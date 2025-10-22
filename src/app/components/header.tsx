@@ -2,7 +2,7 @@
 
 export default function Header() {
     return (
-        <header className="sticky top-0 z-30 flex w-full pl-4 sm:pl-8 lg:pl-0 pr-8 py-5">
+        <header className="sticky top-0 z-30 flex w-full pl-4 sm:pl-8 lg:pl-1 pr-8 py-5">
             <div className="flex w-full rounded-3xl">
                 <div className="flex grow items-center justify-between">
                     <div className="w-full pl-14 sm:gap-4 lg:pl-0 flex items-center">

@@ -3,11 +3,14 @@
 import * as React from "react";
 import Sidebar from "../components/sidebar";
 import Header from "../components/header";
+import { usePathname } from "next/navigation";
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   return (
@@ -16,7 +19,7 @@ export default function DashboardLayout({
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         <main className="frelative flex flex-col flex-1 overflow-x-hidden overflow-y-auto text-black">
           <Header />
-          <div className="z-10 lg:pl-0 pl-20">
+          <div className={`z-10 lg:pl-0 pl-20 pr-3 md:pr-8 h-full ${pathname.startsWith("/inspira") ? 'overflow-hidden' : 'overflow-auto'}`}>
             {children}
           </div>
         </main>
