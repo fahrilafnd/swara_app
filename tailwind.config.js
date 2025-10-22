@@ -9,6 +9,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
+        lexend: ['"Lexend"', 'sans-serif'],
       },
     },
   },
