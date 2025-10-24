@@ -9,6 +9,7 @@ import { User, MapPin, Calendar, Star, Award, Target, Flame, Bell, ChevronRight,
 export default function SwaraProfilePage() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -103,11 +104,11 @@ export default function SwaraProfilePage() {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
       {/* Sidebar */}
-      <Sidebar isCollapsed={false} setIsCollapsed={() => {}} />
+      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 md:ml-60">
-        <Header onUserClick={() => setShowProfileModal(true)} />
+        <Header />
         
         {/* Spacer to offset fixed header on desktop */}
         <div className="hidden md:block h-14" />

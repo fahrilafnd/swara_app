@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '../components/header';
-import Sidebar from '../components/sidebar';
 import { Mic, Volume2, Zap, Smile, User, ChevronRight, Video, BarChart3 } from 'lucide-react';
 
 export default function SkorSwaraPage() {
@@ -19,22 +17,7 @@ export default function SkorSwaraPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 to-purple-50">
-      {/* Sidebar */}
-      <Sidebar isCollapsed={false} setIsCollapsed={function (v: boolean): void {
-        throw new Error('Function not implemented.');
-      } } />
-      
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 md:ml-60">
-        <Header onUserClick={() => setShowProfileModal(true)} />
-        
-        {/* Spacer to offset fixed header on desktop */}
-        <div className="hidden md:block h-14" />
-        
-        {/* Main Content */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
             {/* Video Upload Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               {/* Video Upload Section */}
@@ -199,9 +182,6 @@ export default function SkorSwaraPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </main>
-      </div>
     </div>
   );
 }

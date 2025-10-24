@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import Header from '../../components/header';
-import Sidebar from '../../components/sidebar';
 import { useRouter } from 'next/navigation';
 
 // Circular Progress Component
@@ -64,7 +62,6 @@ function CircularProgress({ percentage, color, label }: CircularProgressProps) {
 
 export default function HasilAnalisis() {
   const [activeTab, setActiveTab] = useState('intonasi');
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const router = useRouter();
   
   const metrics = {
@@ -105,101 +102,84 @@ export default function HasilAnalisis() {
   const currentMetric = metrics[activeTab as keyof typeof metrics];
   
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+    <div className="max-w-7xl mx-auto">
+      {/* Page Header */}
+      <div className="mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Kembali</span>
+        </button>
+      </div>
+
+      {/* Success Banner */}
+      <div className="bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-6 mb-8 text-white">
+        <h2 className="text-2xl font-bold mb-2">Kamu sudah mencoba sangat baik!</h2>
+        <p className="text-blue-50">
+          Kamu sudah mulai menguasai dasar-dasar public speaking! Teruskan latihan untuk mencapai level berikutnya.
+        </p>
+      </div>
       
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 md:ml-60">
-        <Header />
-        
-        {/* Spacer to offset fixed header on desktop */}
-        <div className="hidden md:block h-14" />
-
-        {/* Main Content */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
-            {/* Page Header */}
-            <div className="mb-6">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">Kembali</span>
-              </button>
-            </div>
-
-
-            {/* Success Banner */}
-            <div className="bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-6 mb-8 text-white">
-              <h2 className="text-2xl font-bold mb-2">Kamu sudah mencoba sangat baik!</h2>
-              <p className="text-blue-50">
-                Kamu sudah mulai menguasai dasar-dasar public speaking! Teruskan latihan untuk mencapai level berikutnya.
-              </p>
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* All 4 Metrics */}
+        {Object.entries(metrics).map(([key, metric]) => (
+          <div key={key} className="flex flex-col items-center">
+            {/* Metric Label */}
+            <div className={`px-4 py-2 rounded-full font-bold text-black mb-4 ${
+              metric.color === 'blue' ? 'bg-blue-400' :
+              metric.color === 'green' ? 'bg-green-500' :
+              metric.color === 'yellow' ? 'bg-yellow-400' :
+              'bg-pink-400'
+            }`}>
+              {metric.label}
             </div>
             
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* All 4 Metrics */}
-              {Object.entries(metrics).map(([key, metric]) => (
-                <div key={key} className="flex flex-col items-center">
-                  {/* Metric Label */}
-                  <div className={`px-4 py-2 rounded-full font-bold text-black mb-4 ${
-                    metric.color === 'blue' ? 'bg-blue-400' :
-                    metric.color === 'green' ? 'bg-green-500' :
-                    metric.color === 'yellow' ? 'bg-yellow-400' :
-                    'bg-pink-400'
-                  }`}>
-                    {metric.label}
-                  </div>
-                  
-                  <CircularProgress
-                    percentage={metric.percentage}
-                    color={metric.color}
-                    label={metric.label}
-                  />
-                  
-                  <div className="mt-6 bg-white rounded-xl p-5 w-full shadow-sm">
-                    {/* Evaluasi Section */}
-                    <div className="-mt-5 -mx-5">
-                      <div className={`px-5 py-3 ${
-                        metric.color === 'blue' ? 'bg-blue-50' :
-                        metric.color === 'green' ? 'bg-green-50' :
-                        metric.color === 'yellow' ? 'bg-yellow-50' :
-                        'bg-pink-50'
-                      }`}>
-                        <h4 className="font-bold text-gray-800 text-center">Evaluasi</h4>
-                      </div>
-                      <div className="px-5 py-4 bg-white">
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          {metric.evaluasi}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Saran Perbaikan Section */}
-                    <div className="mt-4 -mx-5">
-                      <div className={`px-5 py-3 ${
-                        metric.color === 'blue' ? 'bg-blue-50' :
-                        metric.color === 'green' ? 'bg-green-50' :
-                        metric.color === 'yellow' ? 'bg-yellow-50' :
-                        'bg-pink-50'
-                      }`}>
-                        <h4 className="font-bold text-gray-800 text-center">Saran Perbaikan</h4>
-                      </div>
-                      <div className="px-5 py-4 bg-white">
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          {metric.saran}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+            <CircularProgress
+              percentage={metric.percentage}
+              color={metric.color}
+              label={metric.label}
+            />
+            
+            <div className="mt-6 bg-white rounded-xl p-5 w-full shadow-sm">
+              {/* Evaluasi Section */}
+              <div className="-mt-5 -mx-5">
+                <div className={`px-5 py-3 ${
+                  metric.color === 'blue' ? 'bg-blue-50' :
+                  metric.color === 'green' ? 'bg-green-50' :
+                  metric.color === 'yellow' ? 'bg-yellow-50' :
+                  'bg-pink-50'
+                }`}>
+                  <h4 className="font-bold text-gray-800 text-center">Evaluasi</h4>
                 </div>
-              ))}
+                <div className="px-5 py-4 bg-white">
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {metric.evaluasi}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Saran Perbaikan Section */}
+              <div className="mt-4 -mx-5">
+                <div className={`px-5 py-3 ${
+                  metric.color === 'blue' ? 'bg-blue-50' :
+                  metric.color === 'green' ? 'bg-green-50' :
+                  metric.color === 'yellow' ? 'bg-yellow-50' :
+                  'bg-pink-50'
+                }`}>
+                  <h4 className="font-bold text-gray-800 text-center">Saran Perbaikan</h4>
+                </div>
+                <div className="px-5 py-4 bg-white">
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {metric.saran}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        </main>
+        ))}
       </div>
     </div>
   );
