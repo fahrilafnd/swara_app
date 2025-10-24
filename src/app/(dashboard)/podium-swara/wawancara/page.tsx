@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, Check } from "lucide-react";
 import Link from "next/link";
 
@@ -15,17 +15,24 @@ function CameraFeed({
   className = "",
   mirrored = true,
   label,
-  constraints = {
-    video: {
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
-      facingMode: "user",
-    },
-    audio: false,
-  },
+  constraints,
 }: CameraFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Stabilkan constraints (default jika tidak diberikan)
+  const stableConstraints = useMemo<MediaStreamConstraints>(
+    () =>
+      constraints ?? {
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user",
+        },
+        audio: false,
+      },
+    [constraints]
+  );
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -34,14 +41,15 @@ function CameraFeed({
     (async () => {
       try {
         setError(null);
-        const supported = !!navigator.mediaDevices?.getUserMedia;
-        if (!supported) {
+        if (!navigator.mediaDevices?.getUserMedia) {
           setError("Browser tidak mendukung getUserMedia.");
           return;
         }
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        stream = await navigator.mediaDevices.getUserMedia(stableConstraints);
         if (!stopped && videoRef.current) {
           videoRef.current.srcObject = stream;
+          // tambahkan muted agar autoplay tidak diblokir browser
+          videoRef.current.muted = true;
           await videoRef.current.play().catch(() => {});
         }
       } catch (e) {
@@ -57,7 +65,7 @@ function CameraFeed({
       stopped = true;
       if (stream) stream.getTracks().forEach((t) => t.stop());
     };
-  }, [constraints]);
+  }, [stableConstraints]);
 
   return (
     <div className={`relative bg-white ${className}`}>
@@ -66,19 +74,14 @@ function CameraFeed({
           {label}
         </span>
       )}
-
-      {/* Video feed */}
       <video
         ref={videoRef}
         autoPlay
-        muted
         playsInline
-        className={`h-full w-full object-cover ${
+        className={`w-full h-full object-cover ${
           mirrored ? "scale-x-[-1]" : ""
         }`}
       />
-
-      {/* Error overlay */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm p-4 text-center rounded-xl">
           {error}
@@ -88,28 +91,10 @@ function CameraFeed({
   );
 }
 
-/* =========================
-   Halaman Pidato
-   ========================= */
 export default function Pidato() {
   const [isPaused, setIsPaused] = useState(false);
   const [time, setTime] = useState(292);
 
-  // Kunci scroll pada main#app-scroll (sesuai layout kamu)
-  useEffect(() => {
-    const el = document.getElementById("app-scroll");
-    if (!el) return;
-    const prevOverflow = el.style.overflowY;
-    const prevHeight = el.style.height;
-    el.style.overflowY = "hidden";
-    el.style.height = "100vh";
-    return () => {
-      el.style.overflowY = prevOverflow;
-      el.style.height = prevHeight;
-    };
-  }, []);
-
-  // Timer
   useEffect(() => {
     if (!isPaused && time > 0) {
       const timer = setInterval(() => setTime((t) => t - 1), 1000);
@@ -125,18 +110,12 @@ export default function Pidato() {
       .padStart(2, "0")}`;
   };
 
-  const speechText =
-    "Keterampilan komunikasi yang kuat dan kemampuan beradaptasi adalah dua hal yang saya anggap sangat penting di dunia kerja. Dengan komunikasi yang efektif, saya dapat menyampaikan";
-
   return (
     <div className="pr-8">
       <div className="bg-white p-4 rounded-xl">
-        <section className="relative h-screen w-full bg-[url(/podium/tirai.png)] bg-no-repeat bg-cover bg-top overflow-hidden rounded-xl">
-          {/* Header kecil */}
+        <section className="relative min-h-screen w-full bg-[url(/podium/tirai.png)] bg-no-repeat bg-cover bg-top rounded-xl">
           <div className="p-4">
             <div className="flex justify-between items-center">
-           
-
               <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
                 <p className="text-orange-500 font-bold text-lg">
                   Mode : Wawancara
@@ -145,28 +124,37 @@ export default function Pidato() {
             </div>
           </div>
 
-          {/* Dua kotak video */}
-          <div className="flex justify-center items-center gap-10 w-full">
-            {/* Kamera Anda */}
+          <div className="flex justify-center items-end gap-10 w-full">
             <CameraFeed
               className="w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-200"
               label="Anda"
               mirrored
             />
+            <div className="flex items-center flex-col justify-center gap-10">
+              <div className="relative w-fit max-w-3xl mx-auto ">
+                <div className="bg-white rounded-3xl shadow-md px-8 py-4 text-center text-orange-500 font-medium text-lg relative">
+                  <p>
+                    Ceritakan pengalaman Anda bekerja dalam sebuah tim
+                    <br />
+                    dan bagaimana peran Anda di dalamnya?
+                  </p>
+                  <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[16px] border-transparent border-t-white"></div>
+                </div>
+              </div>
 
-            <div className="relative bg-white w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-400">
-              <img
-                src="/podium/virtual.png"
-                alt="Bu Hilda PT Foodie"
-                className="h-full w-full object-cover"
-              />
-              <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/60 text-white px-2 py-1 rounded">
-                Bu Hilda PT Foodie
-              </span>
+              <div className="relative bg-white w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-400">
+                <img
+                  src="/podium/virtual.png"
+                  alt="Bu Hilda PT Foodie"
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/60 text-white px-2 py-1 rounded">
+                  Bu Hilda PT Foodie
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Kontrol bawah */}
           <div className="flex items-center justify-center mt-10">
             <div className="bg-white flex items-center justify-center w-[90%] h-40 rounded-2xl shadow-md">
               <div className="flex items-center gap-4 z-40">
@@ -198,24 +186,6 @@ export default function Pidato() {
               </div>
             </div>
           </div>
-
-          {/* Bubble pertanyaan (opsional) */}
-          {/* <div className="pointer-events-none absolute top-6 left-1/2 -translate-x-1/2">
-            <div className="bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-sm border border-white/60">
-              <p className="text-orange-500 text-sm font-medium text-center">
-                {speechText.split("Dengan").map((part, i, arr) => (
-                  <span key={i}>
-                    {part}
-                    {i < arr.length - 1 && (
-                      <span className="bg-green-400 text-white px-2 py-1 rounded-md font-medium ml-1">
-                        Dengan
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </p>
-            </div>
-          </div> */}
         </section>
       </div>
     </div>

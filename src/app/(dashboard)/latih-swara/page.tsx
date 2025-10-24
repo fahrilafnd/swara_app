@@ -139,7 +139,7 @@ export default function LatihSwara() {
     <div className="pr-8 pb-8">
       <div className="flex bg-white px-6 py-4 rounded-xl items-center gap-2 mb-4">
         <div className="w-4 h-1 bg-orange-500"></div>
-        <h1 className="text-orange-500 font-semibold text-lg">latih Swara</h1>
+        <h1 className="text-orange-500 font-semibold text-lg">Latih Swara</h1>
       </div>
 
       <div className="flex bg-white px-6 py-4 rounded-xl items-center gap-2 mb-4">

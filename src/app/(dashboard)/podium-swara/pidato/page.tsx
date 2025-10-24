@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Pause, Play, Check } from "lucide-react";
 import Link from "next/link";
 
-/* ===== Komponen Reusable: PeopleRow ===== */
 type PeopleRowProps = {
-  /** jumlah penonton => akan generate /podium/people {i}.png */
   count?: number;
-  /** kalau mau manual, pakai array path */
   people?: string[];
-  /** rentang interval acak applause (ms) */
   applauseMinMs?: number;
   applauseMaxMs?: number;
   className?: string;
@@ -35,44 +31,30 @@ function PeopleRow({
   );
 
   const [applaudIndex, setApplaudIndex] = useState<number | null>(null);
-  const [applauseStyle, setApplauseStyle] = useState<{
-    x: number;
-    y: number;
-    scale: number;
-  }>({
-    x: 0,
-    y: 0,
-    scale: 1,
-  });
+  const [applauseStyle, setApplauseStyle] = useState({ x: 0, y: 0, scale: 1 });
 
   useEffect(() => {
     let mounted = true;
-
     const schedule = () => {
       const delay =
         Math.floor(Math.random() * (applauseMaxMs - applauseMinMs + 1)) +
         applauseMinMs;
-
       const t = setTimeout(() => {
         if (!mounted || peopleList.length === 0) return;
-
         const idx = Math.floor(Math.random() * peopleList.length);
         setApplaudIndex(idx);
         setApplauseStyle({
-          x: Math.floor(Math.random() * 16) - 8, // -8..8 px
-          y: Math.floor(Math.random() * 8), // 0..7 px
-          scale: 0.9 + Math.random() * 0.4, // 0.9..1.3
+          x: Math.floor(Math.random() * 16) - 8,
+          y: Math.floor(Math.random() * 8),
+          scale: 0.9 + Math.random() * 0.4,
         });
-
         setTimeout(() => {
           setApplaudIndex(null);
           schedule();
         }, 800);
       }, delay);
-
       return () => clearTimeout(t);
     };
-
     const clean = schedule();
     return () => {
       mounted = false;
@@ -81,44 +63,200 @@ function PeopleRow({
   }, [peopleList.length, applauseMinMs, applauseMaxMs]);
 
   return (
-    <div className={`flex items-center gap-4 px-24 mt-4 ${className}`}>
-      {peopleList.map((src, i) => (
-        <div
-          key={`${src}-${i}`}
-          className="relative flex flex-col items-center"
-        >
-          {applaudIndex === i && (
-            <img
-              src="/podium/plause.png"
-              alt="applause"
-              className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
-              style={{
-                transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
-                marginLeft: applauseStyle.x,
-                width: 64,
-              }}
-              draggable={false}
-            />
-          )}
-          <img
-            src={src}
-            alt={`penonton ${i + 1}`}
-            className="w-[88px] h-auto"
-            draggable={false}
-          />
+    <div>
+      <div className="flex justify-between mt-4">
+        <div className="flex flex-col">
+          <div
+            className={`flex ml-40 -mb-6  items-center gap-4 px-24 ${className}`}
+          >
+            {peopleList.map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="relative flex flex-col items-center"
+              >
+                {applaudIndex === i && (
+                  <img
+                    src="/podium/plause.png"
+                    alt="applause"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
+                    style={{
+                      transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
+                      marginLeft: applauseStyle.x,
+                      width: 64,
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <img
+                  src={src}
+                  alt={`penonton ${i + 1}`}
+                  className="w-[88px] h-auto"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+          <div
+            className={`flex ml-20 -mb-10  items-center gap-4 px-24 ${className}`}
+          >
+            {peopleList.map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="relative flex flex-col items-center"
+              >
+                {applaudIndex === i && (
+                  <img
+                    src="/podium/plause.png"
+                    alt="applause"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
+                    style={{
+                      transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
+                      marginLeft: applauseStyle.x,
+                      width: 64,
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <img
+                  src={src}
+                  alt={`penonton ${i + 1}`}
+                  className="w-[88px] h-auto"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+          <div className={`flex items-center gap-4 px-24 mt-4 ${className}`}>
+            {peopleList.map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="relative flex flex-col items-center"
+              >
+                {applaudIndex === i && (
+                  <img
+                    src="/podium/plause.png"
+                    alt="applause"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
+                    style={{
+                      transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
+                      marginLeft: applauseStyle.x,
+                      width: 64,
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <img
+                  src={src}
+                  alt={`penonton ${i + 1}`}
+                  className="w-[88px] h-auto"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
+        <div className="flex flex-col">
+          <div
+            className={`flex mr-40 -mb-6  items-center gap-4 px-24 ${className}`}
+          >
+            {peopleList.map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="relative flex flex-col items-center"
+              >
+                {applaudIndex === i && (
+                  <img
+                    src="/podium/plause.png"
+                    alt="applause"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
+                    style={{
+                      transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
+                      marginLeft: applauseStyle.x,
+                      width: 64,
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <img
+                  src={src}
+                  alt={`penonton ${i + 1}`}
+                  className="w-[88px] h-auto"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+          <div
+            className={`flex mr-20 -mb-10  items-center gap-4 px-24 ${className}`}
+          >
+            {peopleList.map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="relative flex flex-col items-center"
+              >
+                {applaudIndex === i && (
+                  <img
+                    src="/podium/plause.png"
+                    alt="applause"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
+                    style={{
+                      transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
+                      marginLeft: applauseStyle.x,
+                      width: 64,
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <img
+                  src={src}
+                  alt={`penonton ${i + 1}`}
+                  className="w-[88px] h-auto"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+          <div className={`flex items-center gap-4 px-24 mt-4 ${className}`}>
+            {peopleList.map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="relative flex flex-col items-center"
+              >
+                {applaudIndex === i && (
+                  <img
+                    src="/podium/plause.png"
+                    alt="applause"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 select-none pointer-events-none animate-bounce"
+                    style={{
+                      transform: `translateX(-50%) translateY(-${applauseStyle.y}px) scale(${applauseStyle.scale})`,
+                      marginLeft: applauseStyle.x,
+                      width: 64,
+                    }}
+                    draggable={false}
+                  />
+                )}
+                <img
+                  src={src}
+                  alt={`penonton ${i + 1}`}
+                  className="w-[88px] h-auto"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-/* ===== /PeopleRow ===== */
 
 export default function Pidato() {
   const [isPaused, setIsPaused] = useState(false);
   const [time, setTime] = useState(292);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    const el = document.getElementById("app-scroll");
+    const el = document.getElementById("");
     if (!el) return;
     const prevOverflow = el.style.overflowY;
     const prevHeight = el.style.height;
@@ -136,6 +274,22 @@ export default function Pidato() {
       return () => clearInterval(timer);
     }
   }, [isPaused, time]);
+
+  useEffect(() => {
+    const enableCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Tidak dapat mengakses kamera:", err);
+      }
+    };
+    enableCamera();
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -159,46 +313,47 @@ export default function Pidato() {
                   Merancang Masa Depan: Membangun Karier di Era Digital
                 </p>
               </div>
-
               <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
-                <p className="text-orange-500 font-bold text-lg">
-                  Mode : Pidato
+                <p className="text-orange-500 font-bold text-lg">Mode : Pidato</p>
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="bg-white rounded-3xl p-6 shadow-sm max-w-3xl">
+                <p className="text-gray-700 text-base leading-relaxed">
+                  {speechText.split("Dengan").map((part, i, arr) => (
+                    <span key={i}>
+                      {part}
+                      {i < arr.length - 1 && (
+                        <span className="bg-green-400 text-white px-2 py-1 rounded-md font-medium">
+                          Dengan
+                        </span>
+                      )}
+                    </span>
+                  ))}
                 </p>
               </div>
             </div>
-              <div className="mt-2">
-                <div className="bg-white rounded-3xl p-6 shadow-sm max-w-3xl">
-                  <p className="text-gray-700 text-base leading-relaxed">
-                    {speechText.split("Dengan").map((part, i, arr) => (
-                      <span key={i}>
-                        {part}
-                        {i < arr.length - 1 && (
-                          <span className="bg-green-400 text-white px-2 py-1 rounded-md font-medium">
-                            Dengan
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                  </p>
-                </div>
-              </div>
           </div>
-
           <div className="flex justify-center items-center w-full">
-            <div className="bg-white w-[30rem] h-fit flex items-center justify-center rounded-xl">
-              <img src="/podium/virtual.png" alt="" />
+            <div className="bg-white w-[30rem] h-80 flex items-center justify-center rounded-xl overflow-hidden">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full h-auto rounded-xl"
+                style={{ transform: "scaleX(-1)" }}
+              />
             </div>
           </div>
-
-          <PeopleRow people={[
-            "/podium/people 1.png",
-            "/podium/people 1.png",
-            "/podium/people 1.png",
-            "/podium/people 1.png",
-            "/podium/people 1.png",
-          ]} />
-         
-
+          <PeopleRow
+            people={[
+              "/podium/people 1.png",
+              "/podium/people 1.png",
+              "/podium/people 1.png",
+              "/podium/people 1.png",
+              "/podium/people 1.png",
+            ]}
+          />
           <div className="flex items-center justify-center">
             <div className="bg-white flex items-center justify-center w-[90%] h-40 rounded-2xl shadow-md">
               <div className="flex items-center gap-4 z-40">
@@ -213,14 +368,15 @@ export default function Pidato() {
                   )}
                   {isPaused ? "Resume" : "Pause"}
                 </button>
-
                 <div className="bg-white border-3 border-orange-300 px-8 py-4 rounded-2xl shadow-xl">
                   <p className="text-3xl font-bold text-gray-800 tabular-nums">
                     {formatTime(time)}
                   </p>
                 </div>
-
-                <Link href="/podium-swara/selesai" className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Link
+                  href="/podium-swara/selesai"
+                  className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
+                >
                   <Check className="w-5 h-5" />
                   Selesai
                 </Link>
