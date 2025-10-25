@@ -42,10 +42,7 @@ export default function Login() {
       <header className="relative z-10 container mx-auto px-6 py-6 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-              <Mic className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-orange-500">Swara</span>
+            <img src="./logo.svg" alt="Logo" className="w-36" />
           </div>
           <Link
             href="/"
@@ -56,7 +53,7 @@ export default function Login() {
           </Link>
         </div>
         <Link
-          href="/auth/login"
+          href="/masuk"
           className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
         >
           Masuk
@@ -65,7 +62,6 @@ export default function Login() {
 
       <div className="relative z-10 container mx-auto px-6 py-12">
         <div className="flex justify-center gap-8 items-center">
-       
           <div className="lg:col-span-6">
             <div className="bg-white w-[35rem] h- rounded-3xl shadow-2xl p-8 md:p-12">
               <div className="flex items-start justify-between mb-8">
@@ -133,8 +129,6 @@ export default function Login() {
               </form>
             </div>
           </div>
-
-         
         </div>
       </div>
 

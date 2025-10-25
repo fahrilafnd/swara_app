@@ -55,9 +55,9 @@ export default function MentorSaya() {
               key={session.id}
               className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
             >
-              <div className="flex items-start gap-6">
+              <div className="flex flex-col md:flex-row items-start gap-6">
                 {/* Left Section - Mentor Info */}
-                <div className="flex items-start gap-4 flex-1">
+                <div className="flex flex-col md:flex-row items-start gap-4 flex-1">
                   {/* Profile Picture */}
                   <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-orange-100">
                     <img
@@ -98,7 +98,7 @@ export default function MentorSaya() {
                 </div>
 
                 {/* Right Section - Date, Time & Action */}
-                <div className="flex flex-col items-end gap-4 min-w-[180px]">
+                <div className="flex flex-col md:items-end items-start gap-4 min-w-[180px]">
                   {/* Date & Time */}
                   <div className="text-right">
                     <p className="text-gray-900 font-bold text-lg">

@@ -96,7 +96,7 @@ export default function Mentor() {
         {/* Content Section */}
         <div className="px-12 pt-8 pb-10">
           {/* Name and Badges */}
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex flex-col md:flex-row items-start mt-14 md:mt-0 md:items-center gap-4 mb-2">
             <h1 className="text-4xl font-bold text-gray-900">
               Daffa Arif Setyawan
             </h1>
@@ -130,7 +130,7 @@ export default function Mentor() {
             langsung dari seorang CEO.
           </p>
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col items-start justify-between md:items-center mb-3">
               <span className="text-gray-700 font-semibold">
                 Biaya Mentoring (1 Sesi)
               </span>
