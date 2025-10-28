@@ -11,6 +11,20 @@ export default function Header() {
     // Check if current route should show back button
     const shouldShowBackButton = pathname.includes('/sesi-latihan') || pathname.includes('/hasil-skor');
 
+    // Define specific navigation based on current page
+    const handleBackNavigation = () => {
+        if (pathname.includes('/hasil-skor')) {
+            // From hasil-skor, go to sesi-latihan
+            router.push('/skor-swara/sesi-latihan');
+        } else if (pathname.includes('/sesi-latihan')) {
+            // From sesi-latihan, go to skor-swara
+            router.push('/skor-swara');
+        } else {
+            // Fallback to browser back
+            router.back();
+        }
+    };
+
     return (
         <header className="sticky top-0 z-30 flex w-full px-4 sm:px-8 py-5">
             <div className="flex w-full items-center justify-between">
@@ -18,7 +32,7 @@ export default function Header() {
                 <div className="flex-1 flex justify-start">
                     {shouldShowBackButton ? (
                         <button
-                            onClick={() => router.back()}
+                            onClick={handleBackNavigation}
                             className="flex items-center px-4 py-2 bg-white rounded-full text-orange-500 hover:text-orange-600 font-medium transition-colors shadow-sm"
                         >
                             <ArrowLeft className="w-5 h-5" />
