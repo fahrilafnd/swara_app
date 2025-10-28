@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+
 export default function Header() {
     return (
         <header className="sticky top-0 z-30 flex w-full pl-4 sm:pl-8 lg:pl-1 pr-8 py-5">
@@ -26,6 +28,7 @@ export default function Header() {
                     <Link href="/profile" className="hover:opacity-80 transition-opacity">
                         <img src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg" className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer" alt="pp" />
                     </Link>
+                </div>
                 </div>
             </div>
         </header>
