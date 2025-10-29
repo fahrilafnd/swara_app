@@ -14,8 +14,8 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F5F2E9] relative">
-        <div className="absolute -top-[50px] -left-[70px] bg-[#F0712280] w-[390px] h-[350px] blur-3xl z-0"></div>
+    <div className="flex h-screen overflow-hidden bg-[#F5F2E9]">
+        <div className="absolute -top-[50px] -left-[70px] bg-[#F0712280] w-[390px] h-[350px] blur-3xl"></div>
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         <main className="frelative flex flex-col flex-1 overflow-x-hidden overflow-y-auto text-black">
           {!pathname.startsWith("/skor-swara/sesi-latihan") && !pathname.startsWith("/skor-swara/hasil-skor") && <Header />}
