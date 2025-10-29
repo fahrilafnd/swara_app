@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
+
 import {
   DollarSign,
   TrendingUp,
@@ -95,8 +97,6 @@ function EditBankAccountModal({
       accountNumber: values.accountNumber.replace(/\s/g, ""),
     });
   };
-
-  
 
   return (
     <div
@@ -259,6 +259,9 @@ interface Transaction {
 }
 
 export default function Pembayaran() {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
   const [activeTab, setActiveTab] = useState<"transaksi" | "penarikan">(
     "transaksi"
   );
@@ -767,294 +770,317 @@ export default function Pembayaran() {
       </div>
 
       {/* Modal Withdraw */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-white" />
+      {mounted && showWithdrawModal
+        ? createPortal(
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-3xl max-w-xl w-full">
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Tarik Saldo
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowWithdrawModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Tarik Saldo</h2>
-              </div>
-              <button
-                onClick={() => setShowWithdrawModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
 
-            <div className="p-6 space-y-6">
-              {/* Available Balance */}
-              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                <p className="text-green-700 text-sm mb-2">Saldo Tersedia</p>
-                <p className="text-4xl font-bold text-green-700">
-                  {formatCurrency(summary.availableBalance)}
-                </p>
-              </div>
+                <div className="p-6 space-y-6">
+                  {/* Available Balance */}
+                  <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                    <p className="text-green-700 text-sm mb-2">
+                      Saldo Tersedia
+                    </p>
+                    <p className="text-4xl font-bold text-green-700">
+                      {formatCurrency(summary.availableBalance)}
+                    </p>
+                  </div>
 
-              {/* Withdrawal Amount */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Jumlah Penarikan
-                </label>
-                <input
-                  type="number"
-                  placeholder="Masukkan jumlah"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-                  defaultValue={summary.availableBalance}
-                />
-                <div className="flex items-center justify-between mt-2 text-sm">
-                  <span className="text-gray-600">
-                    Minimum: {formatCurrency(50000)}
-                  </span>
-                  <button className="text-green-600 font-semibold hover:underline">
-                    Tarik Semua
+                  {/* Withdrawal Amount */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Jumlah Penarikan
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Masukkan jumlah"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                      defaultValue={summary.availableBalance}
+                    />
+                    <div className="flex items-center justify-between mt-2 text-sm">
+                      <span className="text-gray-600">
+                        Minimum: {formatCurrency(50000)}
+                      </span>
+                      <button className="text-green-600 font-semibold hover:underline">
+                        Tarik Semua
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bank Account */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm text-gray-600 mb-2">Ditransfer ke:</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                        <Building className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">
+                          {bankAccount.bankName}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {bankAccount.accountNumber} -{" "}
+                          {bankAccount.accountName}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fee Info */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-gray-700">
+                        <p className="font-semibold mb-1">
+                          Informasi Penarikan:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>
+                            Biaya admin: {formatCurrency(summary.withdrawalFee)}
+                          </li>
+                          <li>Dana akan diproses dalam 1-2 hari kerja</li>
+                          <li>
+                            Penarikan hanya dapat dilakukan untuk saldo yang
+                            sudah settlement (7 hari setelah transaksi)
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gray-600">Jumlah Penarikan</span>
+                      <span className="font-semibold text-gray-900">
+                        {formatCurrency(summary.availableBalance)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gray-600">Biaya Admin</span>
+                      <span className="font-semibold text-red-600">
+                        - {formatCurrency(summary.withdrawalFee)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="font-bold text-gray-900">
+                        Total Diterima
+                      </span>
+                      <span className="font-bold text-green-600 text-xl">
+                        {formatCurrency(
+                          summary.availableBalance - summary.withdrawalFee
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setShowWithdrawModal(false)}
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleWithdraw}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                    >
+                      Tarik Saldo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+
+      {/* Modal Transaction Detail */}
+      {mounted && showDetailModal && selectedTransaction
+        ? createPortal(
+            <div className="fixed inset-0 bg-black z-60 bg-opacity-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Detail Transaksi
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Status */}
+                  <div className="flex items-center justify-center">
+                    {(() => {
+                      const statusInfo = getStatusBadge(
+                        selectedTransaction.status
+                      );
+                      return (
+                        <span
+                          className={`flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold ${statusInfo.className}`}
+                        >
+                          {statusInfo.icon}
+                          {statusInfo.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Mentee Info */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Informasi Mentee
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-orange-200">
+                        <img
+                          src={selectedTransaction.menteeImage}
+                          alt={selectedTransaction.menteeName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 text-lg">
+                          {selectedTransaction.menteeName}
+                        </p>
+                        <p className="text-gray-600">
+                          {selectedTransaction.sessionTitle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div className="space-y-3">
+                    <p className="font-bold text-gray-900">Detail Pembayaran</p>
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Order ID</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedTransaction.orderId}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Transaction ID</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedTransaction.id}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Metode Pembayaran</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedTransaction.paymentMethod}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tanggal Transaksi</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedTransaction.transactionDate}
+                        </span>
+                      </div>
+                      {selectedTransaction.settlementDate && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">
+                            Tanggal Settlement
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            {selectedTransaction.settlementDate}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Amount Breakdown */}
+                  <div className="space-y-3">
+                    <p className="font-bold text-gray-900">Rincian Jumlah</p>
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Harga Sesi</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(selectedTransaction.amount)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">
+                          Biaya Platform (5%)
+                        </span>
+                        <span className="font-semibold text-red-600">
+                          - {formatCurrency(selectedTransaction.fee)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-3 border-t">
+                        <span className="font-bold text-gray-900">
+                          Total Diterima
+                        </span>
+                        <span className="font-bold text-green-600 text-xl">
+                          {formatCurrency(selectedTransaction.netAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Settlement Info */}
+                  {selectedTransaction.status === "pending" && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <Clock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-gray-700">
+                          <p className="font-semibold mb-1">
+                            Menunggu Settlement
+                          </p>
+                          <p>
+                            Dana akan tersedia untuk ditarik dalam{" "}
+                            <strong>
+                              {selectedTransaction.daysUntilWithdraw} hari
+                            </strong>{" "}
+                            (tanggal {selectedTransaction.settlementDate}).
+                            Settlement otomatis dilakukan 7 hari kerja setelah
+                            transaksi berhasil.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors"
+                  >
+                    Tutup
                   </button>
                 </div>
               </div>
-
-              {/* Bank Account */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm text-gray-600 mb-2">Ditransfer ke:</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                    <Building className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">
-                      {bankAccount.bankName}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {bankAccount.accountNumber} - {bankAccount.accountName}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fee Info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-gray-700">
-                    <p className="font-semibold mb-1">Informasi Penarikan:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>
-                        Biaya admin: {formatCurrency(summary.withdrawalFee)}
-                      </li>
-                      <li>Dana akan diproses dalam 1-2 hari kerja</li>
-                      <li>
-                        Penarikan hanya dapat dilakukan untuk saldo yang sudah
-                        settlement (7 hari setelah transaksi)
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-600">Jumlah Penarikan</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(summary.availableBalance)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-600">Biaya Admin</span>
-                  <span className="font-semibold text-red-600">
-                    - {formatCurrency(summary.withdrawalFee)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="font-bold text-gray-900">
-                    Total Diterima
-                  </span>
-                  <span className="font-bold text-green-600 text-xl">
-                    {formatCurrency(
-                      summary.availableBalance - summary.withdrawalFee
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowWithdrawModal(false)}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleWithdraw}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                >
-                  Tarik Saldo
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Transaction Detail */}
-      {showDetailModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-black z-60 bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Detail Transaksi
-                </h2>
-              </div>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Status */}
-              <div className="flex items-center justify-center">
-                {(() => {
-                  const statusInfo = getStatusBadge(selectedTransaction.status);
-                  return (
-                    <span
-                      className={`flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold ${statusInfo.className}`}
-                    >
-                      {statusInfo.icon}
-                      {statusInfo.label}
-                    </span>
-                  );
-                })()}
-              </div>
-
-              {/* Mentee Info */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm text-gray-600 mb-3">Informasi Mentee</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-orange-200">
-                    <img
-                      src={selectedTransaction.menteeImage}
-                      alt={selectedTransaction.menteeName}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-lg">
-                      {selectedTransaction.menteeName}
-                    </p>
-                    <p className="text-gray-600">
-                      {selectedTransaction.sessionTitle}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              <div className="space-y-3">
-                <p className="font-bold text-gray-900">Detail Pembayaran</p>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Order ID</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedTransaction.orderId}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Transaction ID</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedTransaction.id}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Metode Pembayaran</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedTransaction.paymentMethod}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tanggal Transaksi</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedTransaction.transactionDate}
-                    </span>
-                  </div>
-                  {selectedTransaction.settlementDate && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tanggal Settlement</span>
-                      <span className="font-semibold text-gray-900">
-                        {selectedTransaction.settlementDate}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Amount Breakdown */}
-              <div className="space-y-3">
-                <p className="font-bold text-gray-900">Rincian Jumlah</p>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Harga Sesi</span>
-                    <span className="font-semibold text-gray-900">
-                      {formatCurrency(selectedTransaction.amount)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Biaya Platform (5%)</span>
-                    <span className="font-semibold text-red-600">
-                      - {formatCurrency(selectedTransaction.fee)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-3 border-t">
-                    <span className="font-bold text-gray-900">
-                      Total Diterima
-                    </span>
-                    <span className="font-bold text-green-600 text-xl">
-                      {formatCurrency(selectedTransaction.netAmount)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settlement Info */}
-              {selectedTransaction.status === "pending" && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-gray-700">
-                      <p className="font-semibold mb-1">Menunggu Settlement</p>
-                      <p>
-                        Dana akan tersedia untuk ditarik dalam{" "}
-                        <strong>
-                          {selectedTransaction.daysUntilWithdraw} hari
-                        </strong>{" "}
-                        (tanggal {selectedTransaction.settlementDate}).
-                        Settlement otomatis dilakukan 7 hari kerja setelah
-                        transaksi berhasil.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

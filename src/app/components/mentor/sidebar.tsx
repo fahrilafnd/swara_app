@@ -157,7 +157,7 @@ export default function Sidebar({
           }`}
         >
           {!isCollapsed && (
-            <Link href="/dashboard">
+            <Link href="/mentor">
               <img src="/logo.svg" alt="logo" className="w-32" />
             </Link>
           )}
