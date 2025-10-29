@@ -1,27 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 type HeaderProps = {
-  /** ID elemen yang menjadi scroll container. Kosongkan jika pakai window */
   scrollContainerId?: string;
 };
 
-export default function Header({ scrollContainerId }: HeaderProps) {
+type Notif = {
+  id: string;
+  title: string;
+  message?: string;
+  time: string;
+  read: boolean;
+};
+
+export default function MentorHeader({ scrollContainerId }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [openNotif, setOpenNotif] = useState(false);
+  const [notifs, setNotifs] = useState<Notif[]>([
+    {
+      id: "n1",
+      title: "Sesi baru dijadwalkan",
+      message: "Jumat, 15:00 WIB",
+      time: "2m",
+      read: false,
+    },
+    {
+      id: "n2",
+      title: "Peserta mengirim pesan",
+      message: "Cek inbox mentoring",
+      time: "1h",
+      read: false,
+    },
+    {
+      id: "n3",
+      title: "Pembayaran terkonfirmasi",
+      message: "Sesi 30 menit",
+      time: "Kemarin",
+      read: true,
+    },
+  ]);
+
+  const unreadCount = notifs.filter((n) => !n.read).length;
+  const notifRef = useRef<HTMLDivElement>(null);
+  const bellBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const el = scrollContainerId
       ? (document.getElementById(scrollContainerId) as HTMLElement | null)
       : window;
-
     const getScrollTop = () =>
       scrollContainerId
         ? document.getElementById(scrollContainerId)?.scrollTop ?? 0
         : window.scrollY;
-
     const onScroll = () => setIsScrolled(getScrollTop() > 10);
-
     if (el instanceof Window) {
       el.addEventListener("scroll", onScroll, { passive: true });
       return () => el.removeEventListener("scroll", onScroll);
@@ -31,16 +64,47 @@ export default function Header({ scrollContainerId }: HeaderProps) {
     }
   }, [scrollContainerId]);
 
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (
+        openNotif &&
+        notifRef.current &&
+        !notifRef.current.contains(t) &&
+        bellBtnRef.current &&
+        !bellBtnRef.current.contains(t)
+      ) {
+        setOpenNotif(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenNotif(false);
+    };
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [openNotif]);
+
+  const toggleNotif = () => setOpenNotif((v) => !v);
+  const markAsRead = (id: string) =>
+    setNotifs((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  const markAllAsRead = () =>
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  const clearAll = () => setNotifs([]);
+
   return (
     <header
-      className={`sticky top-0 z-30 flex w-full pl-4 sm:pl-8 lg:pl-0 pr-8 py-5 transition-all duration-300
-      ${
+      className={`sticky top-0 z-40 flex w-full pl-4 sm:pl-8 lg:pl-0 pr-8 py-5 transition-all duration-300 ${
         isScrolled ? "bg-white/80 backdrop-blur-md shadow-md" : "bg-transparent"
       }`}
     >
-      <div className="flex w-full rounded-3xl">
+      <div className="flex w-full rounded-3xl relative">
         <div className="flex grow items-center justify-between">
-          {/* SEARCH BAR */}
           <div className="w-full pl-14 sm:gap-4 lg:pl-0 flex items-center">
             <div className="flex w-[160px] md:w-[300px] relative">
               <label
@@ -70,30 +134,113 @@ export default function Header({ scrollContainerId }: HeaderProps) {
             </div>
           </div>
 
-          {/* ICONS & PROFILE */}
-          <div className="gap-4 px-0 flex items-center">
-            <div className="cursor-pointer">
-              <svg
-                width="25"
-                height="26"
-                viewBox="0 0 25 26"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+          <div className="gap-4 px-0 flex items-center relative">
+            <div className="relative">
+              <button
+                ref={bellBtnRef}
+                aria-label="Notifikasi"
+                onClick={toggleNotif}
+                className="relative rounded-full p-2 hover:bg-gray-100"
               >
-                <path
-                  d="M18.8896 11.9583C19.4948 17.5573 21.875 19.25 21.875 19.25H3.125C3.125 19.25 6.25 17.0281 6.25 9.24999C6.25 7.48229 6.90833 5.78645 8.08021 4.53645C9.25208 3.28645 10.8438 2.58333 12.5 2.58333C12.8521 2.58333 13.1993 2.61458 13.5417 2.67708M14.3021 22.375C14.1189 22.6907 13.8561 22.9528 13.5398 23.1349C13.2236 23.3171 12.865 23.413 12.5 23.413C12.135 23.413 11.7764 23.3171 11.4602 23.1349C11.1439 22.9528 10.8811 22.6907 10.6979 22.375M19.7917 8.83333C20.6205 8.83333 21.4153 8.50409 22.0014 7.91804C22.5874 7.33199 22.9167 6.53713 22.9167 5.70833C22.9167 4.87953 22.5874 4.08467 22.0014 3.49862C21.4153 2.91257 20.6205 2.58333 19.7917 2.58333C18.9629 2.58333 18.168 2.91257 17.582 3.49862C16.9959 4.08467 16.6667 4.87953 16.6667 5.70833C16.6667 6.53713 16.9959 7.33199 17.582 7.91804C18.168 8.50409 18.9629 8.83333 19.7917 8.83333Z"
-                  stroke="#39363D"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+                <svg
+                  width="25"
+                  height="26"
+                  viewBox="0 0 25 26"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18.8896 11.9583C19.4948 17.5573 21.875 19.25 21.875 19.25H3.125C3.125 19.25 6.25 17.0281 6.25 9.24999C6.25 7.48229 6.90833 5.78645 8.08021 4.53645C9.25208 3.28645 10.8438 2.58333 12.5 2.58333C12.8521 2.58333 13.1993 2.61458 13.5417 2.67708M14.3021 22.375C14.1189 22.6907 13.8561 22.9528 13.5398 23.1349C13.2236 23.3171 12.865 23.413 12.5 23.413C12.135 23.413 11.7764 23.3171 11.4602 23.1349C11.1439 22.9528 10.8811 22.6907 10.6979 22.375M19.7917 8.83333C20.6205 8.83333 21.4153 8.50409 22.0014 7.91804C22.5874 7.33199 22.9167 6.53713 22.9167 5.70833C22.9167 4.87953 22.5874 4.08467 22.0014 3.49862C21.4153 2.91257 20.6205 2.58333 19.7917 2.58333C18.9629 2.58333 18.168 2.91257 17.582 3.49862C16.9959 4.08467 16.6667 4.87953 16.6667 5.70833C16.6667 6.53713 16.9959 7.33199 17.582 7.91804C18.168 8.50409 18.9629 8.83333 19.7917 8.83333Z"
+                    stroke="#39363D"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {openNotif && (
+                <div
+                  ref={notifRef}
+                  className="absolute right-0 mt-2 w-80 rounded-2xl border border-gray-200 bg-white shadow-xl z-[9999]"
+                  role="dialog"
+                  aria-label="Notifikasi"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <p className="font-semibold">Notifikasi</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs text-orange-600 hover:underline"
+                      >
+                        Tandai selesai
+                      </button>
+                      <button
+                        onClick={clearAll}
+                        className="text-xs text-gray-400 hover:underline"
+                      >
+                        Bersihkan
+                      </button>
+                    </div>
+                  </div>
+                  {notifs.length === 0 ? (
+                    <div className="p-4 text-sm text-gray-500">
+                      Tidak ada notifikasi.
+                    </div>
+                  ) : (
+                    <ul className="max-h-80 overflow-auto divide-y">
+                      {notifs.map((n) => (
+                        <li key={n.id} className="p-4 flex gap-3">
+                          <div className="mt-1">
+                            <span
+                              className={`inline-block h-2 w-2 rounded-full ${
+                                n.read ? "bg-gray-300" : "bg-orange-500"
+                              }`}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {n.title}
+                            </p>
+                            {n.message && (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {n.message}
+                              </p>
+                            )}
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-[11px] text-gray-400">
+                                {n.time}
+                              </span>
+                              {!n.read && (
+                                <button
+                                  onClick={() => markAsRead(n.id)}
+                                  className="text-[11px] text-orange-600 hover:underline"
+                                >
+                                  Selesai
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
-            <img
-              src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
-              className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer ml-2"
-              alt="profile"
-            />
+
+            <Link href="/mentor/profil" className="cursor-pointer">
+              <img
+                src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
+                className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer ml-2"
+                alt="profile"
+              />
+            </Link>
           </div>
         </div>
       </div>
