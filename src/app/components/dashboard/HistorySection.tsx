@@ -17,7 +17,7 @@ interface HistorySectionProps {
 
 export default function HistorySection({ historyItems }: HistorySectionProps) {
   return (
-    <div className='bg-white rounded-3xl shadow-md p-4 sm:p-5'>
+    <div className='bg-white rounded-3xl shadow-md p-4 sm:p-5' data-tour="history-section">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-gray-800 text-base sm:text-lg font-semibold">Riwayat latihanmu</h2>
         <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">

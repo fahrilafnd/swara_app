@@ -12,7 +12,7 @@ export default function LevelCard({ level, xp, maxXp }: LevelCardProps) {
   const progressPercentage = (xp / maxXp) * 100;
 
   return (
-    <div className="bg-white rounded-3xl shadow-md p-4 sm:p-6 mb-4 sm:mb-5 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-3xl shadow-md p-4 sm:p-6 mb-4 sm:mb-5 hover:shadow-lg transition-shadow" data-tour="level-card">
       <div className="flex items-center justify-center mb-3">
         <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Level kamu</h3>
       </div>

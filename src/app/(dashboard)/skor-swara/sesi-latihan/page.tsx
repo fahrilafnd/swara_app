@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Square } from 'lucide-react';
+import SkorSwaraHeader from '@/app/components/skor-swara/SkorSwaraHeader';
 
 export default function SesiLatihanPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function SesiLatihanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   const topik = "Merancang Masa Depan: Membangun Karier di Era Digital";
   const latihanText = `Keterampilan komunikasi yang kuat dan kemampuan beradaptasi adalah dua hal yang saya anggap sangat penting di dunia kerja. Dengan komunikasi yang efektif, saya dapat menyampaikan ide dengan jelas dan berkolaborasi dengan tim.
@@ -66,12 +68,56 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     try {
       if (videoRef.current?.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
-        const mediaRecorder = new MediaRecorder(stream);
+        const preferredType = 'video/webm;codecs=vp8,opus';
+        const options = MediaRecorder.isTypeSupported?.(preferredType)
+          ? { mimeType: preferredType }
+          : undefined as unknown as MediaRecorderOptions;
+        const mediaRecorder = new MediaRecorder(stream, options);
         mediaRecorderRef.current = mediaRecorder;
-        
-        const chunks: Blob[] = [];
-        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-        
+
+        // reset chunks container for new recording
+        recordedChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e: BlobEvent) => {
+          if (e.data && e.data.size > 0) {
+            recordedChunksRef.current.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          try {
+            const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                resolve((reader.result as string) || '');
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+
+            const payload = {
+              src: dataUrl,
+              durationSeconds: timer,
+              createdAt: Date.now(),
+              topic: topik,
+              text: latihanText,
+              mimeType: 'video/webm'
+            };
+            try {
+              localStorage.setItem('skor-swara:lastRecording', JSON.stringify(payload));
+              sessionStorage.setItem('skor-swara:lastRecording', JSON.stringify(payload));
+            } catch (_) {
+              // ignore storage errors
+            }
+
+            router.push('/skor-swara/hasil-skor');
+          } catch (err) {
+            console.error('Failed to save recording:', err);
+            router.push('/skor-swara/hasil-skor');
+          }
+        };
+
         mediaRecorder.start();
       }
     } catch (error) {
@@ -91,15 +137,24 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
 
     // Stop recording
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        // ensure final dataavailable is emitted before stop
+        if (typeof mediaRecorderRef.current.requestData === 'function') {
+          mediaRecorderRef.current.requestData();
+        }
+      } catch (_) {
+        // ignore
+      }
       mediaRecorderRef.current.stop();
+    } else {
+      // if no recorder, still navigate to results page
+      router.push('/skor-swara/hasil-skor');
     }
-
-    // Navigate to results
-    router.push('/skor-swara/hasil-skor');
   };
 
   return (
     <>
+      <SkorSwaraHeader />
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">

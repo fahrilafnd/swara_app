@@ -2,12 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
-
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -41,4 +39,27 @@ body.modal-open header:not([class*="bg-orange"]) {
 
 body.modal-open .fixed {
   filter: none !important;
+}
+
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 10px;
+  height: 6px;
+}
+
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background-color: #B3C8CF; 
+  border-radius: 10px;
+}
+ 
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: #F07122; 
+  border-radius: 10px;
+}
+
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: #F0712295; 
 }

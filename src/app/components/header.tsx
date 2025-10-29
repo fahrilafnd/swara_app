@@ -1,15 +1,10 @@
 "use client"
 
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-    const router = useRouter();
     const pathname = usePathname();
-    
-    // Check if current route should show back button
-    const shouldShowBackButton = pathname.includes('/sesi-latihan') || pathname.includes('/hasil-skor');
 
     // Define specific navigation based on current page
     const handleBackNavigation = () => {
@@ -45,10 +40,9 @@ export default function Header() {
                                     <path d="M19.9011 18.5992L16.5003 15.2258C17.8204 13.5799 18.4597 11.4907 18.2867 9.38786C18.1137 7.28503 17.1416 5.32839 15.5703 3.92026C13.999 2.51213 11.9479 1.75955 9.83879 1.81727C7.72965 1.87498 5.72277 2.7386 4.23083 4.23055C2.73888 5.7225 1.87526 7.72937 1.81754 9.83852C1.75983 11.9477 2.51241 13.9988 3.92054 15.5701C5.32866 17.1414 7.28531 18.1134 9.38814 18.2864C11.491 18.4594 13.5802 17.8201 15.2261 16.5L18.5994 19.8733C18.6847 19.9593 18.786 20.0275 18.8977 20.074C19.0095 20.1205 19.1293 20.1445 19.2503 20.1445C19.3713 20.1445 19.4911 20.1205 19.6028 20.074C19.7145 20.0275 19.8159 19.9593 19.9011 19.8733C20.0663 19.7024 20.1587 19.474 20.1587 19.2363C20.1587 18.9985 20.0663 18.7701 19.9011 18.5992ZM10.0836 16.5C8.81452 16.5 7.57392 16.1237 6.5187 15.4186C5.46349 14.7135 4.64105 13.7114 4.15538 12.5389C3.66972 11.3664 3.54265 10.0762 3.79024 8.83151C4.03783 7.5868 4.64896 6.44346 5.54634 5.54607C6.44373 4.64868 7.58707 4.03755 8.83178 3.78996C10.0765 3.54238 11.3667 3.66945 12.5392 4.15511C13.7117 4.64077 14.7138 5.46321 15.4189 6.51843C16.1239 7.57364 16.5003 8.81424 16.5003 10.0833C16.5003 11.7851 15.8242 13.4172 14.6209 14.6206C13.4175 15.824 11.7854 16.5 10.0836 16.5Z" fill="#B3C8CF" />
                                 </svg>
                             </label>
-                            <input type="text" name="search" id="search" className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline focus:outline-[#F07122]" placeholder="Search" />
+                            <input type="text" name="search" id="search" className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline focus:outline-[#F07122] " placeholder="Search" />
                         </div>
-                    )}
-                </div>
+                    </div>
 
                 {/* Right Side Icons */}
                 <div className="flex items-center gap-4 ml-4">
@@ -60,6 +54,7 @@ export default function Header() {
                     <Link href="/profile" className="hover:opacity-80 transition-opacity">
                         <img src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg" className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer" alt="pp" />
                     </Link>
+                </div>
                 </div>
             </div>
         </header>
