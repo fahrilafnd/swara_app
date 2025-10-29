@@ -38,7 +38,7 @@ export default function SkillCards({ onModalOpen }: SkillCardsProps) {
   ];
 
   return (
-    <div>
+    <div className="mb-6 sm:mb-8">
       <h2 className="text-gray-800 text-base sm:text-lg font-semibold mb-4">Petunjuk Penggunaan</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 sm:gap-4">
         {skillCards.map((card) => (

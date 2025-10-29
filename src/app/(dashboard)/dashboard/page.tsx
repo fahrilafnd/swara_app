@@ -10,6 +10,7 @@ import SkillCards from '@/app/components/dashboard/SkillCards';
 import LevelCard from '@/app/components/dashboard/LevelCard';
 import HistorySection from '@/app/components/dashboard/HistorySection';
 import InfoModal from '@/app/components/dashboard/InfoModal';
+import TourGuide from '@/app/components/dashboard/TourGuide';
 import router from 'next/router';
 
 
@@ -26,10 +27,19 @@ interface ModalContentItem {
 export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>('skor-swara');
+  const [isTourActive, setIsTourActive] = useState(false);
   
   const handleCloseModal = () => {
     setShowModal(false);
     router.push('/dashboard'); // redirect ke dashboard page
+  };
+
+  const handleTakeTour = () => {
+    setIsTourActive(true);
+  };
+
+  const handleTourComplete = () => {
+    setIsTourActive(false);
   };
 
   const stats = {
@@ -187,7 +197,7 @@ export default function Dashboard() {
   };
   return (
     <div className="w-full min-h-screen">
-      <HeaderSection />
+      <HeaderSection onTakeTour={handleTakeTour} />
 
       {/* Main Content */}
       <main className="w-full px-4 sm:px-6 py-6 sm:py-8">
@@ -195,7 +205,7 @@ export default function Dashboard() {
 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Left Column */}
-          <div className="flex-1 border-4 border-white bg-white rounded-3xl p-4 sm:p-6 w-full shadow-md">
+          <div className="flex-1 border-4 border-white bg-white rounded-3xl p-4 sm:p-6 w-full shadow-md" data-tour="event-card">
             <EventCard />
             <SkillCards onModalOpen={handleModalOpen} />
           </div>
@@ -215,6 +225,10 @@ export default function Dashboard() {
         tips={tips}
         mekanismeLatihan={mekanismeLatihan}
         peraturanLatihan={peraturanLatihan}
+      />
+      <TourGuide 
+        isActive={isTourActive} 
+        onComplete={handleTourComplete} 
       />
     </div>  
   );
