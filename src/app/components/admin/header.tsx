@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Header() {
+export default function AdminHeader() {
     const pathname = usePathname();
 
     return (
@@ -12,7 +12,7 @@ export default function Header() {
                 <div className="flex grow items-center justify-between">
                     <div className="w-full pl-14 sm:gap-4 lg:pl-0 flex items-center">
                         {
-                            !pathname.startsWith("/adu/") ?  
+                            !pathname.startsWith("/admin/manage-adu-swara/") ?  
                             <div className="flex w-[160px] md:w-[300px] relative">
                                 <label htmlFor="search" className="absolute left-4 top-0 bottom-0 m-auto h-max w-max">
                                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -21,11 +21,11 @@ export default function Header() {
                                 </label>
                                 <input type="text" name="search" id="search" className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline focus:outline-[#F07122] " placeholder="Search" />
                             </div> : 
-                            <Link href={'/adu'} className="flex items-center p-4 pr-6 bg-white rounded-2xl">
+                            <Link href={'/admin/manage-adu-swara'} className="flex items-center p-4 pr-6 bg-white rounded-2xl">
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M7.17245 11.9167L11.6641 16.4084C11.8474 16.5917 11.9354 16.8056 11.9281 17.05C11.9208 17.2945 11.8251 17.5084 11.6412 17.6917C11.4579 17.8597 11.244 17.9477 10.9995 17.9557C10.7551 17.9636 10.5412 17.8756 10.3579 17.6917L4.30786 11.6417C4.2162 11.55 4.15111 11.4507 4.11261 11.3438C4.07411 11.2368 4.05547 11.1222 4.0567 11C4.05792 10.8778 4.07717 10.7632 4.11445 10.6563C4.15172 10.5493 4.2165 10.45 4.30878 10.3584L10.3588 4.30836C10.5268 4.1403 10.7371 4.05627 10.9894 4.05627C11.2418 4.05627 11.4594 4.1403 11.6421 4.30836C11.8254 4.49169 11.9171 4.70955 11.9171 4.96194C11.9171 5.21433 11.8254 5.43189 11.6421 5.61461L7.17245 10.0834H17.4162C17.6759 10.0834 17.8938 10.1714 18.0698 10.3474C18.2458 10.5234 18.3335 10.7409 18.3329 11C18.3323 11.2591 18.2443 11.477 18.0689 11.6536C17.8935 11.8302 17.6759 11.9179 17.4162 11.9167H7.17245Z" fill="#F07122" />
                                 </svg>
-                                <p className="text-[#F07122] font-medium font-lexend ml-4">Kembali</p>
+                                <p className="text-[#F07122] font-medium font-lexend ml-4">Manajemen Adu Swara</p>
                             </Link>
                         }
                     </div>
@@ -40,14 +40,6 @@ export default function Header() {
                     </div>
                 </div>
             </div>
-            <img
-              src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
-              className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer ml-2"
-              alt="profile"
-            />
-          </div>
-        </div>
-      </div>
-    </header>
-  );
+        </header>
+    )
 }
