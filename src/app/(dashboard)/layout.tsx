@@ -18,7 +18,7 @@ export default function DashboardLayout({
         <div className="absolute -top-[50px] -left-[70px] bg-[#F0712280] w-[390px] h-[350px] blur-3xl z-0"></div>
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         <main className="frelative flex flex-col flex-1 overflow-x-hidden overflow-y-auto text-black">
-          <Header />
+          {!pathname.startsWith("/skor-swara/sesi-latihan") && !pathname.startsWith("/skor-swara/hasil-skor") && <Header />}
           <div className={`z-10 lg:pl-0 pl-20 pr-3 md:pr-8 h-full ${pathname.startsWith("/inspira") ? 'overflow-hidden' : 'overflow-auto'}`}>
             {children}
           </div>

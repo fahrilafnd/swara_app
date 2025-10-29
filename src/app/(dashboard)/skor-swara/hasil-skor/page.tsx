@@ -1,8 +1,33 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import SkorSwaraHeader from '@/app/components/skor-swara/SkorSwaraHeader';
+
+type LastRecording = {
+  src: string;
+  durationSeconds: number;
+  createdAt: number;
+  topic?: string;
+  text?: string;
+  mimeType?: string;
+};
 
 export default function PresentationScore() {
+  const [lastRecording, setLastRecording] = useState<LastRecording | null>(null);
+
+  useEffect(() => {
+    try {
+      const rawLocal = localStorage.getItem('skor-swara:lastRecording');
+      const rawSession = !rawLocal ? sessionStorage.getItem('skor-swara:lastRecording') : null;
+      const raw = rawLocal || rawSession;
+      if (raw) {
+        const parsed = JSON.parse(raw) as LastRecording;
+        setLastRecording(parsed);
+      }
+    } catch (_) {
+      // ignore parse/storage errors
+    }
+  }, []);
 
   const performanceMetrics = [
     { 
@@ -30,6 +55,7 @@ export default function PresentationScore() {
 
   return (
     <>
+      <SkorSwaraHeader />
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
 
@@ -45,7 +71,46 @@ export default function PresentationScore() {
           </div>
         </div>
 
-        {/* Performance Cards */}
+      {/* Video Result Section */}
+      <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Hasil Rekaman Latihan</h2>
+        {lastRecording?.src ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <video
+                src={lastRecording.src}
+                controls
+                className="w-full rounded-lg shadow-md"
+              />
+              {typeof lastRecording.durationSeconds === 'number' && (
+                <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs font-mono">
+                  {Math.floor(lastRecording.durationSeconds / 60)
+                    .toString()
+                    .padStart(2, '0')}
+                  :
+                  {(lastRecording.durationSeconds % 60)
+                    .toString()
+                    .padStart(2, '0')}
+                </div>
+              )}
+            </div>
+            {(lastRecording.topic || lastRecording.text) && (
+              <div className="text-sm text-gray-700">
+                {lastRecording.topic && (
+                  <p className="mb-1"><strong>Topik:</strong> {lastRecording.topic}</p>
+                )}
+                {lastRecording.text && (
+                  <p className="whitespace-pre-line"><strong>Teks:</strong> {lastRecording.text}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-gray-500 text-sm">Belum ada hasil rekaman dari sesi latihan. Silakan mulai latihan terlebih dahulu.</div>
+        )}
+      </div>
+
+      {/* Performance Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {performanceMetrics.map((metric, index) => (
             <div key={index} className="bg-white rounded-xl p-6 shadow-sm">

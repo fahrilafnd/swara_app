@@ -69,14 +69,14 @@ export default function EventCard() {
           </div>
 
           {/* Navigation arrows */}
-          <button className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 -full flex items-center justify-center transition-all">
+            <svg className="w-10 h-10 text-white scale-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
-          <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-all">
+            <svg className="w-10 h-10 text-white scale-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -92,7 +92,7 @@ export default function EventCard() {
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-orange-600/80 to-transparent">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
               <div className="flex-1">
-                <h3 className="text-white text-sm sm:text-lg font-bold mb-1 sm:mb-2">Webinar Public Speaking #1: Let's Learn</h3>
+                <h3 className="text-white text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Webinar Public Speaking #1: Let's Learn</h3>
                 <p className="text-white/90 text-xs sm:text-sm font-medium">12:20 WIB | 25 Maret 2023</p>
               </div>
             </div>
