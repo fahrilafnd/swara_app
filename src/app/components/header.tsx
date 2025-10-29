@@ -40,6 +40,14 @@ export default function Header() {
                     </div>
                 </div>
             </div>
-        </header>
-    )
+            <img
+              src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
+              className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer ml-2"
+              alt="profile"
+            />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }
