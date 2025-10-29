@@ -22,3 +22,26 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 10px;
+  height: 6px;
+}
+
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background-color: #B3C8CF; 
+  border-radius: 10px;
+}
+ 
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: #F07122; 
+  border-radius: 10px;
+}
+
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: #F0712295; 
+}

@@ -80,7 +80,7 @@ export default function Sidebar({
     },
     {
       title: "Adu Swara",
-      href: "/adu-swara",
+      href: "/adu",
       icon: (
         <svg
           width="27"
@@ -110,7 +110,7 @@ export default function Sidebar({
     },
     {
       title: "Inspira Swara",
-      href: "/inspira-swara",
+      href: "/inspira",
       icon: (
         <svg
           width="24"
