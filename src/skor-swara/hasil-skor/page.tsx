@@ -20,7 +20,9 @@ export default function PresentationScore() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <Sidebar isCollapsed={false} setIsCollapsed={() => {}} />
+      <Sidebar isCollapsed={false} setIsCollapsed={function (v: boolean): void {
+        throw new Error('Function not implemented.');
+      } } />
       
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 md:ml-60">

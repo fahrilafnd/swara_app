@@ -28,6 +28,7 @@ export default function Sidebar({
     {
       title: "Beranda",
       href: "/dashboard",
+      tourId: "beranda",
       icon: (
         <svg
           width="24"
@@ -53,6 +54,7 @@ export default function Sidebar({
     {
       title: "Skor Swara",
       href: "/skor-swara",
+      tourId: "skor-swara",
       icon: (
         <svg
           width="24"
@@ -81,6 +83,7 @@ export default function Sidebar({
     {
       title: "Adu Swara",
       href: "/adu",
+      tourId: "adu-swara",
       icon: (
         <svg
           width="27"
@@ -111,6 +114,7 @@ export default function Sidebar({
     {
       title: "Inspira Swara",
       href: "/inspira",
+      tourId: "grafik-swara",
       icon: (
         <svg
           width="24"
@@ -128,7 +132,8 @@ export default function Sidebar({
     },
     {
       title: "Podium Swara",
-      href: "/podium-swara",
+      href: "/dashboard/podium-swara",
+      tourId: "podium-swara",
       icon: (
         <svg
           width="24"
@@ -162,7 +167,8 @@ export default function Sidebar({
     },
     {
       title: "Latih Swara",
-      href: "/latih-swara",
+      href: "/dashboard/latih-swara",
+      tourId: "latih-swara",
       icon: (
         <svg
           width="24"
@@ -220,6 +226,7 @@ export default function Sidebar({
                   <li
                     key={item.title}
                     className="rounded-xl py-3 font-lexend relative w-full"
+                    data-tour={item.title === "Beranda" ? undefined : item.tourId}
                   >
                     <div
                       className={`absolute -left-[25px] top-0 w-[6px] rounded-full h-full ${
@@ -257,5 +264,5 @@ export default function Sidebar({
         </div>
       </div>
     </aside>
-  );
+  )
 }

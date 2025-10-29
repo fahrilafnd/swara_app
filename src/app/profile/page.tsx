@@ -107,7 +107,7 @@ export default function SwaraProfilePage() {
       
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 md:ml-60">
-        <Header onUserClick={() => setShowProfileModal(true)} />
+        <Header />
         
         {/* Spacer to offset fixed header on desktop */}
         <div className="hidden md:block h-14" />

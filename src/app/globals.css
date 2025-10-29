@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,18 +18,27 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-lexend), Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
 }
 
-/* Hide scrollbar globally */
-::-webkit-scrollbar {
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-* {
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+body.modal-open aside,
+body.modal-open header:not([class*="bg-orange"]) {
+  filter: blur(4px);
+  transition: filter 0.3s ease;
+}
+
+body.modal-open .fixed {
+  filter: none !important;
 }
 
 
