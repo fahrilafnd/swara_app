@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -261,7 +263,8 @@ export default function JadwalMentoring() {
   };
 
   const days = getDaysInMonth(currentDate);
-
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   return (
     <div className="pr-8">
       {/* Page Title */}
@@ -471,146 +474,156 @@ export default function JadwalMentoring() {
       </div>
 
       {/* Modal Set Availability */}
-      {showAvailabilityModal && selectedDate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Set Availability
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    {selectedDate.toLocaleDateString("id-ID", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAvailabilityModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-gray-700">
-                  <strong>Tips:</strong> Set jam availability Anda untuk tanggal
-                  ini. Mentee dapat booking sesi pada waktu yang Anda tentukan.
-                </p>
-              </div>
-
-              {/* Time Slots */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900">Jam Tersedia</h3>
-                  <button
-                    onClick={addTimeSlot}
-                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Tambah Jam
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {tempSlots.length > 0 ? (
-                    tempSlots.map((slot, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl"
-                      >
-                        <div className="flex-1 grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                              Mulai
-                            </label>
-                            <input
-                              type="time"
-                              value={slot.start}
-                              onChange={(e) =>
-                                updateTimeSlot(index, "start", e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                              Selesai
-                            </label>
-                            <input
-                              type="time"
-                              value={slot.end}
-                              onChange={(e) =>
-                                updateTimeSlot(index, "end", e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => removeTimeSlot(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 bg-gray-50 rounded-xl">
-                      <Clock className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-500">Belum ada jam tersedia</p>
-                      <p className="text-sm text-gray-400">
-                        Klik {"Tambah Jam"} untuk menambahkan
+      {mounted && showAvailabilityModal && selectedDate
+        ? createPortal(
+            <div className="fixed inset-0 text-black bg-black/50 flex items-center justify-center z-[1100] p-4">
+              <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Set Availability
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        {selectedDate.toLocaleDateString("id-ID", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
-                  )}
+                  </div>
+                  <button
+                    onClick={() => setShowAvailabilityModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 space-y-6">
+                  {/* Info */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Tips:</strong> Set jam availability Anda untuk
+                      tanggal ini. Mentee dapat booking sesi pada waktu yang
+                      Anda tentukan.
+                    </p>
+                  </div>
+
+                  {/* Time Slots */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-gray-900">Jam Tersedia</h3>
+                      <button
+                        onClick={addTimeSlot}
+                        className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Tambah Jam
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {tempSlots.length > 0 ? (
+                        tempSlots.map((slot, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl"
+                          >
+                            <div className="flex-1 grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                  Mulai
+                                </label>
+                                <input
+                                  type="time"
+                                  value={slot.start}
+                                  onChange={(e) =>
+                                    updateTimeSlot(
+                                      index,
+                                      "start",
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                  Selesai
+                                </label>
+                                <input
+                                  type="time"
+                                  value={slot.end}
+                                  onChange={(e) =>
+                                    updateTimeSlot(index, "end", e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => removeTimeSlot(index)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 bg-gray-50 rounded-xl">
+                          <Clock className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                          <p className="text-gray-500">
+                            Belum ada jam tersedia
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Klik {"Tambah Jam"} untuk menambahkan
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    {availabilities.some(
+                      (a) => a.date === formatDate(selectedDate)
+                    ) && (
+                      <button
+                        onClick={deleteAvailability}
+                        className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Hapus Semua
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowAvailabilityModal(false)}
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={saveAvailability}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <Check className="w-5 h-5" />
+                      Simpan
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              {/* Buttons */}
-              <div className="flex gap-3 pt-4">
-                {availabilities.some(
-                  (a) => a.date === formatDate(selectedDate)
-                ) && (
-                  <button
-                    onClick={deleteAvailability}
-                    className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Hapus Semua
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowAvailabilityModal(false)}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={saveAvailability}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <Check className="w-5 h-5" />
-                  Simpan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

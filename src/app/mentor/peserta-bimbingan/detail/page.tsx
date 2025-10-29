@@ -22,6 +22,7 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 
 export default function DetailMentoring() {
   const [isEditing, setIsEditing] = useState(false);
@@ -136,6 +137,9 @@ export default function DetailMentoring() {
       alert("Materi berhasil dihapus!");
     }
   };
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   return (
     <div className="pr-8 pb-8">
@@ -498,295 +502,312 @@ export default function DetailMentoring() {
       </div>
 
       {/* Modal Edit Detail Sesi */}
-      {showEditSessionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Settings className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Edit Detail Sesi
-                </h2>
-              </div>
-              <button
-                onClick={() => setShowEditSessionModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Tanggal */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Tanggal Sesi
-                </label>
-                <input
-                  type="date"
-                  value={sessionData.date}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, date: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-
-              {/* Waktu */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-900 font-semibold mb-2">
-                    Waktu Mulai
-                  </label>
-                  <input
-                    type="time"
-                    value={sessionData.startTime}
-                    onChange={(e) =>
-                      setSessionData({
-                        ...sessionData,
-                        startTime: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-900 font-semibold mb-2">
-                    Waktu Selesai
-                  </label>
-                  <input
-                    type="time"
-                    value={sessionData.endTime}
-                    onChange={(e) =>
-                      setSessionData({
-                        ...sessionData,
-                        endTime: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              </div>
-
-              {/* Metode */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Metode Meeting
-                </label>
-                <select
-                  value={sessionData.method}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, method: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="zoom">Zoom Meeting</option>
-                  <option value="gmeet">Google Meet</option>
-                  <option value="teams">Microsoft Teams</option>
-                </select>
-              </div>
-
-              {/* Link Meeting */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Link Meeting
-                </label>
-                <input
-                  type="url"
-                  value={sessionData.zoomUrl}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, zoomUrl: e.target.value })
-                  }
-                  placeholder="https://zoom.us/j/..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-
-              {/* Meeting ID & Passcode */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-900 font-semibold mb-2">
-                    Meeting ID
-                  </label>
-                  <input
-                    type="text"
-                    value={sessionData.meetingId}
-                    onChange={(e) =>
-                      setSessionData({
-                        ...sessionData,
-                        meetingId: e.target.value,
-                      })
-                    }
-                    placeholder="123 456 789"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-900 font-semibold mb-2">
-                    Passcode
-                  </label>
-                  <input
-                    type="text"
-                    value={sessionData.passcode}
-                    onChange={(e) =>
-                      setSessionData({
-                        ...sessionData,
-                        passcode: e.target.value,
-                      })
-                    }
-                    placeholder="swara123"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={() => setShowEditSessionModal(false)}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleUpdateSession}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Upload Materi */}
-      {showUploadMaterialModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Upload className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Upload Materi Pembelajaran
-                </h2>
-              </div>
-              <button
-                onClick={() => setShowUploadMaterialModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Nama Materi */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Nama Materi
-                </label>
-                <input
-                  type="text"
-                  value={newMaterial.name}
-                  onChange={(e) =>
-                    setNewMaterial({ ...newMaterial, name: e.target.value })
-                  }
-                  placeholder="Contoh: Materi Public Speaking Dasar.pdf"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-
-              {/* Upload File */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  File Materi
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-500 transition-colors">
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    accept=".pdf,.doc,.docx,.ppt,.pptx"
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                      <Upload className="w-8 h-8 text-orange-500" />
+      {mounted && showEditSessionModal
+        ? createPortal(
+            <div className="fixed inset-0 text-black bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Settings className="w-6 h-6 text-white" />
                     </div>
-                    {newMaterial.file ? (
-                      <div>
-                        <p className="text-gray-900 font-semibold mb-1">
-                          {newMaterial.file.name}
-                        </p>
-                        <p className="text-gray-600 text-sm">
-                          {(newMaterial.file.size / (1024 * 1024)).toFixed(2)}{" "}
-                          MB
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-gray-900 font-semibold mb-1">
-                          Klik untuk upload file
-                        </p>
-                        <p className="text-gray-600 text-sm">
-                          PDF, DOC, PPT (Max 10MB)
-                        </p>
-                      </div>
-                    )}
-                  </label>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Edit Detail Sesi
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowEditSessionModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
                 </div>
-              </div>
 
-              {/* Info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex gap-3">
-                  <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-gray-700">
-                    <p className="font-semibold mb-1">Tips Upload Materi:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Pastikan file berukuran maksimal 10MB</li>
-                      <li>Format yang didukung: PDF, DOC, DOCX, PPT, PPTX</li>
-                      <li>Gunakan nama file yang deskriptif</li>
-                    </ul>
+                {/* Modal Content */}
+                <div className="p-6 space-y-6">
+                  {/* Tanggal */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Tanggal Sesi
+                    </label>
+                    <input
+                      type="date"
+                      value={sessionData.date}
+                      onChange={(e) =>
+                        setSessionData({ ...sessionData, date: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  {/* Waktu */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-900 font-semibold mb-2">
+                        Waktu Mulai
+                      </label>
+                      <input
+                        type="time"
+                        value={sessionData.startTime}
+                        onChange={(e) =>
+                          setSessionData({
+                            ...sessionData,
+                            startTime: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-900 font-semibold mb-2">
+                        Waktu Selesai
+                      </label>
+                      <input
+                        type="time"
+                        value={sessionData.endTime}
+                        onChange={(e) =>
+                          setSessionData({
+                            ...sessionData,
+                            endTime: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Metode */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Metode Meeting
+                    </label>
+                    <select
+                      value={sessionData.method}
+                      onChange={(e) =>
+                        setSessionData({
+                          ...sessionData,
+                          method: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="zoom">Zoom Meeting</option>
+                      <option value="gmeet">Google Meet</option>
+                      <option value="teams">Microsoft Teams</option>
+                    </select>
+                  </div>
+
+                  {/* Link Meeting */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Link Meeting
+                    </label>
+                    <input
+                      type="url"
+                      value={sessionData.zoomUrl}
+                      onChange={(e) =>
+                        setSessionData({
+                          ...sessionData,
+                          zoomUrl: e.target.value,
+                        })
+                      }
+                      placeholder="https://zoom.us/j/..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  {/* Meeting ID & Passcode */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-900 font-semibold mb-2">
+                        Meeting ID
+                      </label>
+                      <input
+                        type="text"
+                        value={sessionData.meetingId}
+                        onChange={(e) =>
+                          setSessionData({
+                            ...sessionData,
+                            meetingId: e.target.value,
+                          })
+                        }
+                        placeholder="123 456 789"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-900 font-semibold mb-2">
+                        Passcode
+                      </label>
+                      <input
+                        type="text"
+                        value={sessionData.passcode}
+                        onChange={(e) =>
+                          setSessionData({
+                            ...sessionData,
+                            passcode: e.target.value,
+                          })
+                        }
+                        placeholder="swara123"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      onClick={() => setShowEditSessionModal(false)}
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleUpdateSession}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                    >
+                      Simpan Perubahan
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>,
+            document.body
+          )
+        : null}
+      {/* Modal Upload Materi */}
+      {mounted && showUploadMaterialModal
+        ? createPortal(
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1100] p-4">
+              <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Upload Materi Pembelajaran
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowUploadMaterialModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
 
-              {/* Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowUploadMaterialModal(false)}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleUploadMaterial}
-                  disabled={!newMaterial.file}
-                  className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
-                    newMaterial.file
-                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  Upload Materi
-                </button>
+                {/* Modal Content */}
+                <div className="p-6 space-y-6">
+                  {/* Nama Materi */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Nama Materi
+                    </label>
+                    <input
+                      type="text"
+                      value={newMaterial.name}
+                      onChange={(e) =>
+                        setNewMaterial({ ...newMaterial, name: e.target.value })
+                      }
+                      placeholder="Contoh: Materi Public Speaking Dasar.pdf"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  {/* Upload File */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      File Materi
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-500 transition-colors">
+                      <input
+                        id="file-upload"
+                        type="file"
+                        onChange={handleFileUpload}
+                        accept=".pdf,.doc,.docx,.ppt,.pptx"
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="file-upload"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
+                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                          <Upload className="w-8 h-8 text-orange-500" />
+                        </div>
+                        {newMaterial.file ? (
+                          <div>
+                            <p className="text-gray-900 font-semibold mb-1">
+                              {newMaterial.file.name}
+                            </p>
+                            <p className="text-gray-600 text-sm">
+                              {(newMaterial.file.size / (1024 * 1024)).toFixed(
+                                2
+                              )}{" "}
+                              MB
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-gray-900 font-semibold mb-1">
+                              Klik untuk upload file
+                            </p>
+                            <p className="text-gray-600 text-sm">
+                              PDF, DOC, PPT (Max 10MB)
+                            </p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex gap-3">
+                      <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-gray-700">
+                        <p className="font-semibold mb-1">
+                          Tips Upload Materi:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Pastikan file berukuran maksimal 10MB</li>
+                          <li>
+                            Format yang didukung: PDF, DOC, DOCX, PPT, PPTX
+                          </li>
+                          <li>Gunakan nama file yang deskriptif</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setShowUploadMaterialModal(false)}
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleUploadMaterial}
+                      disabled={!newMaterial.file}
+                      className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
+                        newMaterial.file
+                          ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg"
+                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
+                    >
+                      Upload Materi
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

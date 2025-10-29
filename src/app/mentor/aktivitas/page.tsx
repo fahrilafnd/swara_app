@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Plus,
   Edit2,
@@ -181,7 +182,8 @@ export default function Aktivitas() {
     });
     setPreviewImage(null);
   };
-
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   return (
     <div className="pr-8">
       {/* Header */}
@@ -214,8 +216,6 @@ export default function Aktivitas() {
             {activities.length}
           </p>
         </div>
-
-     
       </div>
 
       {activities.length > 0 ? (
@@ -282,8 +282,6 @@ export default function Aktivitas() {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
               </div>
-
-             
             </div>
           ))}
         </div>
@@ -307,311 +305,327 @@ export default function Aktivitas() {
       )}
 
       {/* Modal Create Activity */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Buat Aktivitas Baru
-                </h2>
-              </div>
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  resetForm();
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Label/Category */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Label/Kategori <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.label}
-                  onChange={(e) =>
-                    setFormData({ ...formData, label: e.target.value })
-                  }
-                  placeholder="Contoh: PUBLIC SPEAKER, WORKSHOP, SEMINAR"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Deskripsi Aktivitas <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Ceritakan tentang aktivitas mentoring Anda..."
-                  rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  {formData.description.length} karakter
-                </p>
-              </div>
-
-              {/* Image Upload */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Gambar Aktivitas
-                </label>
-
-                {previewImage ? (
-                  <div className="relative">
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="w-full h-64 object-cover rounded-xl"
-                    />
-                    <button
-                      onClick={() => {
-                        setPreviewImage(null);
-                        setFormData({ ...formData, image: null });
-                      }}
-                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-500 transition-colors">
-                    <input
-                      type="file"
-                      onChange={handleImageUpload}
-                      accept="image/*"
-                      className="hidden"
-                      id="image-upload-create"
-                    />
-                    <label
-                      htmlFor="image-upload-create"
-                      className="cursor-pointer flex flex-col items-center"
-                    >
-                      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                        <Upload className="w-8 h-8 text-orange-500" />
-                      </div>
-                      <p className="text-gray-900 font-semibold mb-1">
-                        Klik untuk upload gambar
-                      </p>
-                      <p className="text-gray-600 text-sm">
-                        PNG, JPG, JPEG (Max 5MB)
-                      </p>
-                    </label>
-                  </div>
-                )}
-              </div>
-
-              {/* Preview Card */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-semibold text-gray-700 mb-3">
-                  Preview Postingan:
-                </p>
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <div className="p-4 border-b">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-200"></div>
-                      <div>
-                        <p className="font-bold text-sm">Daffa Arif Setyawan</p>
-                        <p className="text-xs text-gray-500">Baru saja</p>
-                      </div>
+      {mounted && showCreateModal
+        ? createPortal(
+            <div className="fixed inset-0 text-black bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Plus className="w-6 h-6 text-white" />
                     </div>
-                    {formData.label && (
-                      <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
-                        [ {formData.label} ]
-                      </span>
-                    )}
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Buat Aktivitas Baru
+                    </h2>
                   </div>
-                  <div className="p-4">
-                    <p className="text-sm text-gray-700">
-                      {formData.description ||
-                        "Deskripsi aktivitas akan muncul di sini..."}
+                  <button
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      resetForm();
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 space-y-6">
+                  {/* Label/Category */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Label/Kategori <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.label}
+                      onChange={(e) =>
+                        setFormData({ ...formData, label: e.target.value })
+                      }
+                      placeholder="Contoh: PUBLIC SPEAKER, WORKSHOP, SEMINAR"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Deskripsi Aktivitas{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Ceritakan tentang aktivitas mentoring Anda..."
+                      rows={5}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      {formData.description.length} karakter
                     </p>
                   </div>
-                  {previewImage && (
-                    <div className="h-48">
-                      <img
-                        src={previewImage}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
+
+                  {/* Image Upload */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Gambar Aktivitas
+                    </label>
+
+                    {previewImage ? (
+                      <div className="relative">
+                        <img
+                          src={previewImage}
+                          alt="Preview"
+                          className="w-full h-64 object-cover rounded-xl"
+                        />
+                        <button
+                          onClick={() => {
+                            setPreviewImage(null);
+                            setFormData({ ...formData, image: null });
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-500 transition-colors">
+                        <input
+                          type="file"
+                          onChange={handleImageUpload}
+                          accept="image/*"
+                          className="hidden"
+                          id="image-upload-create"
+                        />
+                        <label
+                          htmlFor="image-upload-create"
+                          className="cursor-pointer flex flex-col items-center"
+                        >
+                          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                            <Upload className="w-8 h-8 text-orange-500" />
+                          </div>
+                          <p className="text-gray-900 font-semibold mb-1">
+                            Klik untuk upload gambar
+                          </p>
+                          <p className="text-gray-600 text-sm">
+                            PNG, JPG, JPEG (Max 5MB)
+                          </p>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preview Card */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">
+                      Preview Postingan:
+                    </p>
+                    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                      <div className="p-4 border-b">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                          <div>
+                            <p className="font-bold text-sm">
+                              Daffa Arif Setyawan
+                            </p>
+                            <p className="text-xs text-gray-500">Baru saja</p>
+                          </div>
+                        </div>
+                        {formData.label && (
+                          <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+                            [ {formData.label} ]
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <p className="text-sm text-gray-700">
+                          {formData.description ||
+                            "Deskripsi aktivitas akan muncul di sini..."}
+                        </p>
+                      </div>
+                      {previewImage && (
+                        <div className="h-48">
+                          <img
+                            src={previewImage}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Buttons */}
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    resetForm();
-                  }}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleCreateActivity}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                >
-                  Publikasikan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Edit Activity */}
-      {showEditModal && editingActivity && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Edit2 className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Edit Aktivitas
-                </h2>
-              </div>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingActivity(null);
-                  resetForm();
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Label/Category */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Label/Kategori <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.label}
-                  onChange={(e) =>
-                    setFormData({ ...formData, label: e.target.value })
-                  }
-                  placeholder="Contoh: PUBLIC SPEAKER, WORKSHOP, SEMINAR"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Deskripsi Aktivitas <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Ceritakan tentang aktivitas mentoring Anda..."
-                  rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-                />
-              </div>
-
-              {/* Image Upload */}
-              <div>
-                <label className="block text-gray-900 font-semibold mb-2">
-                  Gambar Aktivitas
-                </label>
-
-                {previewImage ? (
-                  <div className="relative">
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="w-full h-64 object-cover rounded-xl"
-                    />
+                  {/* Buttons */}
+                  <div className="flex gap-4 pt-4">
                     <button
                       onClick={() => {
-                        setPreviewImage(null);
-                        setFormData({ ...formData, image: null });
+                        setShowCreateModal(false);
+                        resetForm();
                       }}
-                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
                     >
-                      <X className="w-4 h-4" />
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleCreateActivity}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                    >
+                      Publikasikan
                     </button>
                   </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-500 transition-colors">
-                    <input
-                      type="file"
-                      onChange={handleImageUpload}
-                      accept="image/*"
-                      className="hidden"
-                      id="image-upload-edit"
-                    />
-                    <label
-                      htmlFor="image-upload-edit"
-                      className="cursor-pointer flex flex-col items-center"
-                    >
-                      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                        <Upload className="w-8 h-8 text-orange-500" />
-                      </div>
-                      <p className="text-gray-900 font-semibold mb-1">
-                        Klik untuk upload gambar baru
-                      </p>
-                      <p className="text-gray-600 text-sm">
-                        PNG, JPG, JPEG (Max 5MB)
-                      </p>
-                    </label>
-                  </div>
-                )}
+                </div>
               </div>
+            </div>,
+            document.body
+          )
+        : null}
 
-              {/* Buttons */}
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingActivity(null);
-                    resetForm();
-                  }}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleEditActivity}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                >
-                  Simpan Perubahan
-                </button>
+      {/* Modal Edit Activity */}
+      {mounted && showEditModal && editingActivity
+        ? createPortal(
+            <div className="fixed inset-0 text-black bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Edit2 className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Edit Aktivitas
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingActivity(null);
+                      resetForm();
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 space-y-6">
+                  {/* Label/Category */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Label/Kategori <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.label}
+                      onChange={(e) =>
+                        setFormData({ ...formData, label: e.target.value })
+                      }
+                      placeholder="Contoh: PUBLIC SPEAKER, WORKSHOP, SEMINAR"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Deskripsi Aktivitas{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Ceritakan tentang aktivitas mentoring Anda..."
+                      rows={5}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    />
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Gambar Aktivitas
+                    </label>
+
+                    {previewImage ? (
+                      <div className="relative">
+                        <img
+                          src={previewImage}
+                          alt="Preview"
+                          className="w-full h-64 object-cover rounded-xl"
+                        />
+                        <button
+                          onClick={() => {
+                            setPreviewImage(null);
+                            setFormData({ ...formData, image: null });
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-500 transition-colors">
+                        <input
+                          type="file"
+                          onChange={handleImageUpload}
+                          accept="image/*"
+                          className="hidden"
+                          id="image-upload-edit"
+                        />
+                        <label
+                          htmlFor="image-upload-edit"
+                          className="cursor-pointer flex flex-col items-center"
+                        >
+                          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                            <Upload className="w-8 h-8 text-orange-500" />
+                          </div>
+                          <p className="text-gray-900 font-semibold mb-1">
+                            Klik untuk upload gambar baru
+                          </p>
+                          <p className="text-gray-600 text-sm">
+                            PNG, JPG, JPEG (Max 5MB)
+                          </p>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingActivity(null);
+                        resetForm();
+                      }}
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleEditActivity}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                    >
+                      Simpan Perubahan
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
