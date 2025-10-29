@@ -161,7 +161,7 @@ export default function LatihSwara() {
         </div>
 
         {/* GRID CARD — tetap sesuai desainmu */}
-        <div className="mt-4 grid grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           {current.map((m) => (
             <div key={m.id} className="border-2 border-gray-200 p-4 rounded-lg">
               <div className="flex items-center gap-3 ">

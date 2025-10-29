@@ -139,12 +139,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center transform hover:rotate-12 transition-transform shadow-lg">
-                <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                SWARA
-              </span>
+              <img src="./logo.svg" alt="Logo" className="w-36" />
             </div>
 
             {/* Desktop Menu */}
@@ -718,10 +713,7 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <Mic className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-2xl font-bold">SWARA</span>
+                <img src="./logo.svg" alt="Logo" className="w-36" />
               </div>
               <p className="text-gray-400 text-sm leading-relaxed mb-4">
                 Platform pembelajaran public speaking berbasis AI yang inklusif
