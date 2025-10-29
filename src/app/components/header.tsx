@@ -1,8 +1,11 @@
 "use client"
 
-import Link from "next/link"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
+    const pathname = usePathname();
+
     return (
         <header className="sticky top-0 z-30 flex w-full pl-4 sm:pl-8 lg:pl-1 pr-8 py-5">
             <div className="flex w-full rounded-3xl">
