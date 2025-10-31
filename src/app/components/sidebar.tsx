@@ -132,7 +132,7 @@ export default function Sidebar({
     },
     {
       title: "Podium Swara",
-      href: "/dashboard/podium-swara",
+      href: "/podium-swara",
       tourId: "podium-swara",
       icon: (
         <svg
@@ -167,7 +167,7 @@ export default function Sidebar({
     },
     {
       title: "Latih Swara",
-      href: "/dashboard/latih-swara",
+      href: "/latih-swara",
       tourId: "latih-swara",
       icon: (
         <svg
@@ -226,7 +226,9 @@ export default function Sidebar({
                   <li
                     key={item.title}
                     className="rounded-xl py-3 font-lexend relative w-full"
-                    data-tour={item.title === "Beranda" ? undefined : item.tourId}
+                    data-tour={
+                      item.title === "Beranda" ? undefined : item.tourId
+                    }
                   >
                     <div
                       className={`absolute -left-[25px] top-0 w-[6px] rounded-full h-full ${
@@ -264,5 +266,5 @@ export default function Sidebar({
         </div>
       </div>
     </aside>
-  )
+  );
 }

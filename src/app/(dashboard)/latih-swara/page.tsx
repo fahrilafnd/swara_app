@@ -101,7 +101,7 @@ const MENTORS: Mentor[] = [
 ];
 
 type Filters = { q: string; spesialisasi: string; lokasi: string };
-const PAGE_SIZE = 3; // tetap 3 card per halaman seperti desain kamu
+const PAGE_SIZE = 9; // tetap 3 card per halaman seperti desain kamu
 
 export default function LatihSwara() {
   const [filters, setFilters] = useState<Filters>({
@@ -136,7 +136,7 @@ export default function LatihSwara() {
   const current = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div className="pr-8 pb-8">
+    <div className="pb-8">
       <div className="flex bg-white px-6 py-4 rounded-xl items-center gap-2 mb-4">
         <div className="w-4 h-1 bg-orange-500"></div>
         <h1 className="text-orange-500 font-semibold text-lg">Latih Swara</h1>

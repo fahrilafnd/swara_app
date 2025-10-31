@@ -1,6 +1,6 @@
 "use client";
 
-import SkorSwaraIntroModal from "@/app/components/podium/SkorSwaraIntroModal";
+import PodiumSwaraIntroModal from "@/app/components/podium/PodiumSwaraIntroModal";
 import {
   Mic,
   Clock,
@@ -31,7 +31,7 @@ export default function PodiumSwara() {
 
   return (
     <div>
-      <SkorSwaraIntroModal
+      <PodiumSwaraIntroModal
         open={showModal}
         onClose={() => setShowModal(false)}
       />

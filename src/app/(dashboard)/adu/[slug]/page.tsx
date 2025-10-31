@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AduSession() {
     return (
         <div className="font-lexend h-full flex flex-col pt-8 pb-5">
@@ -31,7 +33,7 @@ export default function AduSession() {
                 </div>
             </div>
             <span className="w-max mx-auto text-[#F07122] bg-white font-semibold text-2xl py-2 px-4 rounded-2xl mb-12">02:11</span>
-            <button className="bg-[#F8C56A] text-lg text-white flex w-max items-center py-3 px-4 rounded-2xl border-2 border-[#F07122] mx-auto">
+            <Link href={"/adu/result"} className="bg-[#F8C56A] text-lg text-white flex w-max items-center py-3 px-4 rounded-2xl border-2 border-[#F07122] mx-auto">
                 <div className="mr-3">
                     <svg width="20" height="24" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" clipRule="evenodd" d="M0.84375 7.875C1.06753 7.875 1.28214 7.9639 1.44037 8.12213C1.59861 8.28036 1.6875 8.49497 1.6875 8.71875V9.84375C1.6875 10.9148 1.89847 11.9755 2.30836 12.965C2.71825 13.9546 3.31903 14.8537 4.07641 15.6111C4.83379 16.3685 5.73293 16.9693 6.72249 17.3791C7.71205 17.789 8.77266 18 9.84375 18C10.9148 18 11.9754 17.789 12.965 17.3791C13.9546 16.9693 14.8537 16.3685 15.6111 15.6111C16.3685 14.8537 16.9692 13.9546 17.3791 12.965C17.789 11.9755 18 10.9148 18 9.84375V8.71875C18 8.49497 18.0889 8.28036 18.2471 8.12213C18.4054 7.9639 18.62 7.875 18.8437 7.875C19.0675 7.875 19.2821 7.9639 19.4404 8.12213C19.5986 8.28036 19.6875 8.49497 19.6875 8.71875V9.84375C19.6876 12.3085 18.763 14.6835 17.0966 16.4995C15.4302 18.3155 13.1431 19.4402 10.6875 19.6515V22.2188C10.6875 22.4425 10.5986 22.6571 10.4404 22.8154C10.2821 22.9736 10.0675 23.0625 9.84375 23.0625C9.61997 23.0625 9.40536 22.9736 9.24713 22.8154C9.08889 22.6571 9 22.4425 9 22.2188V19.6515C6.54437 19.4402 4.25733 18.3155 2.59091 16.4995C0.924491 14.6835 -5.69285e-05 12.3085 2.62909e-09 9.84375V8.71875C2.62909e-09 8.49497 0.0888947 8.28036 0.247129 8.12213C0.405362 7.9639 0.619974 7.875 0.84375 7.875Z" fill="white"/>
@@ -39,7 +41,7 @@ export default function AduSession() {
                     </svg>
                 </div>
                 Mulai Berbicara
-            </button>
+            </Link>
             {/* <button className="bg-[#FF5A7E] text-lg text-white flex w-max items-center py-3 px-4 rounded-2xl border-2 border-[#F07122] mx-auto">
                 <div className="mr-3">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -200,7 +200,7 @@ export default function Dashboard() {
       <HeaderSection onTakeTour={handleTakeTour} />
 
       {/* Main Content */}
-      <main className="w-full px-4 sm:px-6 py-6 sm:py-8">
+      <main className="w-full pt-6">
         <StatsCards stats={stats} />
 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
