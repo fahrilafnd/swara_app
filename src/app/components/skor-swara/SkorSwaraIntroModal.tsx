@@ -2,14 +2,17 @@
 
 import { X, User, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import ModalPortal from "../ModalPortal";
 
 type Props = {
   open: boolean;
-  onClose: () => void;
+  onClose: (dontShowAgain: boolean) => void;
 };
 
 export default function SkorSwaraIntroModal({ open, onClose }: Props) {
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
   if (!open) return null;
 
   const RULES = [
@@ -25,18 +28,12 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
       src: "/modal/modal3.png",
       text: "Percaya diri saat berbicara, jangan takut membuat kesalahan.",
     },
-    {
-      src: "/modal/modal4.png",
-      text: "Tenangkan diri sebelum mulai.",
-    },
+    { src: "/modal/modal4.png", text: "Tenangkan diri sebelum mulai." },
     {
       src: "/modal/modal5.png",
       text: "Fokus pada penyampaian dan ekspresi wajah.",
     },
-    {
-      src: "/modal/modal6.png",
-      text: "Nikmati proses nya!",
-    },
+    { src: "/modal/modal6.png", text: "Nikmati proses nya!" },
   ];
 
   return (
@@ -52,8 +49,9 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => onClose(dontShowAgain)}
               className="p-2 hover:bg-gray-100 rounded-lg"
+              aria-label="Tutup"
             >
               <X className="w-6 h-6 text-gray-600" />
             </button>
@@ -115,7 +113,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Peraturan Latihan (pakai gambar dan teks) */}
+            {/* Peraturan Latihan */}
             <div>
               <h3 className="text-orange-500 font-bold text-lg mb-4">
                 Peraturan Latihan
@@ -144,14 +142,28 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Tombol */}
-            <button
-              onClick={onClose}
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              Gas Cobain!
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            {/* Checkbox + Tombol */}
+            <div className="flex flex-col gap-4">
+              <label className="inline-flex items-center gap-3 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded border-gray-300"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                />
+                <span className="text-sm text-gray-700">
+                  Jangan tampilkan lagi
+                </span>
+              </label>
+
+              <button
+                onClick={() => onClose(dontShowAgain)}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Gas Cobain!
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

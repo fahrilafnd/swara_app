@@ -3,14 +3,15 @@
 import { X, User, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import ModalPortal from "../ModalPortal";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type Props = {
   open: boolean;
-  onClose: () => void;
+  onClose: (dontShowAgain: boolean) => void;
 };
 
 export default function AduSwaraIntroModal({ open, onClose }: Props) {
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   if (!open) return null;
 
   const RULES = [
@@ -28,12 +29,9 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
     },
     {
       src: "/modal/modal5.png",
-      text: " Percaya diri dalam menyampaikan pendapat, tetap tenang dan terarah.",
+      text: "Percaya diri dalam menyampaikan pendapat, tetap tenang dan terarah.",
     },
-    {
-      src: "/modal/modal6.png",
-      text: "Nikmati proses nya!",
-    },
+    { src: "/modal/modal6.png", text: "Nikmati proses nya!" },
   ];
 
   return (
@@ -49,8 +47,9 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => onClose(dontShowAgain)}
               className="p-2 hover:bg-gray-100 rounded-lg"
+              aria-label="Tutup"
             >
               <X className="w-6 h-6 text-gray-600" />
             </button>
@@ -58,7 +57,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
 
           {/* Content */}
           <div className="p-6 space-y-6">
-            {/* Apa itu Skor Swara */}
+            {/* Apa itu Adu Swara */}
             <div>
               <h3 className="text-orange-500 font-bold text-lg mb-3">
                 Apa itu Adu Swara?
@@ -129,7 +128,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Peraturan Latihan (pakai gambar dan teks) */}
+            {/* Peraturan */}
             <div>
               <h3 className="text-orange-500 font-bold text-lg mb-4">
                 Peraturan Latihan
@@ -158,14 +157,28 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Tombol */}
-            <button
-              onClick={onClose}
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              Gas Cobain!
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            {/* Checkbox + Tombol */}
+            <div className="flex flex-col gap-4">
+              <label className="inline-flex items-center gap-3 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded border-gray-300"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                />
+                <span className="text-sm text-gray-700">
+                  Jangan tampilkan lagi
+                </span>
+              </label>
+
+              <button
+                onClick={() => onClose(dontShowAgain)}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Gas Cobain!
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
 
 const lexend = Lexend({
   variable: "--font-lexend",
@@ -23,12 +24,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      
       {/* <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
       </body> */}
       <body className={`${lexend.variable} font-lexend antialiased`}>{children}</body>
+      <Script src="https://cdn.userway.org/widget.js" data-account="Kk9MFRMO7Y"></Script>
     </html>
   );
 }

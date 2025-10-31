@@ -1,30 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 import Link from "next/link";
 import AduSwaraIntroModal from "@/app/components/adu-swara/AduSwaraIntroModal";
+import { createPortal } from "react-dom";
 
 export default function Adu() {
   const [isOpenMatch, setIsOpenMatch] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
-  // const [hasShown, setHasShown] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // const alreadyShown = sessionStorage.getItem("swaraModalShown");
-    setShowModal(true);
-    // if (!alreadyShown) {
-    //   setShowModal(true);
-    //   sessionStorage.setItem("swaraModalShown", "true");
-    // }
+    setMounted(true);
+    const hidden =
+      typeof window !== "undefined" &&
+      localStorage.getItem("aduIntroHide") === "1";
+    setShowModal(!hidden);
   }, []);
 
   return (
     <div className="font-lexend h-full flex flex-col pb-5">
       <AduSwaraIntroModal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={(dontShowAgain) => {
+          if (dontShowAgain) localStorage.setItem("aduIntroHide", "1");
+          setShowModal(false);
+        }}
       />
       <div className="flex flex-1 overflow-hidden">
         <aside className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -291,44 +293,49 @@ export default function Adu() {
         </aside>
       </div>
 
-      {isOpenMatch && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 shadow-lg w-[600px]">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Topik pilihan</h2>
-              <button onClick={() => setIsOpenMatch(false)}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+      {mounted && isOpenMatch
+        ? createPortal(
+            <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl p-6 shadow-lg w-[600px]">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">Topik pilihan</h2>
+                  <button onClick={() => setIsOpenMatch(false)}>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M6.575 7.975L1.675 12.875C1.49167 13.0583 1.25833 13.15 0.975 13.15C0.691667 13.15 0.458333 13.0583 0.275 12.875C0.0916663 12.6917 0 12.4583 0 12.175C0 11.8917 0.0916663 11.6583 0.275 11.475L5.175 6.575L0.275 1.675C0.0916663 1.49167 0 1.25833 0 0.975C0 0.691667 0.0916663 0.458333 0.275 0.275C0.458333 0.0916663 0.691667 0 0.975 0C1.25833 0 1.49167 0.0916663 1.675 0.275L6.575 5.175L11.475 0.275C11.6583 0.0916663 11.8917 0 12.175 0C12.4583 0 12.6917 0.0916663 12.875 0.275C13.0583 0.458333 13.15 0.691667 13.15 0.975C13.15 1.25833 13.0583 1.49167 12.875 1.675L7.975 6.575L12.875 11.475C13.0583 11.6583 13.15 11.8917 13.15 12.175C13.15 12.4583 13.0583 12.6917 12.875 12.875C12.6917 13.0583 12.4583 13.15 12.175 13.15C11.8917 13.15 11.6583 13.0583 11.475 12.875L6.575 7.975Z"
+                        fill="black"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <p className="border border-[#B3C8CF] shadow-md mb-4 p-3 rounded-2xl text-[#F07122] text-sm">
+                  Merancang Masa Depan: Membangun Karier di Era Digital
+                </p>
+                <hr className="h-[2px] bg-[#B3C8CF] rounded-full mb-4" />
+                <p className="text-center">Siapkan Dirimu!</p>
+                <p className="text-center text-[#F07122] text-9xl font-bold">
+                  30
+                </p>
+                <p className="text-center text-[#F07122] text-lg font-semibold">
+                  detik
+                </p>
+                <Link
+                  href={"/adu/slug"}
+                  className="text-center bg-[#F07122] w-[80%] py-3 text-white font-semibold rounded-full mt-6 mx-auto block"
                 >
-                  <path
-                    d="M6.575 7.975L1.675 12.875C1.49167 13.0583 1.25833 13.15 0.975 13.15C0.691667 13.15 0.458333 13.0583 0.275 12.875C0.0916663 12.6917 0 12.4583 0 12.175C0 11.8917 0.0916663 11.6583 0.275 11.475L5.175 6.575L0.275 1.675C0.0916663 1.49167 0 1.25833 0 0.975C0 0.691667 0.0916663 0.458333 0.275 0.275C0.458333 0.0916663 0.691667 0 0.975 0C1.25833 0 1.49167 0.0916663 1.675 0.275L6.575 5.175L11.475 0.275C11.6583 0.0916663 11.8917 0 12.175 0C12.4583 0 12.6917 0.0916663 12.875 0.275C13.0583 0.458333 13.15 0.691667 13.15 0.975C13.15 1.25833 13.0583 1.49167 12.875 1.675L7.975 6.575L12.875 11.475C13.0583 11.6583 13.15 11.8917 13.15 12.175C13.15 12.4583 13.0583 12.6917 12.875 12.875C12.6917 13.0583 12.4583 13.15 12.175 13.15C11.8917 13.15 11.6583 13.0583 11.475 12.875L6.575 7.975Z"
-                    fill="black"
-                  />
-                </svg>
-              </button>
-            </div>
-            <p className="border border-[#B3C8CF] shadow-md mb-4 p-3 rounded-2xl text-[#F07122] text-sm">
-              Merancang Masa Depan: Membangun Karier di Era Digital
-            </p>
-            <hr className="h-[2px] bg-[#B3C8CF] rounded-full mb-4" />
-            <p className="text-center">Siapkan Dirimu!</p>
-            <p className="text-center text-[#F07122] text-9xl font-bold">30</p>
-            <p className="text-center text-[#F07122] text-lg font-semibold">
-              detik
-            </p>
-            <Link
-              href={"/adu/slug"}
-              className="text-center bg-[#F07122] w-[80%] py-3 text-white font-semibold rounded-full mt-6 mx-auto block"
-            >
-              Sudah Siap!
-            </Link>
-          </div>
-        </div>
-      )}
+                  Sudah Siap!
+                </Link>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

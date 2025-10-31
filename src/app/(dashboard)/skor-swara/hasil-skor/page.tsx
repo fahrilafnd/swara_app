@@ -80,7 +80,7 @@ export default function PresentationScore() {
               <video
                 src={lastRecording.src}
                 controls
-                className="w-full rounded-lg shadow-md"
+                className="w-full rounded-lg shadow-md [transform:scaleX(-1)]"
               />
               {typeof lastRecording.durationSeconds === 'number' && (
                 <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs font-mono">
@@ -158,7 +158,7 @@ export default function PresentationScore() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500 font-bold mt-0.5">▶</span>
-                <span>Latih kontak mata dengan teknik "segitiga" - bayangkan segitiga di wajah lawan bicara dan gerakkan pandangan di area tersebut</span>
+                <span>Latih kontak mata dengan teknik segitiga - bayangkan segitiga di wajah lawan bicara dan gerakkan pandangan di area tersebut</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500 font-bold mt-0.5">▶</span>

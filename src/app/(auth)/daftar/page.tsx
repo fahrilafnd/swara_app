@@ -4,6 +4,10 @@ import React, { useState } from "react";
 import { Mic, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE ??
+  "https://40d78b4d17e2.ngrok-free.app/api/swara";
+
 export default function Register() {
   const [formData, setFormData] = useState({
     email: "",
@@ -11,17 +15,56 @@ export default function Register() {
     nomorHP: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setMessage(null);
+    setLoading(true);
+
+    try {
+      // siapkan payload sesuai API kamu
+      const payload = {
+        name: formData.nama,
+        email: formData.email,
+        phone: formData.nomorHP,
+        password: formData.password,
+      };
+
+      const res = await fetch(`${API_BASE}/users/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message || data?.error || `Gagal daftar (HTTP ${res.status})`
+        );
+      }
+
+      setMessage({
+        type: "success",
+        text: data?.message || "Registrasi berhasil. Silakan masuk.",
+      });
+      // reset form jika perlu
+      setFormData({ email: "", nama: "", nomorHP: "", password: "" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Registrasi gagal." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,7 +78,7 @@ export default function Register() {
               "linear-gradient(#D4C4B0 1px, transparent 1px), linear-gradient(90deg, #D4C4B0 1px, transparent 1px)",
             backgroundSize: "100px 100px",
           }}
-        ></div>
+        />
       </div>
 
       {/* Header */}
@@ -85,8 +128,21 @@ export default function Register() {
                 </div>
               </div>
 
+              {/* Alert */}
+              {message && (
+                <div
+                  className={`mb-6 rounded-xl border p-4 text-sm ${
+                    message.type === "success"
+                      ? "border-green-300 bg-green-50 text-green-700"
+                      : "border-red-300 bg-red-50 text-red-700"
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="text-gray-600 space-y-6">
                 {/* Email */}
                 <div>
                   <label className="block text-gray-900 font-medium mb-2">
@@ -154,9 +210,10 @@ export default function Register() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60"
                 >
-                  Daftar
+                  {loading ? "Memproses…" : "Daftar"}
                 </button>
               </form>
             </div>

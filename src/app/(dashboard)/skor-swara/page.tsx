@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HeroSection from "@/app/components/skor-swara/HeroSection";
 import ScoreCards from "@/app/components/skor-swara/ScoreCards";
 import TipsSection from "@/app/components/skor-swara/TipsSection";
 import HistorySection from "@/app/components/skor-swara/HistorySection";
-import { useState, useEffect } from "react";
 import SkorSwaraIntroModal from "@/app/components/skor-swara/SkorSwaraIntroModal";
 
 interface ScoreCard {
@@ -84,22 +83,22 @@ export default function SkorSwaraPage() {
   };
 
   const [showModal, setShowModal] = useState(false);
-  // const [hasShown, setHasShown] = useState(false);
 
   useEffect(() => {
-    // const alreadyShown = sessionStorage.getItem("swaraModalShown");
-    setShowModal(true);
-    // if (!alreadyShown) {
-    //   setShowModal(true);
-    //   sessionStorage.setItem("swaraModalShown", "true");
-    // }
+    const hidden =
+      typeof window !== "undefined" &&
+      localStorage.getItem("swaraIntroHide") === "1";
+    setShowModal(!hidden);
   }, []);
 
   return (
     <div className="space-y-8">
       <SkorSwaraIntroModal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={(dontShowAgain) => {
+          if (dontShowAgain) localStorage.setItem("swaraIntroHide", "1");
+          setShowModal(false);
+        }}
       />
       <div className="min-h-screen bg-white rounded-3xl p-3 md:p-6 lg:p-8">
         <div className="w-full">

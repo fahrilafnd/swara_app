@@ -662,164 +662,164 @@ export default function MonitoringMentoring() {
       </div>
 
       {/* Modal Detail Session */}
-   {mounted && showDetailModal && selectedSession
-  ? createPortal(
-      (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Detail Sesi Mentoring
-                </h2>
-              </div>
-              <button
-                onClick={() => {
-                  setShowDetailModal(false);
-                  setSelectedSession(null);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ChevronDown className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-6">
-              {/* Status Badge */}
-              <div className="flex items-center justify-center">
-                {(() => {
-                  const statusInfo = getStatusBadge(selectedSession.status);
-                  return (
-                    <span
-                      className={`flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold ${statusInfo.className}`}
-                    >
-                      {statusInfo.icon}
-                      {statusInfo.label}
-                    </span>
-                  );
-                })()}
-              </div>
-
-              {/* Mentee & Mentor Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                  <p className="text-sm text-orange-700 font-semibold mb-3">
-                    Mentee
-                  </p>
+      {mounted && showDetailModal && selectedSession
+        ? createPortal(
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
+              <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <img
-                        src={selectedSession.mentee.avatar}
-                        alt={selectedSession.mentee.name}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Eye className="w-6 h-6 text-white" />
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-900">
-                        {selectedSession.mentee.name}
-                      </p>
-                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Detail Sesi Mentoring
+                    </h2>
                   </div>
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedSession(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ChevronDown className="w-6 h-6 text-gray-600" />
+                  </button>
                 </div>
 
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                  <p className="text-sm text-blue-700 font-semibold mb-3">
-                    Mentor
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <img
-                        src={selectedSession.mentor.avatar}
-                        alt={selectedSession.mentor.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">
-                        {selectedSession.mentor.name}
-                      </p>
-                    </div>
+                {/* Body */}
+                <div className="p-6 space-y-6">
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-center">
+                    {(() => {
+                      const statusInfo = getStatusBadge(selectedSession.status);
+                      return (
+                        <span
+                          className={`flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold ${statusInfo.className}`}
+                        >
+                          {statusInfo.icon}
+                          {statusInfo.label}
+                        </span>
+                      );
+                    })()}
                   </div>
-                </div>
-              </div>
 
-              {/* Session Details */}
-              <div className="space-y-3">
-                <p className="font-bold text-gray-900">Detail Sesi</p>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Topik</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedSession.topic}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tanggal</span>
-                    <span className="font-semibold text-gray-900">
-                      {new Date(selectedSession.date).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Waktu</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedSession.time}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Metode</span>
-                    <span className="font-semibold text-gray-900">
-                      {selectedSession.method}
-                    </span>
-                  </div>
-                  {selectedSession.location && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Lokasi</span>
-                      <span className="font-semibold text-gray-900">
-                        {selectedSession.location}
-                      </span>
+                  {/* Mentee & Mentor Info */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                      <p className="text-sm text-orange-700 font-semibold mb-3">
+                        Mentee
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden">
+                          <img
+                            src={selectedSession.mentee.avatar}
+                            alt={selectedSession.mentee.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">
+                            {selectedSession.mentee.name}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex justify-between pt-3 border-t">
-                    <span className="text-gray-600">Dibuat pada</span>
-                    <span className="font-semibold text-gray-900">
-                      {new Date(selectedSession.bookedDate).toLocaleDateString(
-                        "id-ID",
-                        {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        }
+
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                      <p className="text-sm text-blue-700 font-semibold mb-3">
+                        Mentor
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden">
+                          <img
+                            src={selectedSession.mentor.avatar}
+                            alt={selectedSession.mentor.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">
+                            {selectedSession.mentor.name}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Session Details */}
+                  <div className="space-y-3">
+                    <p className="font-bold text-gray-900">Detail Sesi</p>
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Topik</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedSession.topic}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tanggal</span>
+                        <span className="font-semibold text-gray-900">
+                          {new Date(selectedSession.date).toLocaleDateString(
+                            "id-ID",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Waktu</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedSession.time}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Metode</span>
+                        <span className="font-semibold text-gray-900">
+                          {selectedSession.method}
+                        </span>
+                      </div>
+                      {selectedSession.location && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Lokasi</span>
+                          <span className="font-semibold text-gray-900">
+                            {selectedSession.location}
+                          </span>
+                        </div>
                       )}
-                    </span>
+                      <div className="flex justify-between pt-3 border-t">
+                        <span className="text-gray-600">Dibuat pada</span>
+                        <span className="font-semibold text-gray-900">
+                          {new Date(
+                            selectedSession.bookedDate
+                          ).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedSession(null);
+                    }}
+                    className="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors"
+                  >
+                    Tutup
+                  </button>
                 </div>
               </div>
-
-              <button
-                onClick={() => {
-                  setShowDetailModal(false);
-                  setSelectedSession(null);
-                }}
-                className="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      ),
-      document.body
-    )
-  : null}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
