@@ -1,5 +1,6 @@
 "use client";
 
+import { Laugh } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -50,6 +51,12 @@ export default function Sidebar({
           />
         </svg>
       ),
+    },
+    {
+      title: "Latihan Dasar",
+      href: "/latihan-dasar",
+      tourId: "latihan-dasar",
+      icon: <Laugh />,
     },
     {
       title: "Skor Swara",
