@@ -543,10 +543,20 @@ export default function SwaraProfilePage() {
               {/* Logout Button */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <button
-                  onClick={() => {
-                    // Add logout functionality here
-                    console.log("Logging out...");
-                    // You can add actual logout logic like clearing tokens, redirecting to login, etc.
+                  onClick={async () => {
+                    try {
+                      // Hapus cookie login (Next.js App Router)
+                      await fetch("/api/auth/logout", { method: "POST" });
+
+                      // Atau kalau belum punya route logout, bisa hapus manual:
+                      document.cookie =
+                        "swara_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+                      // Redirect ke halaman login
+                      window.location.href = "/masuk";
+                    } catch (err) {
+                      console.error("Gagal logout:", err);
+                    }
                   }}
                   className="w-full flex items-center justify-center gap-3 py-3 px-6 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
                 >

@@ -1,14 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mic, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ??
-  "https://40d78b4d17e2.ngrok-free.app/api/swara";
+type Role = "admin" | "user" | "mentor";
+const HOME_BY_ROLE: Record<Role, string> = {
+  admin: "/admin",
+  user: "/dashboard",
+  mentor: "/mentor",
+};
 
 export default function Register() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: "",
     nama: "",
@@ -27,41 +33,51 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
     setMessage(null);
     setLoading(true);
 
     try {
-      // siapkan payload sesuai API kamu
+      // payload sesuai backend
       const payload = {
-        name: formData.nama,
-        email: formData.email,
-        phone: formData.nomorHP,
+        full_name: formData.nama.trim(),
+        email: formData.email.trim(),
+        phone_number: formData.nomorHP.trim(),
         password: formData.password,
       };
 
-      const res = await fetch(`${API_BASE}/users/register`, {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         cache: "no-store",
       });
 
-      const data = await res.json().catch(() => ({}));
-
+      const data = await res.json().catch(() => ({} as any));
       if (!res.ok) {
         throw new Error(
           data?.message || data?.error || `Gagal daftar (HTTP ${res.status})`
         );
       }
 
+      // role dari payload (samakan dengan struktur API-mu)
+      const rawRole: string | undefined =
+        data?.data?.user?.role?.role_name ?? data?.data?.user?.role_name;
+      const role = (rawRole || "user").toLowerCase() as Role;
+
       setMessage({
         type: "success",
-        text: data?.message || "Registrasi berhasil. Silakan masuk.",
+        text: data?.message || "Registrasi berhasil. Mengalihkan...",
       });
-      // reset form jika perlu
-      setFormData({ email: "", nama: "", nomorHP: "", password: "" });
+
+      // Cookie HttpOnly untuk token/role diset oleh API route register
+      router.replace(HOME_BY_ROLE[role] ?? "/dashboard");
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Registrasi gagal." });
+      setMessage({
+        type: "error",
+        text: err?.message || "Registrasi gagal.",
+      });
     } finally {
       setLoading(false);
     }
@@ -69,7 +85,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen font-lexend bg-[#F5F0E8] relative overflow-hidden">
-      {/* Grid Background Pattern */}
+      {/* Background grid */}
       <div className="absolute inset-0 opacity-20">
         <div
           className="w-full h-full"
@@ -85,7 +101,7 @@ export default function Register() {
       <header className="relative z-10 container mx-auto px-6 py-6 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <img src="./logo.svg" alt="Logo" className="w-36" />
+            <img src="/logo.svg" alt="Logo" className="w-36" />
           </div>
           <Link
             href="/"
@@ -103,10 +119,11 @@ export default function Register() {
         </Link>
       </header>
 
+      {/* Form */}
       <div className="relative z-10 container mx-auto px-6 py-12">
         <div className="flex justify-center gap-8 items-center">
           <div className="lg:col-span-6">
-            <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
+            <div className="bg-white w-[35rem] max-w-full rounded-3xl shadow-2xl p-8 md:p-12">
               <div className="flex items-start justify-between mb-8">
                 <div>
                   <p className="text-gray-600 text-sm mb-2">
@@ -141,9 +158,7 @@ export default function Register() {
                 </div>
               )}
 
-              {/* Form */}
               <form onSubmit={handleSubmit} className="text-gray-600 space-y-6">
-                {/* Email */}
                 <div>
                   <label className="block text-gray-900 font-medium mb-2">
                     Masukkan email
@@ -156,10 +171,11 @@ export default function Register() {
                     placeholder="Email kamu"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     required
+                    autoComplete="email"
+                    inputMode="email"
                   />
                 </div>
 
-                {/* Nama dan Nomor HP */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-900 font-medium mb-2">
@@ -173,6 +189,7 @@ export default function Register() {
                       placeholder="Nama kamu"
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       required
+                      autoComplete="name"
                     />
                   </div>
                   <div>
@@ -187,11 +204,12 @@ export default function Register() {
                       placeholder="Nomor kamu"
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       required
+                      autoComplete="tel"
+                      inputMode="tel"
                     />
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
                   <label className="block text-gray-900 font-medium mb-2">
                     Masukkan password
@@ -204,14 +222,14 @@ export default function Register() {
                     placeholder="Password kamu"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     required
+                    autoComplete="new-password"
                   />
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60"
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Memproses…" : "Daftar"}
                 </button>
@@ -221,7 +239,6 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="relative z-10 text-center py-6">
         <p className="text-gray-700 text-sm">Copyright ©SpeakUp 2025</p>
       </footer>

@@ -2,60 +2,13 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Play,
-  Square,
-  Type as TypeIcon,
-  Droplets,
-  Image as ImageIcon,
-  Edit3,
-} from "lucide-react";
+import { Play, Square, Type as TypeIcon, Droplets } from "lucide-react";
 import SkorSwaraHeader from "@/app/components/skor-swara/SkorSwaraHeader";
-import type { TrainingTopic } from "../config/levels";
 
 // Web Speech API typing
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-  isFinal: boolean;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives: number;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onerror: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
-    | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-}
-
 declare global {
   interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: any;
   }
 }
 
@@ -63,15 +16,7 @@ export default function SesiLatihanPage() {
   const router = useRouter();
 
   // ===== CONFIG =====
-  const MAX_SECONDS = 60;
-
-  // ===== TRAINING MODE & TOPIC =====
-  const [trainingMode, setTrainingMode] = useState<
-    "full-text" | "topic-image" | "custom-topic"
-  >("full-text");
-  const [selectedTopic, setSelectedTopic] = useState<TrainingTopic | null>(
-    null
-  );
+  const MAX_SECONDS = 60; // auto stop di 1 menit
 
   // ===== RECORDING =====
   const [isRecording, setIsRecording] = useState(false);
@@ -80,7 +25,7 @@ export default function SesiLatihanPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const endedRef = useRef(false);
+  const endedRef = useRef(false); // cegah finish ganda
 
   // ===== TELEPROMPTER =====
   const [showTele, setShowTele] = useState(false);
@@ -97,40 +42,10 @@ export default function SesiLatihanPage() {
   const [fallback, setFallback] = useState(false);
   const fallbackTickerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load selected topic from sessionStorage
-  useEffect(() => {
-    const mode = sessionStorage.getItem("skor-swara:selectedMode") as
-      | "full-text"
-      | "topic-image"
-      | "custom-topic"
-      | null;
-    const topicStr = sessionStorage.getItem("skor-swara:selectedTopic");
-
-    if (mode) setTrainingMode(mode);
-    if (topicStr) {
-      try {
-        const parsed = JSON.parse(topicStr);
-        setSelectedTopic(parsed);
-      } catch (e) {
-        console.error("Failed to parse topic:", e);
-      }
-    }
-  }, []);
-
-  const topik =
-    selectedTopic?.title ||
-    "Merancang Masa Depan: Membangun Karier di Era Digital";
-
-  const latihanText = useMemo(() => {
-    if (selectedTopic) {
-      if (selectedTopic.text) return selectedTopic.text;
-      if ((selectedTopic as any).customDescription)
-        return (selectedTopic as any).customDescription;
-    }
-    return `Keterampilan komunikasi yang kuat dan kemampuan beradaptasi adalah dua hal yang saya anggap sangat penting di dunia kerja. Dengan komunikasi yang efektif, saya dapat menyampaikan ide dengan jelas dan berkolaborasi dengan tim.
+  const topik = "Merancang Masa Depan: Membangun Karier di Era Digital";
+  const latihanText = `Keterampilan komunikasi yang kuat dan kemampuan beradaptasi adalah dua hal yang saya anggap sangat penting di dunia kerja. Dengan komunikasi yang efektif, saya dapat menyampaikan ide dengan jelas dan berkolaborasi dengan tim.
 
 Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas juga menjadi harga mahal yang memang sangat berguna di era Industri 5.0 di mana banyak persaingan dalam berbagai bidang.`;
-  }, [selectedTopic]);
 
   // ===== helpers =====
   const formatTime = (s: number) =>
@@ -142,7 +57,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
   const normalize = (t: string) =>
     t
       .toLowerCase()
-      .replace(/[.,!?;:()"""''\-–—]/g, "")
+      .replace(/[.,!?;:()"“”'’\-–—]/g, "")
       .replace(/\s+/g, " ")
       .trim();
 
@@ -181,15 +96,12 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
   // SR support
   useEffect(() => {
     const SR =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition || window.webkitSpeechRecognition;
     setSpeechReady(Boolean(SR));
   }, []);
 
-  // auto-scroll active word
+  // auto-scroll active word (now ON OVERLAY)
   useEffect(() => {
-    if (trainingMode === "topic-image") return; // Skip for topic-image mode
-
     const box = teleContainerRef.current;
     if (!box) return;
     const el = box.querySelector<HTMLSpanElement>(
@@ -203,7 +115,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
       top: Math.max(0, targetTop),
       behavior: "smooth",
     });
-  }, [currentWordIdx, trainingMode]);
+  }, [currentWordIdx]);
 
   // ===== start/stop =====
   const handleStartTraining = async () => {
@@ -248,7 +160,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
               topic: topik,
               text: latihanText,
               mimeType: "video/webm",
-              mode: trainingMode,
             };
             try {
               localStorage.setItem(
@@ -259,12 +170,9 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 "skor-swara:lastRecording",
                 JSON.stringify(payload)
               );
-            } catch (e) {
-              console.error("Failed to save recording:", e);
-            }
+            } catch {}
             router.push("/skor-swara/hasil-skor");
-          } catch (e) {
-            console.error("Recording processing error:", e);
+          } catch {
             router.push("/skor-swara/hasil-skor");
           }
         };
@@ -274,23 +182,16 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
       console.error(e);
     }
 
-    // Only start speech recognition for full-text mode
-    if (trainingMode === "full-text") {
-      startSR();
-    } else {
-      // For other modes, just start a simple timer
-      fallbackTickerRef.current = setInterval(() => {
-        setCurrentWordIdx((i) => Math.min(i + 1, teleWords.length - 1));
-      }, 650);
-    }
+    startSR();
   };
 
   const handleFinishTraining = () => {
-    if (endedRef.current) return;
+    if (endedRef.current) return; // guard
     endedRef.current = true;
 
     setIsRecording(false);
 
+    // timer
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -298,15 +199,14 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
 
     stopSR();
 
+    // stop recorder
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
       try {
         mediaRecorderRef.current.requestData?.();
-      } catch (e) {
-        console.error("Failed to request data:", e);
-      }
+      } catch {}
       mediaRecorderRef.current.stop();
     } else {
       router.push("/skor-swara/hasil-skor");
@@ -316,8 +216,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
   // ===== SR logic =====
   const startSR = () => {
     const SR =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SR) {
       setFallback(true);
@@ -362,16 +261,13 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
       if (isRecording) {
         try {
           rec.start();
-        } catch (e) {
-          console.error("Failed to restart recognition:", e);
-        }
+        } catch {}
       }
     };
 
     try {
       rec.start();
-    } catch (e) {
-      console.error("Failed to start recognition:", e);
+    } catch {
       setFallback(true);
       fallbackTickerRef.current = setInterval(() => {
         setCurrentWordIdx((i) => Math.min(i + 1, teleWords.length - 1));
@@ -382,9 +278,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
   const stopSR = () => {
     try {
       recognitionRef.current?.stop();
-    } catch (e) {
-      console.error("Failed to stop recognition:", e);
-    }
+    } catch {}
     recognitionRef.current = null;
     if (fallbackTickerRef.current) {
       clearInterval(fallbackTickerRef.current);
@@ -397,13 +291,11 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
   useEffect(() => {
     if (!isRecording || endedRef.current) return;
     const reachedTime = timer >= MAX_SECONDS;
-    const reachedEnd =
-      trainingMode === "full-text" && currentWordIdx >= teleWords.length - 1;
+    const reachedEnd = currentWordIdx >= teleWords.length - 1;
     if (reachedTime || reachedEnd) {
       handleFinishTraining();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRecording, timer, currentWordIdx, teleWords.length, trainingMode]);
+  }, [isRecording, timer, currentWordIdx, teleWords.length]);
 
   // ===== RENDER =====
   return (
@@ -420,15 +312,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
               <h2 className="text-orange-600 font-semibold text-lg flex-1">
                 {topik}
               </h2>
-            </div>
-            {/* Mode indicator */}
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-xs text-gray-600">Mode:</span>
-              <span className="text-xs font-bold text-gray-900 bg-white px-2 py-1 rounded">
-                {trainingMode === "full-text" && "📝 Teks Lengkap"}
-                {trainingMode === "topic-image" && "🖼️ Topik + Gambar"}
-                {trainingMode === "custom-topic" && "✨ Topik Kustom"}
-              </span>
             </div>
           </div>
 
@@ -448,49 +331,12 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 </div>
               )}
 
-              {/* Topic+Image Mode: Show image and keywords */}
-              {trainingMode === "topic-image" &&
-                selectedTopic?.image &&
-                isRecording && (
-                  <div className="absolute top-20 left-4 right-4 z-30 bg-white/95 backdrop-blur rounded-2xl p-4 max-w-md shadow-xl">
-                    <div className="relative w-full h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl mb-3 overflow-hidden">
-                      <img
-                        src={selectedTopic.image}
-                        alt={selectedTopic.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
-                      />
-                    </div>
-                    {selectedTopic.keywords && (
-                      <div>
-                        <p className="text-xs text-gray-600 mb-2 font-semibold">
-                          Keyword hints:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedTopic.keywords.map((kw, idx) => (
-                            <span
-                              key={idx}
-                              className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium"
-                            >
-                              {kw}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              {/* Font & Opacity Controls */}
-              {showTele && trainingMode === "full-text" && (
+              {showTele && (
                 <div className="absolute z-40 bottom-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur px-2 py-1 rounded-lg shadow">
                   <TypeIcon className="w-4 h-4 text-gray-700" />
                   <button
                     onClick={() => setFontPx((v) => Math.max(14, v - 2))}
-                    className="px-2 py-0.5 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                    className="px-2 py-0.5 rounded bg-gray-200"
                     aria-label="perkecil"
                   >
                     A-
@@ -498,7 +344,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                   <span className="text-sm w-10 text-center">{fontPx}px</span>
                   <button
                     onClick={() => setFontPx((v) => Math.min(48, v + 2))}
-                    className="px-2 py-0.5 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                    className="px-2 py-0.5 rounded bg-gray-200"
                     aria-label="perbesar"
                   >
                     A+
@@ -526,8 +372,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 className="w-full h-full [transform:scaleX(-1)] object-cover"
               />
 
-              {/* Teleprompter for full-text mode */}
-              {showTele && trainingMode === "full-text" && (
+              {showTele && (
                 <div
                   ref={teleContainerRef}
                   className="absolute z-20 left-4 right-4 top-4 max-h-[55%] rounded-xl border border-gray-200 shadow overflow-auto resize p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -560,23 +405,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                       </span>
                     );
                   })}
-                </div>
-              )}
-
-              {/* Custom Topic Mode: Show only title as reminder */}
-              {showTele && trainingMode === "custom-topic" && (
-                <div className="absolute z-20 left-4 right-4 top-4 bg-white/40 backdrop-blur rounded-2xl p-6 shadow-2xl max-w-2xl mx-auto">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl mb-4">
-                      <Edit3 className="w-8 h-8 text-purple-600" />
-                    </div>
-                    <h3 className="text-2xl font-black text-gray-900 mb-2">
-                      {topik}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Berbicara bebas tentang topik ini dengan gayamu sendiri
-                    </p>
-                  </div>
                 </div>
               )}
 
@@ -622,7 +450,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             </div>
 
             {/* Fallback speed (muncul kalau SR tidak ada) */}
-            {!speechReady && isRecording && trainingMode === "full-text" && (
+            {!speechReady && isRecording && (
               <div className="mt-4 text-sm text-gray-700 flex items-center gap-3">
                 Teleprompter: auto-scroll (fallback)
                 <button
@@ -635,7 +463,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                       );
                     }, 480);
                   }}
-                  className="px-3 py-1 rounded bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+                  className="px-3 py-1 rounded bg-orange-100 text-orange-700"
                 >
                   Lebih cepat
                 </button>
@@ -649,39 +477,10 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                       );
                     }, 800);
                   }}
-                  className="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                  className="px-3 py-1 rounded bg-blue-100 text-blue-700"
                 >
                   Lebih lambat
                 </button>
-              </div>
-            )}
-
-            {/* Mode-specific info */}
-            {trainingMode === "topic-image" && (
-              <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
-                <p className="text-sm text-blue-900 font-semibold mb-2">
-                  💡 Tips Mode Topik + Gambar:
-                </p>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Gunakan keyword hints sebagai panduan</li>
-                  <li>• Berbicara bebas dengan bahasa sendiri</li>
-                  <li>• Tidak perlu mengikuti teks tertentu</li>
-                  <li>• Fokus pada penyampaian ide yang jelas</li>
-                </ul>
-              </div>
-            )}
-
-            {trainingMode === "custom-topic" && (
-              <div className="mt-4 bg-purple-50 border-2 border-purple-200 rounded-2xl p-4">
-                <p className="text-sm text-purple-900 font-semibold mb-2">
-                  ✨ Tips Mode Topik Kustom:
-                </p>
-                <ul className="text-sm text-purple-800 space-y-1">
-                  <li>• Ikuti outline yang sudah kamu buat</li>
-                  <li>• Sampaikan dengan percaya diri</li>
-                  <li>• Jangan terlalu kaku, tapi tetap terstruktur</li>
-                  <li>• Ini kesempatan berkreasi sepenuhnya!</li>
-                </ul>
               </div>
             )}
           </div>

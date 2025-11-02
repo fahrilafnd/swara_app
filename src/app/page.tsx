@@ -131,6 +131,7 @@ export default function Home() {
   return (
     <div className="min-h-screen font-lexend bg-gradient-to-br from-white via-orange-50/30 to-white overflow-x-hidden">
       {/* Navbar */}
+      
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
           scrolled ? "bg-white/95 backdrop-blur-lg shadow-lg" : "bg-transparent"

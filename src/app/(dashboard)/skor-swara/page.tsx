@@ -7,6 +7,7 @@ import ScoreCards from "@/app/components/skor-swara/ScoreCards";
 import TipsSection from "@/app/components/skor-swara/TipsSection";
 import HistorySection from "@/app/components/skor-swara/HistorySection";
 import SkorSwaraIntroModal from "@/app/components/skor-swara/SkorSwaraIntroModal";
+import { getUserLevel, getLevelInfo } from "./config/levels";
 
 interface ScoreCard {
   title: string;
@@ -24,6 +25,20 @@ interface HistoryItem {
 
 export default function SkorSwaraPage() {
   const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
+  const [userLevel, setUserLevel] = useState(3);
+
+  useEffect(() => {
+    const hidden =
+      typeof window !== "undefined" &&
+      localStorage.getItem("swaraIntroHide") === "1";
+    setShowModal(!hidden);
+
+    // Load user level
+    setUserLevel(getUserLevel());
+  }, []);
+
+  const levelInfo = getLevelInfo(userLevel);
 
   const scoreCards: ScoreCard[] = [
     {
@@ -78,18 +93,10 @@ export default function SkorSwaraPage() {
     },
   ];
 
+  // PENTING: Ubah routing ke pilih-mode, bukan langsung ke sesi-latihan
   const handleStartTraining = () => {
-    router.push("/skor-swara/sesi-latihan");
+    router.push("/skor-swara/pilih-mode");
   };
-
-  const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    const hidden =
-      typeof window !== "undefined" &&
-      localStorage.getItem("swaraIntroHide") === "1";
-    setShowModal(!hidden);
-  }, []);
 
   return (
     <div className="space-y-8">
@@ -100,13 +107,59 @@ export default function SkorSwaraPage() {
           setShowModal(false);
         }}
       />
+
       <div className="min-h-screen bg-white rounded-3xl p-3 md:p-6 lg:p-8">
         <div className="w-full">
+          {/* Level Badge */}
+          <div className="mb-6 flex justify-end">
+            <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-md">
+              <span className="text-2xl">{levelInfo?.badge}</span>
+              <div>
+                <p className="text-xs text-gray-600 font-medium">Your Level</p>
+                <p className="text-sm font-black text-gray-900">
+                  Level {userLevel}: {levelInfo?.title}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <HeroSection onStartTraining={handleStartTraining} />
           <ScoreCards scoreCards={scoreCards} />
           <TipsSection tips={tips} />
+
+          {/* Mode Preview Section */}
+          <div className="mt-12 bg-gradient-to-r from-orange-50 to-purple-50 rounded-3xl p-8 border-2 border-orange-200">
+            <h3 className="text-2xl font-black text-gray-900 mb-4 text-center">
+              3 Mode Latihan Tersedia
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-2xl p-4 text-center">
+                <div className="text-3xl mb-2">📝</div>
+                <h4 className="font-bold text-gray-900 mb-1">Teks Lengkap</h4>
+                <p className="text-xs text-gray-600">
+                  Baca teks dengan teleprompter
+                </p>
+              </div>
+              <div className="bg-white rounded-2xl p-4 text-center">
+                <div className="text-3xl mb-2">🖼️</div>
+                <h4 className="font-bold text-gray-900 mb-1">Topik + Gambar</h4>
+                <p className="text-xs text-gray-600">
+                  Improvisasi berdasarkan visual
+                </p>
+              </div>
+              <div className="bg-white rounded-2xl p-4 text-center">
+                <div className="text-3xl mb-2">✨</div>
+                <h4 className="font-bold text-gray-900 mb-1">Topik Kustom</h4>
+                <p className="text-xs text-gray-600">Buat topik sendiri</p>
+              </div>
+            </div>
+            <p className="text-center text-sm text-gray-600 mt-4">
+              Mode yang tersedia tergantung level Anda
+            </p>
+          </div>
         </div>
       </div>
+
       <HistorySection historyItems={historyItems} />
     </div>
   );

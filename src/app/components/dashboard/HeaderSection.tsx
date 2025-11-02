@@ -1,12 +1,16 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 
 interface HeaderSectionProps {
   onTakeTour?: () => void;
+  userName?: string; // ⬅️ terima prop nama
 }
 
-export default function HeaderSection({ onTakeTour }: HeaderSectionProps) {
+export default function HeaderSection({
+  userName,
+  onTakeTour,
+}: HeaderSectionProps) {
   return (
     <header className="bg-orange-500 rounded-xl py-11 px-0 relative overflow-hidden">
       {/* Background decorative circles */}
@@ -39,12 +43,12 @@ export default function HeaderSection({ onTakeTour }: HeaderSectionProps) {
       <div className="w-full px-4 sm:px-6 relative z-10">
         <div className="text-center">
           <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-bold mb-2 px-4">
-            Hi, Fabyan Yastika Permana
+            Hi, {userName ?? "Pengguna"} 👋
           </h1>
           <p className="text-white text-sm sm:text-base opacity-90 mb-4 px-4">
             Selamat datang di SWARA, rumah belajar public speaking!
           </p>
-          <button 
+          <button
             onClick={onTakeTour}
             className="bg-white/20 hover:bg-white/30 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm border border-white/30 transition-all inline-flex items-center gap-2"
           >
