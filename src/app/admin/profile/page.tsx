@@ -1,47 +1,47 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, LogOut } from "lucide-react";
 
 export default function ProfilePage() {
   const [isAccountOpen, setIsAccountOpen] = useState(true);
   const [isPasswordOpen, setIsPasswordOpen] = useState(true);
 
   const [accountForm, setAccountForm] = useState({
-    nama: 'Udin Budiawan',
-    email: 'swaradmin@gmail.com',
-    nomor: '+62 812-3456-7890',
-    lokasi: 'Jakarta, Indonesia'
+    nama: "Udin Budiawan",
+    email: "swaradmin@gmail.com",
+    nomor: "+62 812-3456-7890",
+    lokasi: "Jakarta, Indonesia",
   });
 
   const [passwordForm, setPasswordForm] = useState({
-    passwordBaru: '',
-    konfirmasiPassword: ''
+    passwordBaru: "",
+    konfirmasiPassword: "",
   });
 
   const [showPassword, setShowPassword] = useState({
     passwordBaru: false,
-    konfirmasiPassword: false
+    konfirmasiPassword: false,
   });
 
-  const handleAccountChange = (e: { target: { name: any; value: any; }; }) => {
+  const handleAccountChange = (e: { target: { name: any; value: any } }) => {
     setAccountForm({
       ...accountForm,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
-  const handlePasswordChange = (e: { target: { name: any; value: any; }; }) => {
+  const handlePasswordChange = (e: { target: { name: any; value: any } }) => {
     setPasswordForm({
       ...passwordForm,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const togglePasswordVisibility = (field: string) => {
     setShowPassword({
       ...showPassword,
-      [field]: !showPassword[field as keyof typeof showPassword]
+      [field]: !showPassword[field as keyof typeof showPassword],
     });
   };
 
@@ -50,14 +50,39 @@ export default function ProfilePage() {
       <div className="w-full mx-auto">
         {/* Profile Header Card */}
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-4xl font-bold">U</span>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-4xl font-bold">U</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  Udin Budiawan
+                </h1>
+                <p className="text-gray-500">swaradmin@gmail.com</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Udin Budiawan</h1>
-              <p className="text-gray-500">swaradmin@gmail.com</p>
-            </div>
+            <button
+              onClick={async () => {
+                try {
+                  // Hapus cookie login (Next.js App Router)
+                  await fetch("/api/auth/logout", { method: "POST" });
+
+                  // Atau kalau belum punya route logout, bisa hapus manual:
+                  document.cookie =
+                    "swara_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+                  // Redirect ke halaman login
+                  window.location.href = "/masuk";
+                } catch (err) {
+                  console.error("Gagal logout:", err);
+                }
+              }}
+              className="flex w-fit items-center justify-center gap-3 py-3 px-6 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Keluar</span>
+            </button>
           </div>
         </div>
 
@@ -66,7 +91,7 @@ export default function ProfilePage() {
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-xl font-bold text-gray-800">Informasi Akun</h2>
           </div>
-          
+
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -75,35 +100,35 @@ export default function ProfilePage() {
                 </p>
                 <p className="text-gray-800 font-medium">Udin Budiawan</p>
               </div>
-              
+
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">
                   Email
                 </p>
                 <p className="text-gray-800 font-medium">swaradmin@gmail.com</p>
               </div>
-              
+
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">
                   Nomor Telepon
                 </p>
                 <p className="text-gray-800 font-medium">+62 812-3456-7890</p>
               </div>
-              
+
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">
                   Lokasi
                 </p>
                 <p className="text-gray-800 font-medium">Jakarta, Indonesia</p>
               </div>
-              
+
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">
                   Bergabung Sejak
                 </p>
                 <p className="text-gray-800 font-medium">15 Januari 2024</p>
               </div>
-              
+
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">
                   Tarif Per Sesi
@@ -120,14 +145,16 @@ export default function ProfilePage() {
             onClick={() => setIsAccountOpen(!isAccountOpen)}
             className="w-full p-6 flex items-center justify-between border-b border-gray-100"
           >
-            <h2 className="text-xl font-bold text-orange-500">Perubahan Akun</h2>
+            <h2 className="text-xl font-bold text-orange-500">
+              Perubahan Akun
+            </h2>
             {isAccountOpen ? (
               <ChevronUp className="w-5 h-5 text-gray-400" />
             ) : (
               <ChevronDown className="w-5 h-5 text-gray-400" />
             )}
           </button>
-          
+
           {isAccountOpen && (
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -144,7 +171,7 @@ export default function ProfilePage() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nomor telepon
@@ -158,7 +185,7 @@ export default function ProfilePage() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email
@@ -172,7 +199,7 @@ export default function ProfilePage() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Lokasi
@@ -187,7 +214,7 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button className="px-8 py-3 bg-gray-200 text-gray-700 rounded-full font-medium hover:bg-gray-300 transition-colors">
                   BATAL
@@ -206,14 +233,16 @@ export default function ProfilePage() {
             onClick={() => setIsPasswordOpen(!isPasswordOpen)}
             className="w-full p-6 flex items-center justify-between border-b border-gray-100"
           >
-            <h2 className="text-xl font-bold text-orange-500">Pergantian Password</h2>
+            <h2 className="text-xl font-bold text-orange-500">
+              Pergantian Password
+            </h2>
             {isPasswordOpen ? (
               <ChevronUp className="w-5 h-5 text-gray-400" />
             ) : (
               <ChevronDown className="w-5 h-5 text-gray-400" />
             )}
           </button>
-          
+
           {isPasswordOpen && (
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -232,7 +261,7 @@ export default function ProfilePage() {
                     />
                     <button
                       type="button"
-                      onClick={() => togglePasswordVisibility('passwordBaru')}
+                      onClick={() => togglePasswordVisibility("passwordBaru")}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       {showPassword.passwordBaru ? (
@@ -243,14 +272,16 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Konfirmasi Password Baru
                   </label>
                   <div className="relative">
                     <input
-                      type={showPassword.konfirmasiPassword ? "text" : "password"}
+                      type={
+                        showPassword.konfirmasiPassword ? "text" : "password"
+                      }
                       name="konfirmasiPassword"
                       value={passwordForm.konfirmasiPassword}
                       onChange={handlePasswordChange}
@@ -259,7 +290,9 @@ export default function ProfilePage() {
                     />
                     <button
                       type="button"
-                      onClick={() => togglePasswordVisibility('konfirmasiPassword')}
+                      onClick={() =>
+                        togglePasswordVisibility("konfirmasiPassword")
+                      }
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       {showPassword.konfirmasiPassword ? (
@@ -271,7 +304,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button className="px-8 py-3 bg-gray-200 text-gray-700 rounded-full font-medium hover:bg-gray-300 transition-colors">
                   BATAL

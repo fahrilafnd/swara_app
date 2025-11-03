@@ -16,7 +16,7 @@ export interface TrainingTopic {
   difficulty: "easy" | "medium" | "hard";
   text?: string;
   image?: string;
-  keywords?: string[];
+  topic?: string; // Changed from keywords array to single topic string
   minWords?: number;
   maxWords?: number;
 }
@@ -96,13 +96,7 @@ Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan
     category: "Lingkungan",
     difficulty: "medium",
     image: "/images/topics/climate.jpg",
-    keywords: [
-      "perubahan iklim",
-      "global warming",
-      "emisi karbon",
-      "energi terbarukan",
-      "keberlanjutan",
-    ],
+    topic: "Perubahan Iklim Global",
     minWords: 100,
     maxWords: 300,
   },
@@ -112,13 +106,7 @@ Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan
     category: "Teknologi",
     difficulty: "hard",
     image: "/images/topics/tech-future.jpg",
-    keywords: [
-      "artificial intelligence",
-      "automation",
-      "digital transformation",
-      "skill development",
-      "future jobs",
-    ],
+    topic: "Artificial Intelligence dan Otomasi",
     minWords: 150,
     maxWords: 350,
   },
@@ -128,19 +116,14 @@ Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan
     category: "Pendidikan",
     difficulty: "easy",
     image: "/images/topics/education.jpg",
-    keywords: [
-      "pembelajaran online",
-      "teknologi pendidikan",
-      "akses pendidikan",
-      "kualitas pengajaran",
-    ],
+    topic: "Pembelajaran Online",
     minWords: 80,
     maxWords: 250,
   },
 ];
 
 // ===== LEVEL MANAGEMENT =====
-const DEFAULT_LEVEL = 3; // Set default ke level 3 (semua mode unlocked)
+const DEFAULT_LEVEL = 3;
 
 export const getUserLevel = (): number => {
   if (typeof window === "undefined") return DEFAULT_LEVEL;
@@ -188,7 +171,6 @@ export const getLevelInfo = (level: number): LevelConfig | undefined => {
   return LEVELS.find((l) => l.level === level);
 };
 
-// Helper untuk testing - bisa dipanggil dari console browser
 if (typeof window !== "undefined") {
   (window as any).skorSwaraDebug = {
     setLevel: setUserLevel,

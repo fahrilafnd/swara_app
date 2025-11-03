@@ -448,12 +448,13 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 </div>
               )}
 
-              {/* Topic+Image Mode: Show image and keywords */}
+              {/* Topic+Image Mode: Show image and topic */}
               {trainingMode === "topic-image" &&
                 selectedTopic?.image &&
                 isRecording && (
-                  <div className="absolute top-20 left-4 right-4 z-30 bg-white/95 backdrop-blur rounded-2xl p-4 max-w-md shadow-xl">
-                    <div className="relative w-full h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl mb-3 overflow-hidden">
+                  <div className="absolute top-20 left-2 z-30 bg-white/40 backdrop-blur-lg rounded-2xl p-6 max-w-lg mx-auto shadow-2xl">
+                    {/* Image */}
+                    <div className="relative w-full h-48 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl mb-4 overflow-hidden shadow-lg">
                       <img
                         src={selectedTopic.image}
                         alt={selectedTopic.title}
@@ -463,21 +464,33 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                           target.style.display = "none";
                         }}
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                     </div>
-                    {selectedTopic.keywords && (
+
+                    {/* Topic Display */}
+                    {selectedTopic.topic && (
                       <div>
-                        <p className="text-xs text-gray-600 mb-2 font-semibold">
-                          Keyword hints:
+                        <p className="text-sm text-gray-600 mb-3 font-semibold flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-orange-500" />
+                          Topik Pembahasan:
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedTopic.keywords.map((kw, idx) => (
-                            <span
-                              key={idx}
-                              className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium"
-                            >
-                              {kw}
-                            </span>
-                          ))}
+                        <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl p-5 border-2 border-orange-300 shadow-sm">
+                          <p className="text-xl font-black text-gray-900 text-center leading-tight">
+                            {selectedTopic.topic}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Word count guideline */}
+                    {selectedTopic.minWords && selectedTopic.maxWords && (
+                      <div className="mt-4 text-xs text-center">
+                        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-200">
+                          <span className="font-semibold">💡 Target:</span>
+                          <span className="font-bold">
+                            {selectedTopic.minWords}-{selectedTopic.maxWords}{" "}
+                            kata
+                          </span>
                         </div>
                       </div>
                     )}

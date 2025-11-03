@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Clock,
   DollarSign,
+  LogOut,
 } from "lucide-react";
 
 export default function ProfilMentor() {
@@ -21,44 +22,69 @@ export default function ProfilMentor() {
   return (
     <div className="pr-8">
       <div className="bg-white rounded-3xl shadow-md p-8 mb-6">
-        <div className="flex flex-col md:flex-row items-start gap-6">
-          <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-6xl font-bold">U</span>
-          </div>
-
-          {/* Profile Info */}
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Udin Budiawan
-            </h1>
-            <p className="text-gray-600 mb-4">swaradmin@gmail.com</p>
-
-            {/* Rating & Stats */}
-            <div className="flex items-center gap-6 mb-4">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold text-gray-900">4.9</span>
-                <span className="text-gray-600 text-sm">(127 ulasan)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-600 text-sm">248 Sesi Selesai</span>
-              </div>
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-6xl font-bold">U</span>
             </div>
 
-            {/* Specialization Tags */}
-            <div className="flex flex-wrap gap-2">
-              <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
-                Public Speaking
-              </span>
-              <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
-                Presentasi Bisnis
-              </span>
-              <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
-                Story Telling
-              </span>
+            {/* Profile Info */}
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Udin Budiawan
+              </h1>
+              <p className="text-gray-600 mb-4">swaradmin@gmail.com</p>
+
+              {/* Rating & Stats */}
+              <div className="flex items-center gap-6 mb-4">
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <span className="font-bold text-gray-900">4.9</span>
+                  <span className="text-gray-600 text-sm">(127 ulasan)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-orange-500" />
+                  <span className="text-gray-600 text-sm">
+                    248 Sesi Selesai
+                  </span>
+                </div>
+              </div>
+
+              {/* Specialization Tags */}
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
+                  Public Speaking
+                </span>
+                <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
+                  Presentasi Bisnis
+                </span>
+                <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
+                  Story Telling
+                </span>
+              </div>
             </div>
           </div>
+          <button
+            onClick={async () => {
+              try {
+                // Hapus cookie login (Next.js App Router)
+                await fetch("/api/auth/logout", { method: "POST" });
+
+                // Atau kalau belum punya route logout, bisa hapus manual:
+                document.cookie =
+                  "swara_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+                // Redirect ke halaman login
+                window.location.href = "/masuk";
+              } catch (err) {
+                console.error("Gagal logout:", err);
+              }
+            }}
+            className="flex w-fit items-center justify-center gap-3 py-3 px-6 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Keluar</span>
+          </button>
         </div>
       </div>
 

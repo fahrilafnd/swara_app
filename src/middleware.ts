@@ -21,14 +21,14 @@ export async function middleware(req: NextRequest) {
 
     if (meRes) {
       if (meRes.ok) {
-        // baca flag success jika backend kadang tetap 200
         const j = await meRes
           .clone()
           .json()
           .catch(() => null);
-        authed = j?.success !== false; // true jika tidak jelas gagal
+        authed = j?.success; // true jika tidak jelas gagal
       }
     }
+    console.log(`Middleware proteksi ${pathname}: authed=${authed}`);
 
     if (!authed) {
       const url = new URL("/masuk", req.url);
@@ -36,7 +36,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Batasi silang role (opsional, jika butuh)
     try {
       const meJson = await meRes!.clone().json();
       const role = meJson?.data?.role?.role_name ?? "user";
@@ -52,7 +51,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2) Blokir /masuk & /daftar bagi yang sudah login
   if (PUBLIC_PATHS.includes(pathname)) {
     const meRes = await callMe().catch(() => null);
     let authed = false;

@@ -69,7 +69,7 @@ export default function PilihModePage() {
       description: "Berbicara bebas berdasarkan topik dan gambar pendukung",
       icon: <ImageIcon className="w-8 h-8" />,
       difficulty: "Menengah - Mahir",
-      minLevel: 3,
+      minLevel: 1,
       features: [
         "Hanya topik & gambar visual",
         "Bebas improvisasi",
@@ -127,13 +127,13 @@ export default function PilihModePage() {
   return (
     <>
       <div className="bg-white shadow-md rounded-xl p-8 mb-10">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold">Kembali</span>
-          </button>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-semibold">Kembali</span>
+        </button>
         {/* User Level Card */}
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
           <div className="flex items-center gap-4">

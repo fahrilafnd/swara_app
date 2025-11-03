@@ -8,7 +8,6 @@ import { Edit3, Sparkles, Lightbulb } from "lucide-react";
 export default function CustomTopicInput() {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [targetDuration, setTargetDuration] = useState(60); // in seconds
 
   const MIN_TITLE_LENGTH = 10;
   const MAX_TITLE_LENGTH = 100;
@@ -27,7 +26,6 @@ export default function CustomTopicInput() {
       title,
       category: "Custom",
       difficulty: "custom" as const,
-      targetDuration,
     };
 
     sessionStorage.setItem(
@@ -116,30 +114,6 @@ export default function CustomTopicInput() {
           </div>
         </div>
 
-        {/* Duration Slider */}
-        <div className="mb-8">
-          <label className="block text-sm font-bold text-gray-700 mb-3">
-            Target Durasi Presentasi
-          </label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min={30}
-              max={60}
-              step={10}
-              value={targetDuration}
-              onChange={(e) => setTargetDuration(parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl font-bold min-w-[100px] text-center">
-              {targetDuration} detik
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Atur durasi yang sesuai dengan kompleksitas topik Anda
-          </p>
-        </div>
-
         {/* Suggested Topics */}
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
@@ -165,7 +139,7 @@ export default function CustomTopicInput() {
           disabled={!titleValid}
           className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
             titleValid
-              ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:shadow-xl hover:-translate-y-1"
+              ? "bg-gradient-to-r from-blue-500 to-pink-600 text-white hover:shadow-xl hover:-translate-y-1"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
