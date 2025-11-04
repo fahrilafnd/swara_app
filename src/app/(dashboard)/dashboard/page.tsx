@@ -303,7 +303,6 @@ export default function Dashboard() {
             className="flex-1 border-4 border-white bg-white rounded-3xl p-4 sm:p-6 w-full shadow-md"
             data-tour="event-card"
           >
-            <EventCard />
             <SkillCards onModalOpen={handleModalOpen} />
           </div>
 

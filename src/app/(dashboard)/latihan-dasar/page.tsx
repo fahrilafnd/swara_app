@@ -25,8 +25,6 @@ interface Level {
   description: string;
   isCompleted: boolean;
   isUnlocked: boolean;
-  duration: string;
-  points: number;
   link: string;
 }
 
@@ -58,8 +56,6 @@ export default function LatihanDasar() {
           description: "Pelajari cara mengucapkan huruf vokal dengan jelas",
           isCompleted: false,
           isUnlocked: true,
-          duration: "3 menit",
-          points: 10,
           link: "/latihan-dasar/artikulasi",
         },
         {
@@ -68,8 +64,6 @@ export default function LatihanDasar() {
           description: "Latihan pengucapan konsonan yang tepat",
           isCompleted: false,
           isUnlocked: false,
-          duration: "4 menit",
-          points: 15,
           link: "/latihan-dasar/artikulasi",
         },
         {
@@ -78,8 +72,6 @@ export default function LatihanDasar() {
           description: "Gabungkan vokal dan konsonan menjadi suku kata",
           isCompleted: false,
           isUnlocked: false,
-          duration: "5 menit",
-          points: 20,
           link: "/latihan-dasar/artikulasi",
         },
         {
@@ -88,8 +80,6 @@ export default function LatihanDasar() {
           description: "Ucapkan kata-kata yang menantang dengan jelas",
           isCompleted: false,
           isUnlocked: false,
-          duration: "6 menit",
-          points: 25,
           link: "/latihan-dasar/artikulasi",
         },
         {
@@ -98,8 +88,6 @@ export default function LatihanDasar() {
           description: "Master artikulasi dengan kalimat panjang",
           isCompleted: false,
           isUnlocked: false,
-          duration: "7 menit",
-          points: 30,
           link: "/latihan-dasar/artikulasi",
         },
       ],
@@ -119,8 +107,6 @@ export default function LatihanDasar() {
           description: "Tampilkan senyum dan kegembiraan yang natural",
           isCompleted: false,
           isUnlocked: true,
-          duration: "3 menit",
-          points: 10,
           link: "/latihan-dasar/ekspresi",
         },
         {
@@ -129,8 +115,6 @@ export default function LatihanDasar() {
           description: "Tunjukkan keseriusan dengan tepat",
           isCompleted: false,
           isUnlocked: false,
-          duration: "4 menit",
-          points: 15,
           link: "/latihan-dasar/ekspresi",
         },
         {
@@ -139,8 +123,6 @@ export default function LatihanDasar() {
           description: "Latihan mempertahankan kontak mata",
           isCompleted: false,
           isUnlocked: false,
-          duration: "5 menit",
-          points: 20,
           link: "/latihan-dasar/ekspresi",
         },
         {
@@ -149,8 +131,6 @@ export default function LatihanDasar() {
           description: "Gunakan bahasa tubuh yang efektif",
           isCompleted: false,
           isUnlocked: false,
-          duration: "6 menit",
-          points: 25,
           link: "/latihan-dasar/ekspresi",
         },
         {
@@ -159,8 +139,6 @@ export default function LatihanDasar() {
           description: "Gabungkan semua elemen ekspresi",
           isCompleted: false,
           isUnlocked: false,
-          duration: "7 menit",
-          points: 30,
           link: "/latihan-dasar/ekspresi",
         },
       ],
@@ -180,8 +158,6 @@ export default function LatihanDasar() {
           description: "Berbicara dengan kecepatan yang terkontrol",
           isCompleted: false,
           isUnlocked: true,
-          duration: "3 menit",
-          points: 10,
           link: "/latihan-dasar/tempo",
         },
         {
@@ -190,8 +166,6 @@ export default function LatihanDasar() {
           description: "Temukan kecepatan bicara yang ideal",
           isCompleted: false,
           isUnlocked: false,
-          duration: "4 menit",
-          points: 15,
           link: "/latihan-dasar/tempo",
         },
         {
@@ -200,8 +174,6 @@ export default function LatihanDasar() {
           description: "Ubah kecepatan sesuai konteks",
           isCompleted: false,
           isUnlocked: false,
-          duration: "5 menit",
-          points: 20,
           link: "/latihan-dasar/tempo",
         },
         {
@@ -210,8 +182,6 @@ export default function LatihanDasar() {
           description: "Gunakan pause untuk penekanan",
           isCompleted: false,
           isUnlocked: false,
-          duration: "6 menit",
-          points: 25,
           link: "/latihan-dasar/tempo",
         },
         {
@@ -220,8 +190,6 @@ export default function LatihanDasar() {
           description: "Master timing dalam presentasi",
           isCompleted: false,
           isUnlocked: false,
-          duration: "7 menit",
-          points: 30,
           link: "/latihan-dasar/tempo",
         },
       ],
@@ -552,22 +520,6 @@ export default function LatihanDasar() {
                               </span>
                             )}
                           </div>
-
-                          <div className="flex items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1.5 text-gray-600">
-                              <Clock className="w-4 h-4" />
-                              <span className="font-semibold">
-                                {level.duration}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-orange-600">
-                              <Star className="w-4 h-4" />
-                              <span className="font-bold">
-                                {level.points} poin
-                              </span>
-                            </div>
-                          </div>
-
                           {/* Start Button */}
                           {level.isUnlocked && !level.isCompleted && (
                             <Link

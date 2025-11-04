@@ -129,21 +129,16 @@ export default function PilihTopikPage() {
   if (mode === "custom-topic") {
     return (
       <>
-        <SkorSwaraHeader />
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 py-12 px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white shadow-md rounded-xl p-8">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="font-semibold">Kembali</span>
-              </button>
+        <div className="min-h-screen bg-white mb-10 rounded-xl p-8">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-semibold">Kembali</span>
+          </button>
 
-              <CustomTopicInput />
-            </div>
-          </div>
+          <CustomTopicInput />
         </div>
       </>
     );
@@ -153,8 +148,7 @@ export default function PilihTopikPage() {
   if (showCountdown && randomTopic) {
     return (
       <>
-        <SkorSwaraHeader />
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white rounded-xl shadow-md mb-10 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-12 text-center">
             <div className="mb-8">
               <div className="inline-flex items-center justify-center w-24 h-24 bg-orange-100 rounded-full mb-6">
@@ -230,8 +224,6 @@ export default function PilihTopikPage() {
               <h3 className="text-xl font-black text-gray-900">
                 {randomTopic.title}
               </h3>
-
-            
             </div>
 
             {/* Cancel Button */}

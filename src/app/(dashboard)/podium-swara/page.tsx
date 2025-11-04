@@ -49,20 +49,7 @@ export default function PodiumSwara() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Pilih Arena Virtual Latihanmu!
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link
-                href="/podium-swara/mc"
-                className="bg-gradient-to-br from-orange-200 to-orange-300 rounded-2xl relative overflow-hidden min-h-[120px] cursor-pointer hover:shadow-lg transition-shadow"
-              >
-                <h3 className="text-orange-700 font-bold text-lg relative z-10 p-6">
-                  Master of
-                  <br />
-                  Ceremony
-                </h3>
-                <div className="absolute -right-4 -top-4">
-                  <img src="/podium/mc.png" alt="MC" />
-                </div>
-              </Link>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link
                 href="/podium-swara/wawancara"
                 className="bg-gradient-to-br from-blue-200 to-blue-400 rounded-2xl p-6 relative overflow-hidden min-h-[120px] cursor-pointer hover:shadow-lg transition-shadow"

@@ -1,15 +1,60 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AduSwaraIntroModal from "@/app/components/adu-swara/AduSwaraIntroModal";
 import { createPortal } from "react-dom";
+import { Users, Swords, Trophy, Target } from "lucide-react";
+
+// Mock opponent data
+const MOCK_OPPONENTS = [
+  {
+    name: "Alex Rahman",
+    avatar: "https://i.pravatar.cc/150?img=12",
+    level: 2,
+    winRate: 67,
+    avgScore: 285,
+  },
+  {
+    name: "Sarah Putri",
+    avatar: "https://i.pravatar.cc/150?img=47",
+    level: 3,
+    winRate: 72,
+    avgScore: 310,
+  },
+  {
+    name: "Budi Santoso",
+    avatar: "https://i.pravatar.cc/150?img=33",
+    level: 2,
+    winRate: 58,
+    avgScore: 270,
+  },
+  {
+    name: "Diana Kusuma",
+    avatar: "https://i.pravatar.cc/150?img=44",
+    level: 2,
+    winRate: 63,
+    avgScore: 295,
+  },
+];
+
+type MatchmakingState = "idle" | "searching" | "found" | "countdown";
 
 export default function Adu() {
+  const router = useRouter();
   const [isOpenMatch, setIsOpenMatch] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Matchmaking states
+  const [matchmakingState, setMatchmakingState] =
+    useState<MatchmakingState>("idle");
+  const [opponent, setOpponent] = useState<(typeof MOCK_OPPONENTS)[0] | null>(
+    null
+  );
+  const [countdown, setCountdown] = useState(15);
+  const [searchDots, setSearchDots] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -19,8 +64,306 @@ export default function Adu() {
     setShowModal(!hidden);
   }, []);
 
+  // Animate searching dots
+  useEffect(() => {
+    if (matchmakingState === "searching") {
+      const interval = setInterval(() => {
+        setSearchDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [matchmakingState]);
+
+  // Matchmaking logic
+  useEffect(() => {
+    if (matchmakingState === "searching") {
+      // Simulate finding opponent after 3 seconds
+      const timer = setTimeout(() => {
+        const randomOpponent =
+          MOCK_OPPONENTS[Math.floor(Math.random() * MOCK_OPPONENTS.length)];
+        setOpponent(randomOpponent);
+        setMatchmakingState("found");
+
+        // After showing opponent, start countdown
+        setTimeout(() => {
+          setMatchmakingState("countdown");
+        }, 2000);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [matchmakingState]);
+
+  // Countdown logic
+  useEffect(() => {
+    if (matchmakingState === "countdown" && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (matchmakingState === "countdown" && countdown === 0) {
+      // Redirect to battle
+      router.push("/adu/slug");
+    }
+  }, [matchmakingState, countdown, router]);
+
+  const startMatchmaking = () => {
+    setIsOpenMatch(true);
+    setMatchmakingState("searching");
+    setCountdown(15);
+    setOpponent(null);
+  };
+
+  const cancelMatchmaking = () => {
+    setIsOpenMatch(false);
+    setMatchmakingState("idle");
+    setCountdown(15);
+    setOpponent(null);
+  };
+
+  const renderMatchmakingModal = () => {
+    if (matchmakingState === "searching") {
+      return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl w-[500px] text-center">
+            <div className="mb-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <Users className="w-12 h-12 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">
+                Mencari Lawan{searchDots}
+              </h2>
+              <p className="text-gray-600">
+                Mencocokkan dengan pemain level yang sama
+              </p>
+            </div>
+
+            {/* Animated searching indicators */}
+            <div className="flex justify-center gap-2 mb-8">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-3 h-3 bg-orange-500 rounded-full animate-bounce"
+                  style={{
+                    animationDelay: `${i * 0.15}s`,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Searching animation circles */}
+            <div className="relative w-48 h-48 mx-auto mb-6">
+              <div className="absolute inset-0 border-4 border-orange-200 rounded-full animate-ping" />
+              <div className="absolute inset-4 border-4 border-orange-300 rounded-full animate-ping animation-delay-200" />
+              <div className="absolute inset-8 border-4 border-orange-400 rounded-full animate-ping animation-delay-400" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Target className="w-16 h-16 text-orange-500 animate-spin" />
+              </div>
+            </div>
+
+            <button
+              onClick={cancelMatchmaking}
+              className="px-8 py-3 bg-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-300 transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (matchmakingState === "found" && opponent) {
+      return (
+        <div className="fixed inset-0 bg-gradient-to-br from-orange-500/20 via-pink-500/20 to-purple-500/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl w-[600px]">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full mb-4">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="font-bold text-sm">Lawan Ditemukan!</span>
+              </div>
+            </div>
+
+            {/* VS Display */}
+            <div className="flex items-center justify-between mb-8">
+              {/* You */}
+              <div className="flex-1 text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto mb-3 flex items-center justify-center border-4 border-white shadow-xl">
+                  <img
+                    src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
+                    alt="You"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
+                <p className="font-black text-gray-900 mb-1">Kamu</p>
+                <p className="text-xs text-gray-600">Level 2</p>
+              </div>
+
+              {/* VS Badge */}
+              <div className="flex-shrink-0 mx-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center transform rotate-12 animate-pulse shadow-lg">
+                  <Swords className="w-10 h-10 text-white" />
+                </div>
+              </div>
+
+              {/* Opponent */}
+              <div className="flex-1 text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-red-400 to-red-600 rounded-full mx-auto mb-3 flex items-center justify-center border-4 border-white shadow-xl">
+                  <img
+                    src={opponent.avatar}
+                    alt={opponent.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
+                <p className="font-black text-gray-900 mb-1">{opponent.name}</p>
+                <p className="text-xs text-gray-600">Level {opponent.level}</p>
+              </div>
+            </div>
+
+            {/* Opponent Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-2xl p-4 text-center border-2 border-orange-200">
+                <Trophy className="w-6 h-6 text-orange-500 mx-auto mb-2" />
+                <p className="text-2xl font-black text-gray-900">
+                  {opponent.winRate}%
+                </p>
+                <p className="text-xs text-gray-600">Win Rate</p>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 text-center border-2 border-blue-200">
+                <Target className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                <p className="text-2xl font-black text-gray-900">
+                  {opponent.avgScore}
+                </p>
+                <p className="text-xs text-gray-600">Avg Score</p>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-gray-600 text-sm">
+                Memulai dalam beberapa saat...
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (matchmakingState === "countdown" && opponent) {
+      return (
+        <div className="fixed inset-0 bg-gradient-to-br from-orange-500/30 via-pink-500/30 to-purple-500/30 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-10 shadow-2xl w-[500px] text-center relative overflow-hidden">
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/50 to-pink-100/50 animate-pulse" />
+
+            <div className="relative z-10">
+              <div className="mb-6">
+                <h2 className="text-2xl font-black text-gray-900 mb-2">
+                  Bersiap-siap!
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Battle akan dimulai dalam...
+                </p>
+              </div>
+
+              {/* Countdown Circle */}
+              <div className="relative w-48 h-48 mx-auto mb-6">
+                <svg
+                  className="transform -rotate-90 w-48 h-48"
+                  viewBox="0 0 200 200"
+                >
+                  {/* Background circle */}
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="85"
+                    stroke="#fee2e2"
+                    strokeWidth="12"
+                    fill="none"
+                  />
+                  {/* Progress circle */}
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="85"
+                    stroke="url(#gradient)"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 85}`}
+                    strokeDashoffset={`${
+                      2 * Math.PI * 85 * (1 - countdown / 15)
+                    }`}
+                    className="transition-all duration-1000 ease-linear"
+                  />
+                  <defs>
+                    <linearGradient
+                      id="gradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+
+                {/* Countdown number */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p
+                      className={`text-7xl font-black transition-all duration-300 ${
+                        countdown <= 5
+                          ? "text-red-500 animate-pulse"
+                          : "text-orange-500"
+                      }`}
+                    >
+                      {countdown}
+                    </p>
+                    <p className="text-sm text-gray-600 font-semibold mt-2">
+                      detik
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Topic */}
+              <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-4 mb-6 border-2 border-orange-200">
+                <p className="text-xs text-gray-600 mb-1">Topik Battle:</p>
+                <p className="text-sm font-bold text-orange-600">
+                  Merancang Masa Depan: Membangun Karier di Era Digital
+                </p>
+              </div>
+
+              {/* Quick tips */}
+              <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+                <p className="text-xs text-blue-800 font-semibold mb-1">
+                  💡 Tips Cepat:
+                </p>
+                <p className="text-xs text-blue-700">
+                  Berbicaralah dengan percaya diri dan jelas. Jangan lupa
+                  tersenyum!
+                </p>
+              </div>
+
+              {/* Skip button */}
+              <button
+                onClick={() => router.push("/adu/slug")}
+                className="mt-6 px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full font-bold hover:shadow-lg transition-all hover:-translate-y-0.5"
+              >
+                Mulai Sekarang! →
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <div className="font-lexend h-full flex flex-col pb-5">
+    <div className="font-lexend h-full z-[9999999] relative flex flex-col pb-5">
       <AduSwaraIntroModal
         open={showModal}
         onClose={(dontShowAgain) => {
@@ -104,7 +447,7 @@ export default function Adu() {
             <div className="bg-[#F0712220] border border-[#F07122] rounded-2xl p-6">
               <span className="flex items-center mb-4">
                 <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">🏗️</p>
-                <p className="text-[#39363D] ml-4">Organisasi % Struktur</p>
+                <p className="text-[#39363D] ml-4">Organisasi & Struktur</p>
               </span>
               <p className="text-sm text-[#39363D] mb-3">Poin: 0-5</p>
               <p className="text-sm text-[#39363D]">
@@ -127,11 +470,12 @@ export default function Adu() {
             </div>
           </div>
           <button
-            onClick={() => setIsOpenMatch(true)}
-            className="bg-[#F07122] text-white text-2xl py-4 w-full rounded-2xl font-bold mb-7"
+            onClick={startMatchmaking}
+            className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-2xl py-5 w-full rounded-2xl font-bold mb-7 hover:shadow-2xl transition-all hover:-translate-y-1 flex items-center justify-center gap-3"
           >
-            {" "}
-            ⚔️ Mulai Battle ⚔️{" "}
+            <Swords className="w-8 h-8" />
+            Mulai Battle
+            <Swords className="w-8 h-8" />
           </button>
           <div className="bg-white rounded-2xl p-7">
             <h1 className="text-xl text-[#39363D] font-bold mb-5">Riwayat</h1>
@@ -216,126 +560,36 @@ export default function Adu() {
                   Rahasia Public Speaking Tanpa Grogi
                 </h4>
               </Link>
-              <Link
-                href={`/inspira/slug`}
-                className="flex flex-col justify-end relative h-[185px] rounded-2xl overflow-hidden mb-5 bg-[url('https://static.honestdocs.id/780x300/webp/system/blog_articles/images/000/008/579/original/mengatasi_suara_serak.jpg')] bg-cover bg-center"
-              >
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b to-[#434343] from-[#D9D9D910]"></div>
-                <div className="mx-auto cursor-pointer absolute top-0 bottom-0 right-0 left-0 m-auto w-max h-max">
-                  <svg
-                    width="38"
-                    height="38"
-                    viewBox="0 0 38 38"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle cx="19" cy="19" r="19" fill="white" />
-                    <path
-                      d="M26.2664 20.516C26.4979 20.3369 26.6853 20.1071 26.8142 19.8443C26.9431 19.5815 27.0101 19.2927 27.0101 19C27.0101 18.7073 26.9431 18.4185 26.8142 18.1557C26.6853 17.8929 26.4979 17.6631 26.2664 17.484C23.2686 15.1652 19.9216 13.3371 16.3504 12.068L15.6974 11.836C14.4494 11.393 13.1304 12.237 12.9614 13.526C12.4894 17.1601 12.4894 20.8399 12.9614 24.474C13.1314 25.763 14.4494 26.607 15.6974 26.164L16.3504 25.932C19.9216 24.6629 23.2686 22.8348 26.2664 20.516Z"
-                      fill="#F07122"
-                    />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-white ml-4 mb-5 z-10 text-sm">
-                  Rahasia Public Speaking Tanpa Grogi
-                </h4>
-              </Link>
-              <Link
-                href={`/inspira/slug`}
-                className="flex flex-col justify-end relative h-[185px] rounded-2xl overflow-hidden mb-5 bg-[url('https://static.honestdocs.id/780x300/webp/system/blog_articles/images/000/008/579/original/mengatasi_suara_serak.jpg')] bg-cover bg-center"
-              >
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b to-[#434343] from-[#D9D9D910]"></div>
-                <div className="mx-auto cursor-pointer absolute top-0 bottom-0 right-0 left-0 m-auto w-max h-max">
-                  <svg
-                    width="38"
-                    height="38"
-                    viewBox="0 0 38 38"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle cx="19" cy="19" r="19" fill="white" />
-                    <path
-                      d="M26.2664 20.516C26.4979 20.3369 26.6853 20.1071 26.8142 19.8443C26.9431 19.5815 27.0101 19.2927 27.0101 19C27.0101 18.7073 26.9431 18.4185 26.8142 18.1557C26.6853 17.8929 26.4979 17.6631 26.2664 17.484C23.2686 15.1652 19.9216 13.3371 16.3504 12.068L15.6974 11.836C14.4494 11.393 13.1304 12.237 12.9614 13.526C12.4894 17.1601 12.4894 20.8399 12.9614 24.474C13.1314 25.763 14.4494 26.607 15.6974 26.164L16.3504 25.932C19.9216 24.6629 23.2686 22.8348 26.2664 20.516Z"
-                      fill="#F07122"
-                    />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-white ml-4 mb-5 z-10 text-sm">
-                  Rahasia Public Speaking Tanpa Grogi
-                </h4>
-              </Link>
-              <Link
-                href={`/inspira/slug`}
-                className="flex flex-col justify-end relative h-[185px] rounded-2xl overflow-hidden mb-5 bg-[url('https://static.honestdocs.id/780x300/webp/system/blog_articles/images/000/008/579/original/mengatasi_suara_serak.jpg')] bg-cover bg-center"
-              >
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b to-[#434343] from-[#D9D9D910]"></div>
-                <div className="mx-auto cursor-pointer absolute top-0 bottom-0 right-0 left-0 m-auto w-max h-max">
-                  <svg
-                    width="38"
-                    height="38"
-                    viewBox="0 0 38 38"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle cx="19" cy="19" r="19" fill="white" />
-                    <path
-                      d="M26.2664 20.516C26.4979 20.3369 26.6853 20.1071 26.8142 19.8443C26.9431 19.5815 27.0101 19.2927 27.0101 19C27.0101 18.7073 26.9431 18.4185 26.8142 18.1557C26.6853 17.8929 26.4979 17.6631 26.2664 17.484C23.2686 15.1652 19.9216 13.3371 16.3504 12.068L15.6974 11.836C14.4494 11.393 13.1304 12.237 12.9614 13.526C12.4894 17.1601 12.4894 20.8399 12.9614 24.474C13.1314 25.763 14.4494 26.607 15.6974 26.164L16.3504 25.932C19.9216 24.6629 23.2686 22.8348 26.2664 20.516Z"
-                      fill="#F07122"
-                    />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-white ml-4 mb-5 z-10 text-sm">
-                  Rahasia Public Speaking Tanpa Grogi
-                </h4>
-              </Link>
             </div>
           </div>
         </aside>
       </div>
 
-      {mounted && isOpenMatch
-        ? createPortal(
-            <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-              <div className="bg-white rounded-2xl p-6 shadow-lg w-[600px]">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Topik pilihan</h2>
-                  <button onClick={() => setIsOpenMatch(false)}>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M6.575 7.975L1.675 12.875C1.49167 13.0583 1.25833 13.15 0.975 13.15C0.691667 13.15 0.458333 13.0583 0.275 12.875C0.0916663 12.6917 0 12.4583 0 12.175C0 11.8917 0.0916663 11.6583 0.275 11.475L5.175 6.575L0.275 1.675C0.0916663 1.49167 0 1.25833 0 0.975C0 0.691667 0.0916663 0.458333 0.275 0.275C0.458333 0.0916663 0.691667 0 0.975 0C1.25833 0 1.49167 0.0916663 1.675 0.275L6.575 5.175L11.475 0.275C11.6583 0.0916663 11.8917 0 12.175 0C12.4583 0 12.6917 0.0916663 12.875 0.275C13.0583 0.458333 13.15 0.691667 13.15 0.975C13.15 1.25833 13.0583 1.49167 12.875 1.675L7.975 6.575L12.875 11.475C13.0583 11.6583 13.15 11.8917 13.15 12.175C13.15 12.4583 13.0583 12.6917 12.875 12.875C12.6917 13.0583 12.4583 13.15 12.175 13.15C11.8917 13.15 11.6583 13.0583 11.475 12.875L6.575 7.975Z"
-                        fill="black"
-                      />
-                    </svg>
-                  </button>
-                </div>
-                <p className="border border-[#B3C8CF] shadow-md mb-4 p-3 rounded-2xl text-[#F07122] text-sm">
-                  Merancang Masa Depan: Membangun Karier di Era Digital
-                </p>
-                <hr className="h-[2px] bg-[#B3C8CF] rounded-full mb-4" />
-                <p className="text-center">Siapkan Dirimu!</p>
-                <p className="text-center text-[#F07122] text-9xl font-bold">
-                  30
-                </p>
-                <p className="text-center text-[#F07122] text-lg font-semibold">
-                  detik
-                </p>
-                <Link
-                  href={"/adu/slug"}
-                  className="text-center bg-[#F07122] w-[80%] py-3 text-white font-semibold rounded-full mt-6 mx-auto block"
-                >
-                  Sudah Siap!
-                </Link>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      {mounted && createPortal(renderMatchmakingModal(), document.body)}
+
+      <style jsx global>{`
+        @keyframes bounce {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        .animate-bounce {
+          animation: bounce 1s infinite;
+        }
+
+        .animation-delay-200 {
+          animation-delay: 0.2s;
+        }
+
+        .animation-delay-400 {
+          animation-delay: 0.4s;
+        }
+      `}</style>
     </div>
   );
 }

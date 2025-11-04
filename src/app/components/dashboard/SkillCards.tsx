@@ -1,8 +1,14 @@
+// src/app/components/dashboard/SkillCards.tsx
 "use client";
 
-import React from 'react';
+import React from "react";
 
-type ModalType = 'skor-swara' | 'adu-swara' | 'inspira-swara' | 'podium-swara' | 'latih-swara';
+type ModalType =
+  | "skor-swara"
+  | "adu-swara"
+  | "inspira-swara"
+  | "podium-swara"
+  | "latih-swara";
 
 interface SkillCardsProps {
   onModalOpen: (modalType: ModalType) => void;
@@ -11,60 +17,118 @@ interface SkillCardsProps {
 export default function SkillCards({ onModalOpen }: SkillCardsProps) {
   const skillCards = [
     {
-      id: 'skor-swara' as ModalType,
-      title: 'Skor Swara',
-      bgColor: 'bg-customTeal'
+      id: "skor-swara" as ModalType,
+      title: "Skor Swara",
+      bg: "from-[#34C38F] to-[#11998E]",
     },
     {
-      id: 'adu-swara' as ModalType,
-      title: 'Adu Swara',
-      bgColor: 'bg-goldenYellow'
+      id: "adu-swara" as ModalType,
+      title: "Adu Swara",
+      bg: "from-[#F6D365] to-[#FDA085]",
     },
     {
-      id: 'inspira-swara' as ModalType,
-      title: 'Inspira Swara',
-      bgColor: 'bg-customPink'
+      id: "inspira-swara" as ModalType,
+      title: "Inspira Swara",
+      bg: "from-[#F093FB] to-[#F5576C]",
     },
     {
-      id: 'podium-swara' as ModalType,
-      title: 'Podium Swara',
-      bgColor: 'bg-purple'
+      id: "podium-swara" as ModalType,
+      title: "Podium Swara",
+      bg: "from-[#A18CD1] to-[#FBC2EB]",
     },
     {
-      id: 'latih-swara' as ModalType,
-      title: 'Latih Swara',
-      bgColor: 'bg-customBlue'
-    }
+      id: "latih-swara" as ModalType,
+      title: "Latih Swara",
+      bg: "from-[#56CCF2] to-[#2F80ED]",
+    },
   ];
 
   return (
-    <div className="mb-6 sm:mb-8">
-      <h2 className="text-gray-800 text-base sm:text-lg font-semibold mb-4">Petunjuk Penggunaan</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 sm:gap-4">
-        {skillCards.map((card) => (
-          <div key={card.id} className={`${card.bgColor} rounded-3xl shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer`}>
-            <div className="p-4 sm:p-5 text-center flex flex-col justify-between h-[180px] sm:h-[220px]">
-              <div>
-                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-black rounded-full mx-auto mb-2 sm:mb-3 overflow-hidden border-4 border-white/30 shadow-lg">
-                  <div className="w-full h-full bg-black flex items-center justify-center">
-                    <div className="text-2xl sm:text-3xl lg:text-4xl text-white">👤</div>
+    <section className="mb-6 sm:mb-8">
+      <h2 className="text-gray-900 text-lg sm:text-xl font-extrabold tracking-tight mb-1">
+        Petunjuk Penggunaan
+      </h2>
+      <p className="text-sm text-gray-600 mb-5">
+        Pelajari cara memakai tiap fitur Swara dengan cepat.
+      </p>
+
+      <div className="rounded-3xl bg-white/90 border border-gray-100 shadow-md p-4 sm:p-6">
+        {/* Grid: 1 col (mobile), 2 col (sm), 12 col (lg) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5">
+          {skillCards.map((card, i) => {
+            // 3 kartu pertama di baris atas (col-span-4), 2 kartu berikutnya di baris bawah (col-span-6)
+            const span = i < 3 ? "lg:col-span-4" : "lg:col-span-6";
+
+            return (
+              <button
+                key={card.id}
+                onClick={() => onModalOpen(card.id)}
+                className={[
+                  span,
+                  "group relative isolate w-full overflow-hidden rounded-2xl p-4 sm:p-5 text-left",
+                  "shadow-sm ring-1 ring-black/5 transition-all duration-300",
+                  "hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300",
+                ].join(" ")}
+              >
+                {/* Background gradient */}
+                <div
+                  className={[
+                    "absolute inset-0 -z-10 bg-gradient-to-br",
+                    card.bg,
+                    "opacity-90",
+                  ].join(" ")}
+                />
+                <div className="absolute inset-0 -z-0 bg-white/10 " />
+
+                <div className="flex flex-col h-[180px] sm:h-[200px] justify-between">
+                  {/* Avatar & title */}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="relative mb-3">
+                      <div className="size-20 sm:size-24 rounded-full bg-black/70 ring-4 ring-white/30 shadow-xl grid place-items-center">
+                        <span className="text-white text-3xl sm:text-4xl">
+                          👤
+                        </span>
+                      </div>
+                      <div className="absolute inset-0 -z-10 rounded-full blur-xl opacity-60 group-hover:opacity-90 transition-opacity bg-white/30" />
+                    </div>
+                    <h3 className="text-white drop-shadow-sm font-extrabold text-sm sm:text-base tracking-wide">
+                      {card.title}
+                    </h3>
+                  </div>
+
+                  {/* CTA & progress line */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] sm:text-xs font-medium text-white/90">
+                        Buka panduan singkat
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-lg bg-black/40 text-white group-hover:bg-black/60 transition-colors">
+                        Petunjuk
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1.5 rounded-full bg-white/30 overflow-hidden">
+                      <div className="h-full w-0 group-hover:w-full transition-[width] duration-700 ease-out bg-white" />
+                    </div>
                   </div>
                 </div>
-                <h3 className="text-white text-xs sm:text-sm font-semibold whitespace-nowrap">{card.title}</h3>
-              </div>
-              <button 
-                onClick={() => onModalOpen(card.id)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-colors w-full mt-2 inline-flex items-center justify-center gap-1"
-              >
-                Petunjuk
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
               </button>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Pause, Play, Check, Image as ImageIcon, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Pause,
+  Play,
+  Check,
+  Mic,
+  Square,
+  Volume2,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
-
-// Import MediaPipe dengan cara yang benar
-declare global {
-  interface Window {
-    SelfieSegmentation: any;
-  }
-}
+import { useRouter } from "next/navigation";
 
 type CameraFeedProps = {
   className?: string;
   mirrored?: boolean;
   constraints?: MediaStreamConstraints;
   label?: string;
-  enableVirtualBackground?: boolean;
 };
 
 function CameraFeed({
@@ -24,53 +25,9 @@ function CameraFeed({
   mirrored = true,
   label,
   constraints,
-  enableVirtualBackground = false,
 }: CameraFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const outputCanvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedBackground, setSelectedBackground] = useState<string>("none");
-  const [showBackgroundSelector, setShowBackgroundSelector] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isModelLoaded, setIsModelLoaded] = useState(false);
-  const selfieSegmentationRef = useRef<any>(null);
-  const animationFrameRef = useRef<number>();
-  const backgroundImageRef = useRef<HTMLImageElement | null>(null);
-
-  const backgrounds = [
-    { id: "none", name: "Tanpa Background", image: null, color: null },
-    { id: "blur", name: "Blur Background", image: null, color: null },
-    {
-      id: "office1",
-      name: "Office Modern",
-      image:
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
-      color: null,
-    },
-    {
-      id: "office2",
-      name: "Meeting Room",
-      image:
-        "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80",
-      color: null,
-    },
-    {
-      id: "library",
-      name: "Library Professional",
-      image:
-        "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80",
-      color: null,
-    },
-    { id: "minimal", name: "Minimal White", image: null, color: "#f5f5f5" },
-    { id: "blue", name: "Professional Blue", image: null, color: "#1e40af" },
-    {
-      id: "gradient1",
-      name: "Gradient Purple",
-      image: null,
-      color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    },
-  ];
 
   const stableConstraints = useMemo<MediaStreamConstraints>(
     () =>
@@ -85,181 +42,6 @@ function CameraFeed({
     [constraints]
   );
 
-  // Load MediaPipe scripts dynamically
-  useEffect(() => {
-    if (!enableVirtualBackground) return;
-
-    const loadMediaPipe = async () => {
-      try {
-        // Load MediaPipe scripts
-        const scripts = [
-          "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js",
-          "https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js",
-          "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js",
-          "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js",
-        ];
-
-        for (const src of scripts) {
-          const existingScript = document.querySelector(`script[src="${src}"]`);
-          if (!existingScript) {
-            await new Promise((resolve, reject) => {
-              const script = document.createElement("script");
-              script.src = src;
-              script.crossOrigin = "anonymous";
-              script.onload = resolve;
-              script.onerror = reject;
-              document.head.appendChild(script);
-            });
-          }
-        }
-
-        // Wait for SelfieSegmentation to be available
-        await new Promise((resolve) => {
-          const checkInterval = setInterval(() => {
-            if (window.SelfieSegmentation) {
-              clearInterval(checkInterval);
-              resolve(true);
-            }
-          }, 100);
-        });
-
-        // Initialize SelfieSegmentation
-        const selfieSegmentation = new window.SelfieSegmentation({
-          locateFile: (file: string) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-          },
-        });
-
-        selfieSegmentation.setOptions({
-          modelSelection: 1,
-          selfieMode: true,
-        });
-
-        selfieSegmentation.onResults(onResults);
-        selfieSegmentationRef.current = selfieSegmentation;
-        setIsModelLoaded(true);
-      } catch (err) {
-        console.error("Failed to load MediaPipe:", err);
-        setError("Gagal memuat model AI. Coba refresh halaman.");
-      }
-    };
-
-    loadMediaPipe();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [enableVirtualBackground]);
-
-  // Load background image when selected
-  useEffect(() => {
-    const bg = backgrounds.find((b) => b.id === selectedBackground);
-    if (bg?.image) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = bg.image;
-      img.onload = () => {
-        backgroundImageRef.current = img;
-      };
-      img.onerror = () => {
-        console.error("Failed to load background image");
-        backgroundImageRef.current = null;
-      };
-    } else {
-      backgroundImageRef.current = null;
-    }
-  }, [selectedBackground]);
-
-  // Process segmentation results
-  const onResults = useCallback(
-    (results: any) => {
-      if (!canvasRef.current || !outputCanvasRef.current) return;
-
-      const canvas = outputCanvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      canvas.width = results.image.width;
-      canvas.height = results.image.height;
-
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (mirrored) {
-        ctx.scale(-1, 1);
-        ctx.translate(-canvas.width, 0);
-      }
-
-      if (selectedBackground === "none") {
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-      } else {
-        // Draw background
-        if (selectedBackground === "blur") {
-          ctx.filter = "blur(20px)";
-          ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-          ctx.filter = "none";
-        } else {
-          const bg = backgrounds.find((b) => b.id === selectedBackground);
-
-          if (backgroundImageRef.current) {
-            ctx.drawImage(
-              backgroundImageRef.current,
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-          } else if (bg?.color) {
-            if (bg.color.startsWith("linear-gradient")) {
-              const gradient = ctx.createLinearGradient(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-              );
-              gradient.addColorStop(0, "#667eea");
-              gradient.addColorStop(1, "#764ba2");
-              ctx.fillStyle = gradient;
-            } else {
-              ctx.fillStyle = bg.color;
-            }
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
-        }
-
-        // Apply segmentation mask
-        ctx.globalCompositeOperation = "destination-in";
-        ctx.drawImage(
-          results.segmentationMask,
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-
-        // Draw person
-        ctx.globalCompositeOperation = "source-over";
-        if (selectedBackground !== "blur") {
-          ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-          ctx.globalCompositeOperation = "destination-in";
-          ctx.drawImage(
-            results.segmentationMask,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-        }
-      }
-
-      ctx.restore();
-    },
-    [selectedBackground, mirrored, backgrounds]
-  );
-
-  // Start camera and processing
   useEffect(() => {
     let stream: MediaStream | null = null;
     let stopped = false;
@@ -271,16 +53,11 @@ function CameraFeed({
           setError("Browser tidak mendukung getUserMedia.");
           return;
         }
-
         stream = await navigator.mediaDevices.getUserMedia(stableConstraints);
         if (!stopped && videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
-          await videoRef.current.play();
-
-          if (enableVirtualBackground && isModelLoaded) {
-            processVideo();
-          }
+          await videoRef.current.play().catch(() => {});
         }
       } catch (e) {
         const msg =
@@ -291,181 +68,29 @@ function CameraFeed({
       }
     })();
 
-    async function processVideo() {
-      if (
-        !videoRef.current ||
-        !selfieSegmentationRef.current ||
-        stopped ||
-        !enableVirtualBackground ||
-        !isModelLoaded
-      ) {
-        return;
-      }
-
-      setIsProcessing(true);
-      const video = videoRef.current;
-
-      if (video.readyState >= 2) {
-        await selfieSegmentationRef.current.send({ image: video });
-      }
-
-      animationFrameRef.current = requestAnimationFrame(processVideo);
-    }
-
     return () => {
       stopped = true;
-      setIsProcessing(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
-      }
+      if (stream) stream.getTracks().forEach((t) => t.stop());
     };
-  }, [
-    stableConstraints,
-    enableVirtualBackground,
-    isModelLoaded,
-    selectedBackground,
-  ]);
+  }, [stableConstraints]);
 
   return (
-    <div className={`relative bg-gray-900 ${className}`}>
+    <div className={`relative bg-white ${className}`}>
       {label && (
         <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/60 text-white px-2 py-1 rounded">
           {label}
         </span>
       )}
-
-      {/* Loading indicator */}
-      {enableVirtualBackground && !isModelLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-30">
-          <div className="text-center text-white">
-            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-sm">Loading AI Model...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Virtual Background Controls */}
-      {enableVirtualBackground && isModelLoaded && (
-        <div className="absolute top-3 right-3 z-20">
-          <button
-            onClick={() => setShowBackgroundSelector(!showBackgroundSelector)}
-            className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg transition-colors backdrop-blur-sm"
-            title="Ubah Background"
-          >
-            <ImageIcon className="w-5 h-5" />
-          </button>
-
-          {showBackgroundSelector && (
-            <div className="absolute top-12 right-0 bg-white rounded-xl shadow-2xl p-4 w-96 max-h-[32rem] overflow-y-auto">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900">Virtual Background</h3>
-                <button
-                  onClick={() => setShowBackgroundSelector(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {backgrounds.map((bg) => (
-                  <button
-                    key={bg.id}
-                    onClick={() => {
-                      setSelectedBackground(bg.id);
-                      setShowBackgroundSelector(false);
-                    }}
-                    className={`relative rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedBackground === bg.id
-                        ? "border-orange-500 ring-2 ring-orange-200"
-                        : "border-gray-200 hover:border-orange-300"
-                    }`}
-                  >
-                    {bg.image ? (
-                      <img
-                        src={bg.image}
-                        alt={bg.name}
-                        className="w-full h-24 object-cover"
-                      />
-                    ) : bg.id === "none" ? (
-                      <div className="w-full h-24 bg-gray-900 flex items-center justify-center">
-                        <span className="text-2xl">🚫</span>
-                      </div>
-                    ) : bg.id === "blur" ? (
-                      <div className="w-full h-24 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 backdrop-blur-3xl bg-white/30"></div>
-                        <span className="text-3xl relative z-10">🌀</span>
-                      </div>
-                    ) : bg.color?.startsWith("linear") ? (
-                      <div className="w-full h-24 bg-gradient-to-br from-purple-400 to-pink-500" />
-                    ) : (
-                      <div
-                        className="w-full h-24"
-                        style={{ backgroundColor: bg.color || "#e5e7eb" }}
-                      />
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-colors">
-                      <span className="text-white text-xs font-semibold text-center px-2 drop-shadow-lg">
-                        {bg.name}
-                      </span>
-                    </div>
-                    {selectedBackground === bg.id && (
-                      <div className="absolute top-1 right-1 bg-orange-500 rounded-full p-1">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-4 text-xs text-gray-500 text-center bg-blue-50 rounded-lg p-3 border border-blue-200">
-                <p className="font-semibold text-blue-900 mb-1">
-                  💡 Powered by MediaPipe AI
-                </p>
-                <p className="text-blue-700">
-                  Background virtual menggunakan AI segmentation
-                </p>
-              </div>
-
-              {isProcessing && (
-                <div className="mt-3 flex items-center justify-center gap-2 text-xs text-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  Processing...
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Hidden video element */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        muted
-        className={
-          enableVirtualBackground
-            ? "hidden"
-            : `w-full h-full object-cover ${
-                mirrored ? " [transform:scaleX(-1)]" : ""
-              }`
-        }
+        className={`w-full h-full object-cover ${
+          mirrored ? "scale-x-[-1]" : ""
+        }`}
       />
-
-      {/* Hidden canvas for processing */}
-      <canvas ref={canvasRef} className="hidden" />
-
-      {/* Output canvas with background replacement */}
-      {enableVirtualBackground && (
-        <canvas ref={outputCanvasRef} className="w-full h-full object-cover" />
-      )}
-
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm p-4 text-center rounded-xl z-30">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm p-4 text-center rounded-xl">
           {error}
         </div>
       )}
@@ -473,16 +98,179 @@ function CameraFeed({
   );
 }
 
-export default function Pidato() {
-  const [isPaused, setIsPaused] = useState(false);
-  const [time, setTime] = useState(292);
+// Data pertanyaan wawancara
+const INTERVIEW_QUESTIONS = [
+  {
+    id: 1,
+    audio: "/voice-wwc/1 bisakah anda memperkenalkan diri.mp3",
+    text: "Bisakah Anda memperkenalkan diri secara singkat?",
+  },
+  {
+    id: 2,
+    audio: "/voice-wwc/2 arti kesuksesan.mp3",
+    text: "Menurut Anda, apa arti kesuksesan yang sebenarnya?",
+  },
+  {
+    id: 3,
+    audio: "/voice-wwc/3 5 tahun.mp3",
+    text: "Bagaimana Anda melihat diri Anda lima tahun ke depan?",
+  },
+  {
+    id: 4,
+    audio: "/voice-wwc/4 sosok.mp3",
+    text: "Siapa sosok yang paling menginspirasi Anda dan mengapa?",
+  },
+  {
+    id: 5,
+    audio: "/voice-wwc/5 hal.mp3",
+    text: "Apa hal yang paling Anda banggakan dalam hidup Anda sejauh ini?",
+  },
+  {
+    id: 6,
+    audio: "/voice-wwc/6 bagaimana anda.mp3",
+    text: "Bagaimana Anda menghadapi tekanan atau tantangan dalam belajar maupun bekerja?",
+  },
+  {
+    id: 7,
+    audio: "/voice-wwc/7 harapan.mp3",
+    text: "Bagaimana Anda menyikapi kegagalan atau hasil yang tidak sesuai harapan?",
+  },
+  {
+    id: 8,
+    audio: "/voice-wwc/8 disiplin.mp3",
+    text: "Apa yang biasanya Anda lakukan untuk tetap produktif dan disiplin setiap hari?",
+  },
+  {
+    id: 9,
+    audio: "/voice-wwc/9 pengalaman.mp3",
+    text: "Ceritakan pengalaman Anda bekerja dalam sebuah tim dan bagaimana peran Anda di dalamnya",
+  },
+  {
+    id: 10,
+    audio: "/voice-wwc/10 kekurangan.mp3",
+    text: "Apa kelebihan dan kekurangan diri Anda, dan bagaimana Anda mengatasinya?",
+  },
+];
 
+type InterviewState = "playing-question" | "user-answering" | "paused";
+
+export default function Pidato() {
+  const router = useRouter();
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [interviewState, setInterviewState] =
+    useState<InterviewState>("playing-question");
+  const [totalTime, setTotalTime] = useState(0);
+  const [answerTime, setAnswerTime] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const currentQuestion = INTERVIEW_QUESTIONS[currentQuestionIndex];
+  const isLastQuestion =
+    currentQuestionIndex === INTERVIEW_QUESTIONS.length - 1;
+
+  // Timer untuk total waktu
   useEffect(() => {
-    if (!isPaused && time > 0) {
-      const timer = setInterval(() => setTime((t) => t - 1), 1000);
+    if (!isPaused) {
+      const timer = setInterval(() => setTotalTime((t) => t + 1), 1000);
       return () => clearInterval(timer);
     }
-  }, [isPaused, time]);
+  }, [isPaused]);
+
+  // Timer untuk waktu jawaban user
+  useEffect(() => {
+    if (interviewState === "user-answering" && !isPaused) {
+      const timer = setInterval(() => setAnswerTime((t) => t + 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [interviewState, isPaused]);
+
+  // Auto play audio pertanyaan saat state berubah
+  useEffect(() => {
+    if (
+      interviewState === "playing-question" &&
+      audioRef.current &&
+      !isPaused
+    ) {
+      audioRef.current.currentTime = 0;
+      audioRef.current
+        .play()
+        .catch((e) => console.error("Audio play error:", e));
+    }
+  }, [interviewState, currentQuestionIndex, isPaused]);
+
+  // Handle audio selesai diputar
+  const handleAudioEnded = () => {
+    setInterviewState("user-answering");
+    setAnswerTime(0);
+    startRecording();
+  };
+
+  // Start recording user answer
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        // Save recording if needed
+        console.log("Recording saved", blob);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (e) {
+      console.error("Recording error:", e);
+    }
+  };
+
+  // Stop recording user answer
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // Handle user selesai menjawab
+  const handleFinishAnswer = () => {
+    stopRecording();
+
+    if (isLastQuestion) {
+      // Redirect ke halaman selesai
+      router.push("/podium-swara/selesai");
+    } else {
+      // Lanjut ke pertanyaan berikutnya
+      setCurrentQuestionIndex((prev) => prev + 1);
+      setInterviewState("playing-question");
+    }
+  };
+
+  // Handle pause/resume
+  const handlePauseResume = () => {
+    setIsPaused(!isPaused);
+
+    if (audioRef.current) {
+      if (isPaused) {
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -500,36 +288,69 @@ export default function Pidato() {
             <div className="flex justify-between items-center">
               <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
                 <p className="text-orange-500 font-bold text-lg">
-                  Mode : Wawancara
+                  Mode: Wawancara
+                </p>
+              </div>
+
+              {/* Progress Indicator */}
+              <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
+                <p className="text-gray-700 font-semibold">
+                  Pertanyaan {currentQuestionIndex + 1} /{" "}
+                  {INTERVIEW_QUESTIONS.length}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex justify-center items-end gap-10 w-full">
-            {/* User Camera with AI Virtual Background */}
             <CameraFeed
-              className="w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-200 shadow-2xl"
+              className="w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-200"
               label="Anda"
               mirrored
-              enableVirtualBackground={true}
             />
-
             <div className="flex items-center flex-col justify-center gap-10">
               {/* Question Bubble */}
               <div className="relative w-fit max-w-3xl mx-auto">
-                <div className="bg-white rounded-3xl shadow-md px-8 py-4 text-center text-orange-500 font-medium text-lg relative">
-                  <p>
-                    Ceritakan pengalaman Anda bekerja dalam sebuah tim
-                    <br />
-                    dan bagaimana peran Anda di dalamnya?
-                  </p>
+                <div
+                  className={`bg-white rounded-3xl shadow-md px-8 py-4 text-center text-orange-500 font-medium text-lg relative transition-all ${
+                    interviewState === "playing-question"
+                      ? "ring-4 ring-orange-400 animate-pulse"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    {interviewState === "playing-question" && (
+                      <Volume2 className="w-5 h-5 text-orange-500 animate-bounce" />
+                    )}
+                    {interviewState === "user-answering" && (
+                      <Mic className="w-5 h-5 text-red-500 animate-pulse" />
+                    )}
+                  </div>
+                  <p>{currentQuestion.text}</p>
                   <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[16px] border-transparent border-t-white"></div>
+                </div>
+
+                {/* State Indicator */}
+                <div className="mt-4 text-center">
+                  {interviewState === "playing-question" && (
+                    <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold">
+                      <Volume2 className="w-4 h-4" />
+                      Mendengarkan Pertanyaan...
+                    </span>
+                  )}
+                  {interviewState === "user-answering" && (
+                    <div className="space-y-2">
+                      <span className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-semibold">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        SEDANG MEREKAM - {formatTime(answerTime)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Interviewer Video */}
-              <div className="relative bg-white w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-400 shadow-2xl">
+              {/* Interviewer Avatar */}
+              <div className="relative bg-white w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-400">
                 <img
                   src="/podium/virtual.png"
                   alt="Bu Hilda PT Foodie"
@@ -538,6 +359,14 @@ export default function Pidato() {
                 <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/60 text-white px-2 py-1 rounded">
                   Bu Hilda PT Foodie
                 </span>
+
+                {/* Speaking Indicator */}
+                {interviewState === "playing-question" && (
+                  <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    Berbicara
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -546,8 +375,9 @@ export default function Pidato() {
           <div className="flex items-center justify-center mt-10">
             <div className="bg-white flex items-center justify-center w-[90%] h-40 rounded-2xl shadow-md">
               <div className="flex items-center gap-4 z-40">
+                {/* Pause/Resume */}
                 <button
-                  onClick={() => setIsPaused((v) => !v)}
+                  onClick={handlePauseResume}
                   className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
                   {isPaused ? (
@@ -558,24 +388,85 @@ export default function Pidato() {
                   {isPaused ? "Resume" : "Pause"}
                 </button>
 
-                <div className="bg-white border-3 border-orange-300 px-8 py-4 rounded-2xl shadow-xl">
+                {/* Total Time */}
+                <div className="bg-white border-4 border-orange-300 px-8 py-4 rounded-2xl shadow-xl">
+                  <p className="text-xs text-gray-600 mb-1">Total Waktu</p>
                   <p className="text-3xl font-bold text-gray-800 tabular-nums">
-                    {formatTime(time)}
+                    {formatTime(totalTime)}
                   </p>
                 </div>
 
-                <Link
-                  href="/podium-swara/selesai"
-                  className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  <Check className="w-5 h-5" />
-                  Selesai
-                </Link>
+                {/* Finish Answer Button */}
+                {interviewState === "user-answering" && (
+                  <button
+                    onClick={handleFinishAnswer}
+                    className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105 animate-pulse"
+                  >
+                    <Square className="w-5 h-5" />
+                    Berhenti Bicara
+                  </button>
+                )}
+
+                {/* Next/Finish Button */}
+                {interviewState === "user-answering" && (
+                  <button
+                    onClick={handleFinishAnswer}
+                    className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    {isLastQuestion ? (
+                      <>
+                        <Check className="w-5 h-5" />
+                        Selesai Wawancara
+                      </>
+                    ) : (
+                      <>
+                        <ChevronRight className="w-5 h-5" />
+                        Pertanyaan Selanjutnya
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="px-8 pb-6">
+            <div className="bg-white rounded-2xl p-4 shadow-md">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Progress Wawancara</span>
+                <span>
+                  {Math.round(
+                    ((currentQuestionIndex + 1) / INTERVIEW_QUESTIONS.length) *
+                      100
+                  )}
+                  %
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-orange-500 to-pink-500 h-3 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${
+                      ((currentQuestionIndex + 1) /
+                        INTERVIEW_QUESTIONS.length) *
+                      100
+                    }%`,
+                  }}
+                />
               </div>
             </div>
           </div>
         </section>
       </div>
+
+      {/* Hidden Audio Player */}
+      <audio
+        ref={audioRef}
+        src={currentQuestion.audio}
+        onEnded={handleAudioEnded}
+        className="hidden"
+      />
     </div>
   );
 }
