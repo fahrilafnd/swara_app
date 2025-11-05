@@ -1,11 +1,11 @@
 // src/app/api/auth/login/route.ts
+import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ??
-  "https://swara-backend.onrender.com/api/swara";
+  process.env.API_BASE ?? "https://swara-backend.onrender.com/api/swara";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
@@ -16,40 +16,53 @@ export async function POST(req: Request) {
       cache: "no-store",
     });
 
-    const text = await upstream.text();
-    const contentType =
-      upstream.headers.get("content-type") ?? "application/json";
+    const contentType = upstream.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
 
-    let headers: Record<string, string> = { "Content-Type": contentType };
+    // Ambil payload upstream
+    const payload = isJson ? await upstream.json() : await upstream.text();
 
-    if (upstream.ok && contentType.includes("application/json")) {
-      const parsed = JSON.parse(text);
-      const token: string | undefined = parsed?.data?.accessToken;
-
-      // cookie 1 minggu
-      if (token) {
-        const oneWeek = 60 * 60 * 24 * 7;
-        const secure = process.env.NODE_ENV === "production" ? "Secure; " : "";
-        headers[
-          "Set-Cookie"
-        ] = `swara_token=${token}; Path=/; HttpOnly; ${secure}SameSite=Lax; Max-Age=${oneWeek}`;
-      }
-
-      return new Response(JSON.stringify(parsed), {
-        status: upstream.status,
-        headers,
-      });
+    // Jika gagal login, teruskan status & payload upstream
+    if (!upstream.ok) {
+      return NextResponse.json(
+        isJson ? payload : { success: false, message: String(payload) },
+        { status: upstream.status }
+      );
     }
 
-    // non-JSON: teruskan apa adanya
-    return new Response(text, { status: upstream.status, headers });
+    // Ambil token dari payload JSON
+    const token: string | undefined = isJson
+      ? payload?.data?.accessToken ||
+        payload?.data?.token ||
+        payload?.access_token
+      : undefined;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: "Token tidak ditemukan di response login." },
+        { status: 502 }
+      );
+    }
+
+    // Set cookie HttpOnly 7 hari
+    const res = NextResponse.json(payload, { status: upstream.status });
+    res.cookies.set("swara_token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    return res;
   } catch (err: any) {
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         success: false,
-        message: err?.message ?? "Upstream error saat login.",
-      }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
+        message: "Upstream error saat login.",
+        error: String(err?.message || err),
+      },
+      { status: 502 }
     );
   }
 }

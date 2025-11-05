@@ -545,10 +545,8 @@ export default function SwaraProfilePage() {
                 <button
                   onClick={async () => {
                     try {
-                      // Hapus cookie login (Next.js App Router)
                       await fetch("/api/auth/logout", { method: "POST" });
 
-                      // Atau kalau belum punya route logout, bisa hapus manual:
                       document.cookie =
                         "swara_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 

@@ -89,5 +89,10 @@ export const config = {
     "/mentor/:path*",
     "/masuk",
     "/daftar",
+    "/latihan-dasar/:path*",
+    "/inspira/:path*",
+    "/latih-swara/:path*",
+    "/podium-swara/:path*",
+    "/profile"
   ],
 };

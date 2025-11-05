@@ -1,39 +1,146 @@
+// src/app/components/Header.tsx
 "use client";
 
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bell, CheckCheck, Trash2, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
+/** ====== Types ====== */
+type NotifType = "info" | "success" | "warning";
+type Notif = {
+  id: string;
+  title: string;
+  message: string;
+  href?: string;
+  type?: NotifType;
+  createdAt: number; // epoch ms
+  read: boolean;
+};
+
+/** ====== Helpers ====== */
+const fmtTimeAgo = (t: number) => {
+  const s = Math.floor((Date.now() - t) / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}j`;
+  const d = Math.floor(h / 24);
+  return `${d}h`;
+};
+
+const typeStyles: Record<NotifType, string> = {
+  info: "bg-blue-50 text-blue-700 ring-blue-200",
+  success: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  warning: "bg-amber-50 text-amber-700 ring-amber-200",
+};
+
+/** ====== STORAGE KEYS ====== */
+const LS_KEY = "swara:notifs";
+
+/** ====== MAIN HEADER ====== */
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // ---- ensure mounted to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const shouldShowBackButton =
     pathname.includes("/hasil-skor") || pathname.includes("/sesi-latihan");
 
-  // Define specific navigation based on current page
   const handleBackNavigation = () => {
     if (pathname.includes("/hasil-skor")) {
-      // From hasil-skor, go to sesi-latihan
       router.push("/skor-swara/sesi-latihan");
     } else if (pathname.includes("/sesi-latihan")) {
-      // From sesi-latihan, go to skor-swara
       router.push("/skor-swara");
     } else {
-      // Fallback to browser back
       router.back();
     }
   };
 
+  /** ====== NOTIFICATIONS STATE ====== */
+  const [open, setOpen] = useState(false);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+
+  // load from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) setNotifs(JSON.parse(raw));
+      else {
+        const seed: Notif[] = [
+          {
+            id: crypto.randomUUID(),
+            title: "Selamat! Skor kamu meningkat",
+            message: "Peningkatan 12% di Latihan Dasar minggu ini.",
+            href: "/skor-swara/riwayat",
+            type: "success",
+            createdAt: Date.now() - 1000 * 60 * 8,
+            read: false,
+          },
+          {
+            id: crypto.randomUUID(),
+            title: "Event malam ini",
+            message: "Webinar ‘Mengatasi Grogi’ mulai 19.00 WIB.",
+            href: "/event",
+            type: "info",
+            createdAt: Date.now() - 1000 * 60 * 60 * 4,
+            read: false,
+          },
+          {
+            id: crypto.randomUUID(),
+            title: "Tips cepat",
+            message: "Coba latihan 5 menit tiap pagi untuk konsistensi.",
+            type: "warning",
+            createdAt: Date.now() - 1000 * 60 * 60 * 30,
+            read: true,
+          },
+        ];
+        setNotifs(seed);
+        localStorage.setItem(LS_KEY, JSON.stringify(seed));
+      }
+    } catch {}
+  }, []);
+
+  // persist
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(notifs));
+    } catch {}
+  }, [notifs]);
+
+  const unreadCount = useMemo(
+    () => notifs.filter((n) => !n.read).length,
+    [notifs]
+  );
+
+  const markAllRead = () =>
+    setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
+
+  const markRead = (id: string) =>
+    setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+
+  const removeOne = (id: string) =>
+    setNotifs((ns) => ns.filter((n) => n.id !== id));
+
+  const clearAll = () => setNotifs([]);
+
+  /** Toggle modal */
+  const toggleOpen = () => setOpen((v) => !v);
+
   return (
     <header className="sticky top-0 z-30 flex w-full pr-12 py-5">
       <div className="flex w-full items-center justify-between">
-        {/* Conditional Content - Back Button or Search Bar */}
+        {/* Left: Back button / Search */}
         <div className="flex-1 flex justify-start">
           {shouldShowBackButton ? (
             <button
               onClick={handleBackNavigation}
-              className="flex items-center px-4 py-2 bg-white rounded-full text-orange-500 hover:text-orange-600 font-medium transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-orange-500 hover:text-orange-600 font-medium transition-colors shadow-sm"
             >
               <ArrowLeft className="w-5 h-5" />
               Kembali
@@ -61,32 +168,29 @@ export default function Header() {
                 type="text"
                 name="search"
                 id="search"
-                className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline focus:outline-[#F07122] "
+                className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline focus:outline-[#F07122]"
                 placeholder="Search"
               />
             </div>
           )}
         </div>
 
-        {/* Right Side Icons */}
+        {/* Right: Notification & Profile */}
         <div className="flex items-center gap-4 ml-4">
-          <div className="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg
-              width="25"
-              height="26"
-              viewBox="0 0 25 26"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M18.8896 11.9583C19.4948 17.5573 21.875 19.25 21.875 19.25H3.125C3.125 19.25 6.25 17.0281 6.25 9.24999C6.25 7.48229 6.90833 5.78645 8.08021 4.53645C9.25208 3.28645 10.8438 2.58333 12.5 2.58333C12.8521 2.58333 13.1993 2.61458 13.5417 2.67708M14.3021 22.375C14.1189 22.6907 13.8561 22.9528 13.5398 23.1349C13.2236 23.3171 12.865 23.413 12.5 23.413C12.135 23.413 11.7764 23.3171 11.4602 23.1349C11.1439 22.9528 10.8811 22.6907 10.6979 22.375M19.7917 8.83333C20.6205 8.83333 21.4153 8.50409 22.0014 7.91804C22.5874 7.33199 22.9167 6.53713 22.9167 5.70833C22.9167 4.87953 22.5874 4.08467 22.0014 3.49862C21.4153 2.91257 20.6205 2.58333 19.7917 2.58333C18.9629 2.58333 18.168 2.91257 17.582 3.49862C16.9959 4.08467 16.6667 4.87953 16.6667 5.70833C16.6667 6.53713 16.9959 7.33199 17.582 7.91804C18.168 8.50409 18.9629 8.83333 19.7917 8.83333Z"
-                stroke="#39363D"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+          {/* BELL */}
+          <button
+            aria-label="Buka notifikasi"
+            onClick={toggleOpen}
+            className="relative cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Bell className="w-6 h-6 text-[#39363D]" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F07122] text-white text-[10px] font-bold grid place-items-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+
           <Link href="/profile" className="hover:opacity-80 transition-opacity">
             <img
               src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
@@ -96,6 +200,234 @@ export default function Header() {
           </Link>
         </div>
       </div>
+
+      {/* Modal Notifikasi — render only after mounted and via Portal */}
+      {mounted && (
+        <NotificationsModal
+          open={open}
+          onClose={() => setOpen(false)}
+          notifs={notifs}
+          onMarkRead={markRead}
+          onMarkAllRead={markAllRead}
+          onRemove={removeOne}
+          onClearAll={clearAll}
+        />
+      )}
     </header>
+  );
+}
+
+/** ================== NOTIFICATIONS MODAL ================== */
+function NotificationsModal(props: {
+  open: boolean;
+  onClose: () => void;
+  notifs: Notif[];
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+  onRemove: (id: string) => void;
+  onClearAll: () => void;
+}) {
+  const {
+    open,
+    onClose,
+    notifs,
+    onMarkRead,
+    onMarkAllRead,
+    onRemove,
+    onClearAll,
+  } = props;
+  const router = useRouter();
+  const [tab, setTab] = useState<"all" | "unread">("all");
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // lock scroll body when open
+  useEffect(() => {
+    if (!open) return;
+    const body = document.body;
+    const prev = body.style.overflow;
+    body.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open, onClose]);
+
+  // Close on ESC
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  const list = useMemo(
+    () => (tab === "all" ? notifs : notifs.filter((n) => !n.read)),
+    [tab, notifs]
+  );
+
+  if (!open) return null;
+
+  // ---- render to body so it always sits above everything
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] bg-black/25 backdrop-blur-[1px] flex items-start justify-end"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        ref={containerRef}
+        className="mt-20 mr-8 w-[420px] max-w-[92vw] rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTab("all")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                tab === "all"
+                  ? "bg-orange-100 text-[#F07122]"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Semua
+            </button>
+            <button
+              onClick={() => setTab("unread")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                tab === "unread"
+                  ? "bg-orange-100 text-[#F07122]"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Belum dibaca
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onMarkAllRead}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
+              title="Tandai semua sudah dibaca"
+            >
+              <CheckCheck className="w-4 h-4" />
+              Tandai semua
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-gray-100"
+              aria-label="Tutup notifikasi"
+            >
+              <X className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+        </div>
+
+        {/* List */}
+        {list.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            Tidak ada notifikasi {tab === "unread" ? "baru" : ""}.
+          </div>
+        ) : (
+          <ul className="max-h-[60vh] overflow-y-auto divide-y">
+            {list.map((n) => (
+              <li
+                key={n.id}
+                className={`px-4 py-3 flex gap-3 items-start ${
+                  !n.read ? "bg-orange-50/40" : ""
+                }`}
+              >
+                {/* bullet */}
+                <div
+                  className={[
+                    "mt-1 shrink-0 rounded-full ring-2 w-8 h-8 grid place-items-center",
+                    typeStyles[n.type ?? "info"],
+                  ].join(" ")}
+                >
+                  {n.type === "success"
+                    ? "🏆"
+                    : n.type === "warning"
+                    ? "💡"
+                    : "🔔"}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-semibold text-gray-900 truncate">
+                      {n.title}
+                    </h4>
+                    <span className="text-xs text-gray-500 shrink-0">
+                      {fmtTimeAgo(n.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-0.5">{n.message}</p>
+
+                  <div className="mt-2 flex items-center gap-2">
+                    {!n.read && (
+                      <button
+                        onClick={() => onMarkRead(n.id)}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white border hover:bg-gray-50"
+                      >
+                        Tandai sudah dibaca
+                      </button>
+                    )}
+                    {n.href && (
+                      <button
+                        onClick={() => {
+                          onMarkRead(n.id);
+                          router.push(n.href!);
+                          onClose();
+                        }}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-[#F07122] text-white hover:brightness-110"
+                      >
+                        Buka
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onRemove(n.id)}
+                  className="p-1.5 rounded-md hover:bg-gray-100 shrink-0"
+                  title="Hapus"
+                >
+                  <Trash2 className="w-4 h-4 text-gray-600" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Footer */}
+        <div className="px-4 py-3 border-t flex items-center justify-between">
+          <span className="text-xs text-gray-500">
+            {notifs.filter((n) => !n.read).length} belum dibaca
+          </span>
+          <button
+            onClick={onClearAll}
+            className="text-xs font-semibold text-red-600 hover:text-red-700"
+          >
+            Hapus semua
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
+
 import {
   Plus,
   Edit2,
@@ -18,7 +19,35 @@ import {
   Calendar,
   Tag,
   BarChart3,
+  SortAsc,
 } from "lucide-react";
+
+type TEntry = {
+  id: string;
+  mm: string; // "00"
+  ss: string; // "12"
+  t: number; // detik -> mm*60+ss
+  text: string;
+};
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const clamp = (v: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, v));
+
+const parseLine = (line: string): TEntry | null => {
+  // Format: [mm:ss] isi kalimat...
+  const m = line.match(/^\s*\[(\d{2}):(\d{2})]\s*(.+)\s*$/);
+  if (!m) return null;
+  const mm = clamp(parseInt(m[1], 10), 0, 99);
+  const ss = clamp(parseInt(m[2], 10), 0, 59);
+  const text = m[3].trim();
+  return {
+    id: crypto.randomUUID(),
+    mm: pad2(mm),
+    ss: pad2(ss),
+    t: mm * 60 + ss,
+    text,
+  };
+};
 
 interface Video {
   id: number;
@@ -37,6 +66,89 @@ type SortField = "title" | "category" | "level" | "duration" | "addedDate";
 type SortOrder = "asc" | "desc";
 
 export default function ManajemenInspira() {
+  // Transkrip
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [entries, setEntries] = useState<TEntry[]>([
+    // contoh baris awal kosong (boleh dihapus)
+    { id: crypto.randomUUID(), mm: "00", ss: "00", t: 0, text: "" },
+  ]);
+
+  const onTimeChange = (id: string, part: "mm" | "ss", val: string) => {
+    setEntries((prev) =>
+      prev.map((e) => {
+        if (e.id !== id) return e;
+        // hanya angka & max 2 digit
+        const clean = val.replace(/\D/g, "").slice(0, 2);
+        const num = clamp(
+          parseInt(clean || "0", 10),
+          0,
+          part === "mm" ? 99 : 59
+        );
+        const mm = part === "mm" ? pad2(num) : e.mm;
+        const ss = part === "ss" ? pad2(num) : e.ss;
+        return { ...e, mm, ss, t: parseInt(mm) * 60 + parseInt(ss) };
+      })
+    );
+  };
+
+  const onTextChange = (id: string, val: string) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, text: val } : e))
+    );
+  };
+
+  const addRow = () => {
+    const last = entries.at(-1);
+    const nextT = last ? clamp(last.t + 5, 0, 99 * 60 + 59) : 0; // default +5 detik
+    const mm = pad2(Math.floor(nextT / 60));
+    const ss = pad2(nextT % 60);
+    setEntries((p) => [
+      ...p,
+      { id: crypto.randomUUID(), mm, ss, t: nextT, text: "" },
+    ]);
+  };
+
+  const removeRow = (id: string) =>
+    setEntries((p) => p.filter((e) => e.id !== id));
+
+  const sortByTime = () => setEntries((p) => [...p].sort((a, b) => a.t - b.t));
+
+  // Import .txt berformat [mm:ss] kalimat...
+  const handleUpload = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    if (!/\.txt$/i.test(file.name)) {
+      alert(
+        "Format yang didukung untuk import cepat: .txt dengan format [mm:ss] kalimat…"
+      );
+      ev.target.value = "";
+      return;
+    }
+    const text = await file.text();
+    const lines = text.split(/\r?\n/);
+    const parsed: TEntry[] = [];
+    for (const line of lines) {
+      const e = parseLine(line);
+      if (e) parsed.push(e);
+    }
+    if (parsed.length === 0) {
+      alert("Tidak ada baris valid. Gunakan format [mm:ss] kalimat…");
+    } else {
+      setEntries(parsed);
+    }
+    ev.target.value = "";
+  };
+
+  // Nilai final yang akan dikirim ke backend (array of {t, text})
+  const payload = useMemo(
+    () =>
+      entries
+        .filter((e) => e.text.trim().length > 0)
+        .map((e) => ({ t: e.t, text: e.text.trim() })),
+    [entries]
+  );
+
+  // End Transkrip
   const [videos, setVideos] = useState<Video[]>([
     {
       id: 1,
@@ -112,6 +224,7 @@ export default function ManajemenInspira() {
     level: "Pemula" as "Pemula" | "Menengah" | "Lanjutan",
     duration: "",
     description: "",
+    notes: "",
     thumbnail: null as File | null,
     videoFile: null as File | null,
   });
@@ -217,6 +330,7 @@ export default function ManajemenInspira() {
       level: "Pemula",
       duration: "",
       description: "",
+      notes: "",
       thumbnail: null,
       videoFile: null,
     });
@@ -289,6 +403,7 @@ export default function ManajemenInspira() {
       level: video.level,
       duration: video.duration,
       description: video.description,
+      notes: "",
       thumbnail: null,
       videoFile: null,
     });
@@ -621,7 +736,7 @@ export default function ManajemenInspira() {
       {/* Modal Add Video */}
       {mounted && showAddModal
         ? createPortal(
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
+            <div className="fixed inset-0 text-black bg-black/50 flex items-center justify-center z-[1000] p-4">
               <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b">
                   <h2 className="text-2xl font-bold text-gray-900">
@@ -820,6 +935,26 @@ export default function ManajemenInspira() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Deskripsi - TEXTAREA BARU */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Deskripsi <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      placeholder="Tuliskan deskripsi singkat tentang video ini..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    />
+                  </div>
+
                   {/* Teknik Section */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -853,29 +988,120 @@ export default function ManajemenInspira() {
                       />
                     </div>
                   </div>
+
                   {/* Transcript Upload */}
                   <div>
-                    <label className="block text-gray-900 font-semibold mb-2">
+                    {/* Area Upload (tetap sesuai gaya kamu) */}
+                    <label htmlFor="">
                       Transkrip <span className="text-red-500">*</span>
                     </label>
-                    <label
-                      htmlFor="transcript-upload"
-                      className="block rounded-xl border-2 border-dashed border-[#F07122] bg-white p-8 text-center cursor-pointer hover:bg-orange-50 transition"
-                    >
-                      <input
-                        id="transcript-upload"
-                        type="file"
-                        accept=".txt,.pdf,.doc,.docx"
-                        className="hidden"
-                      />
-                      <BarChart3 className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                      <p className="font-medium text-gray-800">
-                        Upload Transkrip
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        TXT, DOC / PDF
-                      </p>
+                    {/* Kontrol aksi */}
+                    <div className="flex items-center justify-between mt-4">
+                      <button
+                        type="button"
+                        onClick={addRow}
+                        className="inline-flex items-center gap-2 bg-[#F07122] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Tambah Baris
+                      </button>
+                      <button
+                        type="button"
+                        onClick={sortByTime}
+                        className="inline-flex items-center gap-2 border border-[#F07122] text-[#F07122] px-4 py-2 rounded-lg hover:bg-orange-50 transition"
+                        title="Urutkan berdasarkan waktu"
+                      >
+                        <SortAsc className="w-4 h-4" />
+                        Urutkan (mm:ss)
+                      </button>
+                    </div>
+
+                    {/* Daftar baris transkrip */}
+                    <div className="mt-4 space-y-3">
+                      {entries.map((e, idx) => (
+                        <div
+                          key={e.id}
+                          className="grid grid-cols-[90px_1fr_40px] items-start gap-3"
+                        >
+                          {/* Input waktu mm:ss */}
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              value={e.mm}
+                              onChange={(v) =>
+                                onTimeChange(e.id, "mm", v.target.value)
+                              }
+                              className="w-12 text-center border border-[#B3C8CF] rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                              placeholder="mm"
+                              inputMode="numeric"
+                            />
+                            <span className="text-gray-500">:</span>
+                            <input
+                              value={e.ss}
+                              onChange={(v) =>
+                                onTimeChange(e.id, "ss", v.target.value)
+                              }
+                              className="w-12 text-center border border-[#B3C8CF] rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                              placeholder="ss"
+                              inputMode="numeric"
+                            />
+                          </div>
+
+                          {/* Teks transkrip */}
+                          <textarea
+                            value={e.text}
+                            onChange={(v) => onTextChange(e.id, v.target.value)}
+                            rows={2}
+                            className="w-full border border-[#B3C8CF] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                            placeholder={`Kalimat pada [${e.mm}:${e.ss}]…`}
+                          />
+
+                          {/* Hapus */}
+                          <button
+                            type="button"
+                            onClick={() => removeRow(e.id)}
+                            className="h-10 w-10 flex items-center justify-center rounded-lg border border-red-300 text-red-500 hover:bg-red-50"
+                            title="Hapus baris"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Hidden field untuk dikirim ke API */}
+                    <input
+                      type="hidden"
+                      name="transcript_json"
+                      value={JSON.stringify(payload)}
+                      readOnly
+                    />
+
+                    {/* Hint kecil */}
+                    <p className="text-xs text-gray-500 mt-3">
+                      * Simpan akan mengirim <code>transcript_json</code> berupa
+                      array <code>[{"{ t, text }"}]</code>, misal:{" "}
+                      <code>[{'{ t:12, text:"…" }'}]</code>. Kolom kosong
+                      otomatis di-skip.
+                    </p>
+                  </div>
+
+                  {/* Catatan - TEXTAREA BARU */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Catatan
                     </label>
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          notes: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      placeholder="Tambahkan catatan tambahan jika diperlukan..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    />
                   </div>
 
                   {/* Submit Button */}
@@ -894,7 +1120,7 @@ export default function ManajemenInspira() {
 
       {mounted && showEditModal && selectedVideo
         ? createPortal(
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
+            <div className="fixed inset-0 text-black bg-black/50 flex items-center justify-center z-[1000] p-4">
               <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b">
                   <h2 className="text-2xl font-bold text-gray-900">
@@ -1094,6 +1320,26 @@ export default function ManajemenInspira() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Deskripsi - TEXTAREA BARU */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Deskripsi <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      placeholder="Tuliskan deskripsi singkat tentang video ini..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    />
+                  </div>
+
                   {/* Teknik rows */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -1129,27 +1375,117 @@ export default function ManajemenInspira() {
                   </div>
                   {/* Transcript upload */}
                   <div>
-                    <label className="block text-gray-900 font-semibold mb-2">
+                    {/* Area Upload (tetap sesuai gaya kamu) */}
+                    <label htmlFor="">
                       Transkrip <span className="text-red-500">*</span>
                     </label>
-                    <label
-                      htmlFor="transcript-edit"
-                      className="block rounded-xl border-2 border-dashed border-[#F07122] bg-white p-8 text-center cursor-pointer hover:bg-orange-50 transition"
-                    >
-                      <input
-                        id="transcript-edit"
-                        type="file"
-                        accept=".txt,.pdf,.doc,.docx"
-                        className="hidden"
-                      />
-                      <BarChart3 className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                      <p className="font-medium text-gray-800">
-                        Upload Transkrip
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        TXT, DOC / PDF
-                      </p>
+                    {/* Kontrol aksi */}
+                    <div className="flex items-center justify-between mt-4">
+                      <button
+                        type="button"
+                        onClick={addRow}
+                        className="inline-flex items-center gap-2 bg-[#F07122] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Tambah Baris
+                      </button>
+                      <button
+                        type="button"
+                        onClick={sortByTime}
+                        className="inline-flex items-center gap-2 border border-[#F07122] text-[#F07122] px-4 py-2 rounded-lg hover:bg-orange-50 transition"
+                        title="Urutkan berdasarkan waktu"
+                      >
+                        <SortAsc className="w-4 h-4" />
+                        Urutkan (mm:ss)
+                      </button>
+                    </div>
+
+                    {/* Daftar baris transkrip */}
+                    <div className="mt-4 space-y-3">
+                      {entries.map((e, idx) => (
+                        <div
+                          key={e.id}
+                          className="grid grid-cols-[90px_1fr_40px] items-start gap-3"
+                        >
+                          {/* Input waktu mm:ss */}
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              value={e.mm}
+                              onChange={(v) =>
+                                onTimeChange(e.id, "mm", v.target.value)
+                              }
+                              className="w-12 text-center border border-[#B3C8CF] rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                              placeholder="mm"
+                              inputMode="numeric"
+                            />
+                            <span className="text-gray-500">:</span>
+                            <input
+                              value={e.ss}
+                              onChange={(v) =>
+                                onTimeChange(e.id, "ss", v.target.value)
+                              }
+                              className="w-12 text-center border border-[#B3C8CF] rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                              placeholder="ss"
+                              inputMode="numeric"
+                            />
+                          </div>
+
+                          {/* Teks transkrip */}
+                          <textarea
+                            value={e.text}
+                            onChange={(v) => onTextChange(e.id, v.target.value)}
+                            rows={2}
+                            className="w-full border border-[#B3C8CF] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                            placeholder={`Kalimat pada [${e.mm}:${e.ss}]…`}
+                          />
+
+                          {/* Hapus */}
+                          <button
+                            type="button"
+                            onClick={() => removeRow(e.id)}
+                            className="h-10 w-10 flex items-center justify-center rounded-lg border border-red-300 text-red-500 hover:bg-red-50"
+                            title="Hapus baris"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Hidden field untuk dikirim ke API */}
+                    <input
+                      type="hidden"
+                      name="transcript_json"
+                      value={JSON.stringify(payload)}
+                      readOnly
+                    />
+
+                    {/* Hint kecil */}
+                    <p className="text-xs text-gray-500 mt-3">
+                      * Simpan akan mengirim <code>transcript_json</code> berupa
+                      array <code>[{"{ t, text }"}]</code>, misal:{" "}
+                      <code>[{'{ t:12, text:"…" }'}]</code>. Kolom kosong
+                      otomatis di-skip.
+                    </p>
+                  </div>
+
+                  {/* Catatan - TEXTAREA BARU */}
+                  <div>
+                    <label className="block text-gray-900 font-semibold mb-2">
+                      Catatan
                     </label>
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          notes: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      placeholder="Tambahkan catatan tambahan jika diperlukan..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    />
                   </div>
 
                   <button

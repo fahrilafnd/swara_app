@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Sembunyikan footer UserWay di mana pun ia muncul */
+.uwaw-footer,
+div.uwaw-footer,
+div[class*="uwaw-footer"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Bila mereka menyuntik style tinggi di parent, paksa jadi 0 */
+.uwaw-footer + .uwaw-footer__i,
+div[class*="uwaw-footer__"] {
+  display: none !important;
+}
+
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
