@@ -21,6 +21,7 @@ import {
   Building,
   User,
   X,
+  Loader,
 } from "lucide-react";
 
 type BankAccount = {
@@ -50,7 +51,13 @@ function EditBankAccountModal({
   const [errors, setErrors] = useState<
     Partial<Record<keyof BankAccount, string>>
   >({});
+  const [mounted, setMounted] = useState(false);
   const firstFieldRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -77,7 +84,7 @@ function EditBankAccountModal({
     [banks]
   );
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const validate = () => {
     const e: Partial<Record<keyof BankAccount, string>> = {};
@@ -98,83 +105,116 @@ function EditBankAccountModal({
     });
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50"
+      className="fixed inset-0 z-[100] animate-fadeIn"
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-rekening-title"
     >
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="absolute inset-0 grid place-items-center p-4">
-        <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b">
+      <div className="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl my-8 animate-scaleIn">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-orange-500 text-white grid place-items-center">
-                <Building className="w-5 h-5" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shadow-lg">
+                <Building className="w-6 h-6" />
               </div>
               <div>
                 <h2
                   id="edit-rekening-title"
-                  className="font-semibold text-gray-900"
+                  className="text-xl font-bold text-gray-900"
                 >
                   Ubah Rekening
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-600">
                   Atur rekening tujuan penarikan
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
-                • Aman & Tervalidasi
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 border border-emerald-200">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Aman & Tervalidasi
               </span>
               <button
                 onClick={onClose}
                 aria-label="Tutup"
-                className="ml-1 rounded-lg p-2 hover:bg-gray-100 text-gray-500"
+                className="ml-2 rounded-xl p-2 hover:bg-gray-100 text-gray-500 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto p-6 space-y-5">
+          {/* Content */}
+          <div className="max-h-[calc(90vh-200px)] overflow-y-auto p-6 space-y-6">
+            {/* Bank Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bank
+              <label className="block text-sm font-bold text-gray-900 mb-2">
+                Bank <span className="text-red-500">*</span>
               </label>
-              <select
-                className="w-full rounded-xl p-4 border border-gray-300 focus:border-orange-500 focus:ring-orange-500"
-                value={values.bankName}
-                onChange={(e) =>
-                  setValues((v) => ({ ...v, bankName: e.target.value }))
-                }
-              >
-                <option value="">Pilih bank…</option>
-                {bankOptions.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className={`w-full rounded-xl px-4 py-4 border-2 ${
+                    errors.bankName
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                  } text-gray-900 font-medium focus:outline-none focus:ring-2 transition-all appearance-none bg-white`}
+                  value={values.bankName}
+                  onChange={(e) =>
+                    setValues((v) => ({ ...v, bankName: e.target.value }))
+                  }
+                >
+                  <option value="">Pilih bank…</option>
+                  {bankOptions.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
               {errors.bankName && (
-                <p className="mt-1 text-sm text-red-600">{errors.bankName}</p>
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.bankName}
+                </p>
               )}
             </div>
 
+            {/* Account Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nomor Rekening
+              <label className="block text-sm font-bold text-gray-900 mb-2">
+                Nomor Rekening <span className="text-red-500">*</span>
               </label>
               <input
                 ref={firstFieldRef}
                 inputMode="numeric"
                 autoComplete="off"
-                className="w-full rounded-xl p-4 border border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                className={`w-full rounded-xl px-4 py-4 border-2 ${
+                  errors.accountNumber
+                    ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                } text-gray-900 font-medium focus:outline-none focus:ring-2 transition-all`}
                 placeholder="Contoh: 1234567890"
                 value={values.accountNumber}
                 onChange={(e) =>
@@ -185,21 +225,28 @@ function EditBankAccountModal({
                 }
               />
               {errors.accountNumber && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
                   {errors.accountNumber}
                 </p>
               )}
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
                 Pastikan nomor sesuai buku/tabungan & aktif.
               </p>
             </div>
 
+            {/* Account Name */}
             <div>
-              <label className="block  text-sm font-medium text-gray-700 mb-2">
-                Nama Pemilik Rekening
+              <label className="block text-sm font-bold text-gray-900 mb-2">
+                Nama Pemilik Rekening <span className="text-red-500">*</span>
               </label>
               <input
-                className="w-full p-4 border rounded-xl border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                className={`w-full rounded-xl px-4 py-4 border-2 ${
+                  errors.accountName
+                    ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                } text-gray-900 font-medium focus:outline-none focus:ring-2 transition-all`}
                 placeholder="Nama sesuai rekening"
                 value={values.accountName}
                 onChange={(e) =>
@@ -207,37 +254,94 @@ function EditBankAccountModal({
                 }
               />
               {errors.accountName && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
                   {errors.accountName}
                 </p>
               )}
             </div>
 
-            <div className="rounded-xl bg-amber-50 text-amber-800 p-4 text-sm">
-              <b>Catatan:</b> data rekening dipakai untuk penarikan saldo.
-              Simpan perubahan hanya jika datanya benar.
+            {/* Warning */}
+            <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-bold text-amber-900 mb-1">
+                    Catatan Penting:
+                  </p>
+                  <p className="text-sm text-amber-800 leading-relaxed">
+                    Data rekening dipakai untuk penarikan saldo. Simpan
+                    perubahan hanya jika datanya benar. Pastikan nama pemilik
+                    rekening sesuai dengan nama yang terdaftar di bank.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="sticky bottom-0 p-5 border-t bg-white flex items-center justify-end gap-3">
+          {/* Footer */}
+          <div className="sticky bottom-0 p-6 border-t border-gray-200 bg-white rounded-b-3xl flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 font-semibold text-gray-700"
+              className="px-6 py-3 rounded-xl border-2 border-gray-300 hover:bg-gray-50 font-bold text-gray-700 transition-colors"
             >
               Batal
             </button>
             <button
               onClick={handleSave}
               disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold disabled:opacity-60"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {loading ? "Menyimpan…" : "Simpan Perubahan"}
+              {loading ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Menyimpan…
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  Simpan Perubahan
+                </>
+              )}
             </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
+        }
+      `}</style>
+    </div>,
+    document.body
   );
 }
 
@@ -452,6 +556,10 @@ export default function Pembayaran() {
   const handleSave = async (values: BankAccount) => {
     setSaving(true);
     try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      console.log("Saved:", values);
+      alert("Rekening berhasil diperbarui!");
       setOpenEdit(false);
     } finally {
       setSaving(false);
@@ -556,15 +664,17 @@ export default function Pembayaran() {
             Ubah Rekening
           </button>
         </div>
-        <EditBankAccountModal
-          open={openEdit}
-          initialValues={bankAccount}
-          onClose={() => setOpenEdit(false)}
-          onSave={handleSave}
-          loading={saving}
-          banks={["Bank BCA", "BNI", "BRI", "Mandiri", "CIMB Niaga", "Permata"]}
-        />
       </div>
+
+      {/* Edit Bank Account Modal */}
+      <EditBankAccountModal
+        open={openEdit}
+        initialValues={bankAccount}
+        onClose={() => setOpenEdit(false)}
+        onSave={handleSave}
+        loading={saving}
+        banks={["Bank BCA", "BNI", "BRI", "Mandiri", "CIMB Niaga", "Permata"]}
+      />
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-md mb-6">
@@ -915,7 +1025,7 @@ export default function Pembayaran() {
       {/* Modal Transaction Detail */}
       {mounted && showDetailModal && selectedTransaction
         ? createPortal(
-            <div className="fixed inset-0 bg-black z-60 bg-opacity-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black z-[90] bg-opacity-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b">
                   <div className="flex items-center gap-3">

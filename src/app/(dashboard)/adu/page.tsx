@@ -5,63 +5,50 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AduSwaraIntroModal from "@/app/components/adu-swara/AduSwaraIntroModal";
 import { createPortal } from "react-dom";
-import { Users, Swords, Trophy, Target } from "lucide-react";
+import { Users, Swords, Trophy, Target, AlertCircle } from "lucide-react";
+import {
+  getCurrentUser,
+  createBattleRoom,
+  joinQueue,
+  leaveQueue,
+  findMatch,
+  getQueueCount,
+  type Player,
+} from "@/lib/matchmaking";
 
-// Mock opponent data
-const MOCK_OPPONENTS = [
-  {
-    name: "Alex Rahman",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    level: 2,
-    winRate: 67,
-    avgScore: 285,
-  },
-  {
-    name: "Sarah Putri",
-    avatar: "https://i.pravatar.cc/150?img=47",
-    level: 3,
-    winRate: 72,
-    avgScore: 310,
-  },
-  {
-    name: "Budi Santoso",
-    avatar: "https://i.pravatar.cc/150?img=33",
-    level: 2,
-    winRate: 58,
-    avgScore: 270,
-  },
-  {
-    name: "Diana Kusuma",
-    avatar: "https://i.pravatar.cc/150?img=44",
-    level: 2,
-    winRate: 63,
-    avgScore: 295,
-  },
-];
-
-type MatchmakingState = "idle" | "searching" | "found" | "countdown";
+type MatchmakingState = "idle" | "searching" | "found" | "countdown" | "no_players";
 
 export default function Adu() {
   const router = useRouter();
-  const [isOpenMatch, setIsOpenMatch] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [currentUser, setCurrentUser] = useState<Player | null>(null);
 
   // Matchmaking states
   const [matchmakingState, setMatchmakingState] =
     useState<MatchmakingState>("idle");
-  const [opponent, setOpponent] = useState<(typeof MOCK_OPPONENTS)[0] | null>(
-    null
-  );
-  const [countdown, setCountdown] = useState(15);
+  const [opponent, setOpponent] = useState<Player | null>(null);
+  const [countdown, setCountdown] = useState(5);
   const [searchDots, setSearchDots] = useState("");
+  const [searchDuration, setSearchDuration] = useState(0);
+  const [queueCount, setQueueCount] = useState(0);
+
+  const MAX_SEARCH_TIME = 30; // 30 seconds before showing "no players"
 
   useEffect(() => {
     setMounted(true);
+    setCurrentUser(getCurrentUser());
+
     const hidden =
       typeof window !== "undefined" &&
       localStorage.getItem("aduIntroHide") === "1";
     setShowModal(!hidden);
+
+    // Cleanup: remove from queue when component unmounts
+    return () => {
+      const user = getCurrentUser();
+      leaveQueue(user.id);
+    };
   }, []);
 
   // Animate searching dots
@@ -74,25 +61,49 @@ export default function Adu() {
     }
   }, [matchmakingState]);
 
-  // Matchmaking logic
+  // Real matchmaking logic with polling
   useEffect(() => {
-    if (matchmakingState === "searching") {
-      // Simulate finding opponent after 3 seconds
-      const timer = setTimeout(() => {
-        const randomOpponent =
-          MOCK_OPPONENTS[Math.floor(Math.random() * MOCK_OPPONENTS.length)];
-        setOpponent(randomOpponent);
-        setMatchmakingState("found");
+    if (matchmakingState === "searching" && currentUser) {
+      // Increment search duration
+      const durationInterval = setInterval(() => {
+        setSearchDuration((prev) => prev + 1);
+      }, 1000);
 
-        // After showing opponent, start countdown
-        setTimeout(() => {
-          setMatchmakingState("countdown");
-        }, 2000);
-      }, 3000);
+      // Poll for match every 2 seconds
+      const pollInterval = setInterval(() => {
+        const foundOpponent = findMatch(currentUser);
 
-      return () => clearTimeout(timer);
+        if (foundOpponent) {
+          console.log("Match found!", foundOpponent);
+          setOpponent(foundOpponent);
+          setMatchmakingState("found");
+
+          // After showing opponent, start countdown
+          setTimeout(() => {
+            setMatchmakingState("countdown");
+          }, 2000);
+        } else {
+          // Update queue count
+          const count = getQueueCount(currentUser.id);
+          setQueueCount(count);
+          console.log("Waiting for opponent... Queue:", count);
+        }
+      }, 2000);
+
+      return () => {
+        clearInterval(pollInterval);
+        clearInterval(durationInterval);
+      };
     }
-  }, [matchmakingState]);
+  }, [matchmakingState, currentUser]);
+
+  // Check if search timeout (no players found)
+  useEffect(() => {
+    if (matchmakingState === "searching" && searchDuration >= MAX_SEARCH_TIME) {
+      console.log("Search timeout - no players found");
+      setMatchmakingState("no_players");
+    }
+  }, [searchDuration, matchmakingState]);
 
   // Countdown logic
   useEffect(() => {
@@ -102,26 +113,42 @@ export default function Adu() {
       }, 1000);
       return () => clearTimeout(timer);
     } else if (matchmakingState === "countdown" && countdown === 0) {
-      // Redirect to battle
-      router.push("/adu/slug");
+      // Create battle room and redirect
+      if (currentUser && opponent) {
+        const room = createBattleRoom(currentUser, opponent);
+        console.log("Battle room created:", room);
+        router.push(`/adu/${room.roomId}`);
+      }
     }
-  }, [matchmakingState, countdown, router]);
+  }, [matchmakingState, countdown, router, currentUser, opponent]);
 
   const startMatchmaking = () => {
-    setIsOpenMatch(true);
+    if (!currentUser) return;
+
     setMatchmakingState("searching");
-    setCountdown(15);
+    setSearchDuration(0);
+    setCountdown(5);
     setOpponent(null);
+    setQueueCount(0);
+
+    // Join matchmaking queue
+    joinQueue(currentUser);
+    console.log("Joined matchmaking queue");
   };
 
   const cancelMatchmaking = () => {
-    setIsOpenMatch(false);
+    if (currentUser) {
+      leaveQueue(currentUser.id);
+    }
+
     setMatchmakingState("idle");
-    setCountdown(15);
+    setSearchDuration(0);
+    setCountdown(5);
     setOpponent(null);
   };
 
   const renderMatchmakingModal = () => {
+    // Searching state
     if (matchmakingState === "searching") {
       return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -133,13 +160,18 @@ export default function Adu() {
               <h2 className="text-2xl font-black text-gray-900 mb-2">
                 Mencari Lawan{searchDots}
               </h2>
-              <p className="text-gray-600">
-                Mencocokkan dengan pemain level yang sama
+              <p className="text-gray-600 mb-2">
+                Menunggu pemain lain bergabung...
+              </p>
+              <p className="text-sm text-gray-500">
+                {queueCount === 0
+                  ? "Belum ada pemain lain di queue"
+                  : `${queueCount} pemain sedang mencari`}
               </p>
             </div>
 
             {/* Animated searching indicators */}
-            <div className="flex justify-center gap-2 mb-8">
+            <div className="flex justify-center gap-2 mb-6">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
@@ -157,9 +189,24 @@ export default function Adu() {
               <div className="absolute inset-4 border-4 border-orange-300 rounded-full animate-ping animation-delay-200" />
               <div className="absolute inset-8 border-4 border-orange-400 rounded-full animate-ping animation-delay-400" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Target className="w-16 h-16 text-orange-500 animate-spin" />
+                <div className="text-center">
+                  <Target className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-orange-600">
+                    {searchDuration}s
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* Timeout warning */}
+            {searchDuration > MAX_SEARCH_TIME / 2 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4">
+                <p className="text-sm text-yellow-800">
+                  ⏱️ Sudah mencari {searchDuration} detik. Mungkin tidak ada
+                  pemain lain saat ini.
+                </p>
+              </div>
+            )}
 
             <button
               onClick={cancelMatchmaking}
@@ -172,6 +219,60 @@ export default function Adu() {
       );
     }
 
+    // No players found state
+    if (matchmakingState === "no_players") {
+      return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl w-[500px] text-center">
+            <div className="mb-6">
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-12 h-12 text-gray-500" />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">
+                Tidak Ada Pemain Lain
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Saat ini tidak ada pemain lain yang sedang mencari battle.
+              </p>
+              <p className="text-sm text-gray-500">
+                Coba lagi nanti atau ajak teman untuk bermain bersama!
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <p className="text-sm text-blue-800 mb-2">
+                💡 <strong>Tips:</strong>
+              </p>
+              <ul className="text-sm text-blue-700 text-left space-y-1">
+                <li>• Coba lagi di jam-jam ramai (12:00 - 14:00 atau 19:00 - 21:00)</li>
+                <li>• Ajak teman untuk bermain bersama</li>
+                <li>• Latihan solo dulu di fitur Latihan</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={cancelMatchmaking}
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                onClick={() => {
+                  setMatchmakingState("idle");
+                  setTimeout(startMatchmaking, 100);
+                }}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full font-semibold hover:shadow-lg transition-all"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Match found state
     if (matchmakingState === "found" && opponent) {
       return (
         <div className="fixed inset-0 bg-gradient-to-br from-orange-500/20 via-pink-500/20 to-purple-500/20 backdrop-blur-sm flex items-center justify-center z-50">
@@ -189,13 +290,17 @@ export default function Adu() {
               <div className="flex-1 text-center">
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto mb-3 flex items-center justify-center border-4 border-white shadow-xl">
                   <img
-                    src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
+                    src={currentUser?.avatar || ""}
                     alt="You"
                     className="w-full h-full rounded-full object-cover"
                   />
                 </div>
-                <p className="font-black text-gray-900 mb-1">Kamu</p>
-                <p className="text-xs text-gray-600">Level 2</p>
+                <p className="font-black text-gray-900 mb-1">
+                  {currentUser?.name}
+                </p>
+                <p className="text-xs text-gray-600">
+                  Level {currentUser?.level}
+                </p>
               </div>
 
               {/* VS Badge */}
@@ -247,6 +352,7 @@ export default function Adu() {
       );
     }
 
+    // Countdown state
     if (matchmakingState === "countdown" && opponent) {
       return (
         <div className="fixed inset-0 bg-gradient-to-br from-orange-500/30 via-pink-500/30 to-purple-500/30 backdrop-blur-md flex items-center justify-center z-50">
@@ -290,7 +396,7 @@ export default function Adu() {
                     strokeLinecap="round"
                     strokeDasharray={`${2 * Math.PI * 85}`}
                     strokeDashoffset={`${
-                      2 * Math.PI * 85 * (1 - countdown / 15)
+                      2 * Math.PI * 85 * (1 - countdown / 5)
                     }`}
                     className="transition-all duration-1000 ease-linear"
                   />
@@ -313,7 +419,7 @@ export default function Adu() {
                   <div className="text-center">
                     <p
                       className={`text-7xl font-black transition-all duration-300 ${
-                        countdown <= 5
+                        countdown <= 3
                           ? "text-red-500 animate-pulse"
                           : "text-orange-500"
                       }`}
@@ -327,28 +433,25 @@ export default function Adu() {
                 </div>
               </div>
 
-              {/* Topic */}
-              <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-4 mb-6 border-2 border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Topik Battle:</p>
-                <p className="text-sm font-bold text-orange-600">
-                  Merancang Masa Depan: Membangun Karier di Era Digital
-                </p>
-              </div>
-
               {/* Quick tips */}
               <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
                 <p className="text-xs text-blue-800 font-semibold mb-1">
                   💡 Tips Cepat:
                 </p>
                 <p className="text-xs text-blue-700">
-                  Berbicaralah dengan percaya diri dan jelas. Jangan lupa
-                  tersenyum!
+                  Setiap pemain punya 60 detik. Berbicaralah dengan percaya
+                  diri dan jelas!
                 </p>
               </div>
 
               {/* Skip button */}
               <button
-                onClick={() => router.push("/adu/slug")}
+                onClick={() => {
+                  if (currentUser && opponent) {
+                    const room = createBattleRoom(currentUser, opponent);
+                    router.push(`/adu/${room.roomId}`);
+                  }
+                }}
                 className="mt-6 px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full font-bold hover:shadow-lg transition-all hover:-translate-y-0.5"
               >
                 Mulai Sekarang! →
@@ -471,10 +574,15 @@ export default function Adu() {
           </div>
           <button
             onClick={startMatchmaking}
-            className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-2xl py-5 w-full rounded-2xl font-bold mb-7 hover:shadow-2xl transition-all hover:-translate-y-1 flex items-center justify-center gap-3"
+            disabled={matchmakingState !== "idle"}
+            className={`bg-gradient-to-r from-orange-500 to-pink-500 text-white text-2xl py-5 w-full rounded-2xl font-bold mb-7 transition-all flex items-center justify-center gap-3 ${
+              matchmakingState !== "idle"
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:shadow-2xl hover:-translate-y-1"
+            }`}
           >
             <Swords className="w-8 h-8" />
-            Mulai Battle
+            {matchmakingState === "idle" ? "Mulai Battle" : "Mencari Lawan..."}
             <Swords className="w-8 h-8" />
           </button>
           <div className="bg-white rounded-2xl p-7">

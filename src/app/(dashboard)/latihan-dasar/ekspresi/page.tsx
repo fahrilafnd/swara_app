@@ -23,7 +23,6 @@ import {
   Loader,
   ArrowLeft,
 } from "lucide-react";
-import { create } from "domain";
 
 interface ExpressionData {
   happiness: number;
@@ -65,9 +64,15 @@ export default function Ekspresi() {
   const detectionIntervalRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const sessionDataRef = useRef<ExpressionData[]>([]);
 
   const TARGET_HAPPINESS = 85;
   const SESSION_DURATION = 10;
+
+  // Sync sessionData with ref
+  useEffect(() => {
+    sessionDataRef.current = sessionData;
+  }, [sessionData]);
 
   // Load face-api models
   const loadModels = async () => {
@@ -260,9 +265,6 @@ export default function Ekspresi() {
             box.x + box.width / 2 - 30,
             box.y - 10
           );
-
-          // Optionally draw landmarks
-          // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
         }
       } else {
         // No face detected
@@ -296,6 +298,7 @@ export default function Ekspresi() {
 
     // Reset session data
     setSessionData([]);
+    sessionDataRef.current = [];
     setTimer(0);
     setIsDetecting(true);
     setIsTimerRunning(true);
@@ -334,45 +337,57 @@ export default function Ekspresi() {
 
     setIsDetecting(false);
     setIsTimerRunning(false);
-
-    // Calculate results - wait a bit to ensure all data is collected
-    setTimeout(() => {
-      calculateResults();
-    }, 500);
   };
 
-  // Calculate session results
-  const calculateResults = () => {
-    if (sessionData.length === 0) {
-      alert("Tidak ada data yang tercatat. Coba lagi!");
-      return;
+  // Calculate session results when detection stops
+  useEffect(() => {
+    if (
+      !isDetecting &&
+      !isTimerRunning &&
+      sessionDataRef.current.length > 0 &&
+      !showResult
+    ) {
+      // Wait a bit to ensure all state updates are complete
+      const timeoutId = setTimeout(() => {
+        const data = sessionDataRef.current;
+
+        if (data.length === 0) {
+          alert("Tidak ada data yang tercatat. Coba lagi!");
+          return;
+        }
+
+        console.log("Calculating results with", data.length, "data points");
+
+        const avgHappiness =
+          data.reduce((sum, d) => sum + d.happiness, 0) / data.length;
+        const maxHappiness = Math.max(...data.map((d) => d.happiness));
+        const isSuccess = avgHappiness >= TARGET_HAPPINESS;
+
+        const result: SessionResult = {
+          avgHappiness: Math.round(avgHappiness),
+          maxHappiness: Math.round(maxHappiness),
+          duration: timer,
+          attempts,
+          isSuccess,
+        };
+
+        setSessionResult(result);
+        setShowResult(true);
+
+        console.log("Session Result:", result);
+        console.log("Session Data Points:", data.length);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
-
-    const avgHappiness =
-      sessionData.reduce((sum, d) => sum + d.happiness, 0) / sessionData.length;
-    const maxHappiness = Math.max(...sessionData.map((d) => d.happiness));
-    const isSuccess = avgHappiness >= TARGET_HAPPINESS;
-
-    const result: SessionResult = {
-      avgHappiness: Math.round(avgHappiness),
-      maxHappiness: Math.round(maxHappiness),
-      duration: timer,
-      attempts,
-      isSuccess,
-    };
-
-    setSessionResult(result);
-    setShowResult(true);
-
-    console.log("Session Result:", result);
-    console.log("Session Data Points:", sessionData.length);
-  };
+  }, [isDetecting, isTimerRunning, timer, attempts, showResult]);
 
   // Reset session
   const resetSession = () => {
     setShowResult(false);
     setSessionResult(null);
     setSessionData([]);
+    sessionDataRef.current = [];
     setTimer(0);
     setCurrentHappiness(0);
     setCurrentConfidence(0);
@@ -509,12 +524,10 @@ export default function Ekspresi() {
                   playsInline
                   muted
                   className="w-full h-full object-cover"
-                  //   style={{ transform: "scaleX(-1)" }} // Mirror effect
                 />
                 <canvas
                   ref={canvasRef}
                   className="absolute top-0 left-0 w-full h-full"
-                  //   style={{ transform: "scaleX(-1)" }} // Mirror effect
                 />
 
                 {/* Camera Overlay Info */}
