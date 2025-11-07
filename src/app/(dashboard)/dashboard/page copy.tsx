@@ -1,13 +1,14 @@
-// src/app/(dashboard)/dashboard/page.tsx
+// src\app\(dashboard)\dashboard\page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import HeaderSection from "@/app/components/dashboard/HeaderSection";
 import StatsCards from "@/app/components/dashboard/StatsCards";
+import EventCard from "@/app/components/dashboard/EventCard";
 import SkillCards from "@/app/components/dashboard/SkillCards";
 import LevelCard from "@/app/components/dashboard/LevelCard";
 import HistorySection from "@/app/components/dashboard/HistorySection";
-import DailyMissionSection from "@/app/components/dashboard/DailyMissionSection";
 import InfoModal from "@/app/components/dashboard/InfoModal";
 import TourGuide from "@/app/components/dashboard/TourGuide";
 import router from "next/router";
@@ -32,9 +33,6 @@ export default function Dashboard() {
   const [activeModal, setActiveModal] = useState<ModalType>("skor-swara");
   const [isTourActive, setIsTourActive] = useState(false);
   const [userName, setUserName] = useState<string>("");
-  const [micBalance, setMicBalance] = useState(6);
-  const [dailyStreak, setDailyStreak] = useState(3);
-  const [completedMissions, setCompletedMissions] = useState<number[]>([]);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -52,6 +50,7 @@ export default function Dashboard() {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    router.push("/dashboard"); // redirect ke dashboard page
   };
 
   const handleTakeTour = () => {
@@ -62,19 +61,10 @@ export default function Dashboard() {
     setIsTourActive(false);
   };
 
-  const handleCompleteMission = (missionId: number) => {
-    if (!completedMissions.includes(missionId)) {
-      setCompletedMissions([...completedMissions, missionId]);
-      setMicBalance(micBalance + 1);
-    }
-  };
-
   const stats = {
     completedTraining: 24,
     minutesPracticed: 256,
     successRate: 60,
-    micBalance: micBalance,
-    dailyStreak: dailyStreak,
   };
 
   const levelData = {
@@ -93,16 +83,16 @@ export default function Dashboard() {
     },
     {
       id: 2,
-      title: "Adu Swara",
+      title: "Skor Swara",
       date: "5 Agustus 2025",
-      description: "Menang melawan lawan dengan skor tinggi",
+      description: "Kamu mendapatkan hasil yang cukup bagus",
       points: 500,
     },
     {
       id: 3,
-      title: "Podium Swara",
+      title: "Skor Swara",
       date: "2 Agustus 2025",
-      description: "Simulasi pidato berhasil diselesaikan",
+      description: "Kamu mendapatkan hasil yang cukup bagus",
       points: 100,
     },
   ];
@@ -295,25 +285,17 @@ export default function Dashboard() {
       buttonLink: "/dashboard/latih-swara",
     },
   };
-
   const handleModalOpen = (modalType: ModalType) => {
     setActiveModal(modalType);
     setShowModal(true);
   };
-
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen">
       <HeaderSection onTakeTour={handleTakeTour} userName={userName} />
 
       {/* Main Content */}
       <main className="w-full pt-6">
         <StatsCards stats={stats} />
-
-        {/* Daily Mission Section */}
-        <DailyMissionSection
-          completedMissions={completedMissions}
-          onCompleteMission={handleCompleteMission}
-        />
 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Left Column */}
@@ -321,7 +303,7 @@ export default function Dashboard() {
             className="flex-1 border-4 border-white bg-white rounded-3xl p-4 sm:p-6 w-full shadow-md"
             data-tour="event-card"
           >
-            <SkillCards onModalOpen={handleModalOpen} micBalance={micBalance} />
+            <SkillCards onModalOpen={handleModalOpen} />
           </div>
 
           {/* Right Sidebar */}
@@ -335,7 +317,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-
       <InfoModal
         isOpen={showModal}
         onClose={handleCloseModal}

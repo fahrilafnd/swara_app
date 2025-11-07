@@ -69,7 +69,7 @@ export default function PilihModePage() {
       description: "Berbicara bebas berdasarkan topik dan gambar pendukung",
       icon: <ImageIcon className="w-8 h-8" />,
       difficulty: "Menengah - Mahir",
-      minLevel: 1,
+      minLevel: 3,
       features: [
         "Hanya topik & gambar visual",
         "Bebas improvisasi",

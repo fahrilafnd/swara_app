@@ -9,6 +9,9 @@ import {
   Droplets,
   Image as ImageIcon,
   Edit3,
+  Wind,
+  Heart,
+  Smile,
 } from "lucide-react";
 import SkorSwaraHeader from "@/app/components/skor-swara/SkorSwaraHeader";
 import type { TrainingTopic } from "../config/levels";
@@ -59,19 +62,46 @@ declare global {
   }
 }
 
+// Instruksi relaksasi yang akan muncul bergantian
+const RELAXATION_STEPS = [
+  {
+    icon: Wind,
+    text: "Tarik napas dalam-dalam...",
+    subtext: "Hirup udara melalui hidung, tahan sebentar",
+  },
+  {
+    icon: Heart,
+    text: "Hembuskan perlahan...",
+    subtext: "Keluarkan napas melalui mulut, rasakan relaks",
+  },
+  {
+    icon: Smile,
+    text: "Tersenyum dan percaya diri!",
+    subtext: "Kamu siap untuk tampil maksimal",
+  },
+];
+
 export default function SesiLatihanPage() {
   const router = useRouter();
 
   // ===== CONFIG =====
   const MAX_SECONDS = 60;
+  const PREPARATION_TIME = 15; // 15 detik persiapan
 
+  // ===== TRAINING MODE & TOPIC =====
   // ===== TRAINING MODE & TOPIC =====
   const [trainingMode, setTrainingMode] = useState<
     "full-text" | "topic-image" | "custom-topic"
   >("full-text");
+
   const [selectedTopic, setSelectedTopic] = useState<TrainingTopic | null>(
     null
   );
+
+  // ===== PREPARATION PHASE =====
+  const [isPreparation, setIsPreparation] = useState(false);
+  const [preparationTimer, setPreparationTimer] = useState(PREPARATION_TIME);
+  const preparationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // ===== RECORDING =====
   const [isRecording, setIsRecording] = useState(false);
@@ -156,6 +186,14 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     [teleWords]
   );
 
+  // Current relaxation step based on timer
+  const currentRelaxationStep = useMemo(() => {
+    const elapsed = PREPARATION_TIME - preparationTimer;
+    if (elapsed < 5) return 0;
+    if (elapsed < 10) return 1;
+    return 2;
+  }, [preparationTimer]);
+
   // ===== camera =====
   useEffect(() => {
     (async () => {
@@ -188,7 +226,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
 
   // auto-scroll active word
   useEffect(() => {
-    if (trainingMode === "topic-image") return; // Skip for topic-image mode
+    if (trainingMode === "topic-image") return;
 
     const box = teleContainerRef.current;
     if (!box) return;
@@ -205,18 +243,46 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     });
   }, [currentWordIdx, trainingMode]);
 
-  // ===== start/stop =====
-  const handleStartTraining = async () => {
+  // ===== PREPARATION PHASE =====
+  const startPreparation = () => {
+    setIsPreparation(true);
+    setPreparationTimer(PREPARATION_TIME);
+
+    preparationIntervalRef.current = setInterval(() => {
+      setPreparationTimer((prev) => {
+        if (prev <= 1) {
+          if (preparationIntervalRef.current) {
+            clearInterval(preparationIntervalRef.current);
+            preparationIntervalRef.current = null;
+          }
+          setIsPreparation(false);
+          startRecording();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const cancelPreparation = () => {
+    if (preparationIntervalRef.current) {
+      clearInterval(preparationIntervalRef.current);
+      preparationIntervalRef.current = null;
+    }
+    setIsPreparation(false);
+    setPreparationTimer(PREPARATION_TIME);
+  };
+
+  // ===== start recording =====
+  const startRecording = async () => {
     setIsRecording(true);
     setShowTele(true);
     setTimer(0);
     setCurrentWordIdx(0);
     endedRef.current = false;
 
-    // timer
     intervalRef.current = setInterval(() => setTimer((p) => p + 1), 1000);
 
-    // media recorder
     try {
       const stream = videoRef.current?.srcObject as MediaStream | undefined;
       if (stream) {
@@ -274,15 +340,17 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
       console.error(e);
     }
 
-    // Only start speech recognition for full-text mode
     if (trainingMode === "full-text") {
       startSR();
     } else {
-      // For other modes, just start a simple timer
       fallbackTickerRef.current = setInterval(() => {
         setCurrentWordIdx((i) => Math.min(i + 1, teleWords.length - 1));
       }, 650);
     }
+  };
+
+  const handleStartTraining = () => {
+    startPreparation();
   };
 
   const handleFinishTraining = () => {
@@ -405,7 +473,25 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording, timer, currentWordIdx, teleWords.length, trainingMode]);
 
+  // ===== CLEANUP =====
+  useEffect(() => {
+    return () => {
+      if (preparationIntervalRef.current) {
+        clearInterval(preparationIntervalRef.current);
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (fallbackTickerRef.current) {
+        clearInterval(fallbackTickerRef.current);
+      }
+    };
+  }, []);
+
   // ===== RENDER =====
+  const currentStep = RELAXATION_STEPS[currentRelaxationStep];
+  const StepIcon = currentStep.icon;
+
   return (
     <>
       <SkorSwaraHeader />
@@ -421,7 +507,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 {topik}
               </h2>
             </div>
-            {/* Mode indicator */}
             <div className="mt-3 flex items-center gap-2">
               <span className="text-xs text-gray-600">Mode:</span>
               <span className="text-xs font-bold text-gray-900 bg-white px-2 py-1 rounded">
@@ -435,6 +520,87 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
           {/* VIDEO + TELEPROMPTER OVERLAY */}
           <div className="p-6">
             <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-video">
+              {/* Preparation Phase Overlay - SIMPLIFIED */}
+              {isPreparation && (
+                <div className="absolute inset-0 z-50 bg-gradient-to-br from-blue-500/95 via-blue-600/95 to-purple-600/95 backdrop-blur-sm flex items-center justify-center">
+                  <div className="text-center px-8 w-full max-w-2xl">
+                    {/* Countdown Circle - COMPACT */}
+                    <div className="relative w-40 h-40 mx-auto mb-8">
+                      <svg className="w-40 h-40 transform -rotate-90">
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="72"
+                          stroke="rgba(255,255,255,0.2)"
+                          strokeWidth="6"
+                          fill="none"
+                        />
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="72"
+                          stroke="white"
+                          strokeWidth="6"
+                          fill="none"
+                          strokeDasharray={`${2 * Math.PI * 72}`}
+                          strokeDashoffset={`${
+                            2 *
+                            Math.PI *
+                            72 *
+                            (1 - preparationTimer / PREPARATION_TIME)
+                          }`}
+                          className="transition-all duration-1000 ease-linear"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-6xl font-black text-white">
+                            {preparationTimer}
+                          </div>
+                          <div className="text-xs text-white/70 font-medium mt-1">
+                            detik
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Relaxation Instructions - COMPACT */}
+                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                      <div className="flex items-center justify-center mb-3">
+                        <div className="bg-white/20 p-3 rounded-full">
+                          <StepIcon className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        {currentStep.text}
+                      </h3>
+                      <p className="text-sm text-white/80">
+                        {currentStep.subtext}
+                      </p>
+                    </div>
+
+                    {/* Bottom Info - MINIMAL */}
+                    <div className="mt-6 space-y-2">
+                      <p className="text-white/70 text-xs">
+                        💡 Bersiaplah dengan tenang
+                      </p>
+                      <p className="text-white/60 text-xs">
+                        Recording akan dimulai otomatis
+                      </p>
+                    </div>
+
+                    {/* Cancel button - SUBTLE */}
+                    <button
+                      onClick={cancelPreparation}
+                      className="mt-4 px-5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg font-medium transition-all border border-white/20"
+                    >
+                      Batalkan
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {isRecording && (
                 <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-medium">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -448,12 +614,11 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 </div>
               )}
 
-              {/* Topic+Image Mode: Show image and topic */}
+              {/* Topic+Image Mode */}
               {trainingMode === "topic-image" &&
                 selectedTopic?.image &&
                 isRecording && (
                   <div className="absolute top-20 left-2 z-30 bg-white/40 backdrop-blur-lg rounded-2xl p-6 max-w-lg mx-auto shadow-2xl">
-                    {/* Image */}
                     <div className="relative w-full h-48 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl mb-4 overflow-hidden shadow-lg">
                       <img
                         src={selectedTopic.image}
@@ -467,7 +632,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                     </div>
 
-                    {/* Topic Display */}
                     {selectedTopic.topic && (
                       <div>
                         <p className="text-sm text-gray-600 mb-3 font-semibold flex items-center gap-2">
@@ -482,7 +646,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                       </div>
                     )}
 
-                    {/* Word count guideline */}
                     {selectedTopic.minWords && selectedTopic.maxWords && (
                       <div className="mt-4 text-xs text-center">
                         <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-200">
@@ -576,7 +739,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 </div>
               )}
 
-              {/* Custom Topic Mode: Show only title as reminder */}
+              {/* Custom Topic Mode */}
               {showTele && trainingMode === "custom-topic" && (
                 <div className="absolute z-20 left-4 right-4 top-4 bg-white/40 backdrop-blur rounded-2xl p-6 shadow-2xl max-w-2xl mx-auto">
                   <div className="text-center">
@@ -593,7 +756,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 </div>
               )}
 
-              {!isRecording && (
+              {!isRecording && !isPreparation && (
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
                   <div className="text-white text-center">
                     <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -609,15 +772,15 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             <div className="flex gap-4 mt-6">
               <button
                 onClick={handleStartTraining}
-                disabled={isRecording}
+                disabled={isRecording || isPreparation}
                 className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all duration-200 ${
-                  isRecording
+                  isRecording || isPreparation
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-green-500 text-white hover:bg-green-600 hover:shadow-lg hover:-translate-y-0.5"
                 }`}
               >
                 <Play className="w-5 h-5" />
-                Mulai Berlatih
+                {isPreparation ? "Bersiap..." : "Mulai Berlatih"}
               </button>
 
               <button
@@ -634,7 +797,26 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
               </button>
             </div>
 
-            {/* Fallback speed (muncul kalau SR tidak ada) */}
+            {/* Info Preparation - COMPACT */}
+            {!isRecording && !isPreparation && (
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">🧘‍♀️</div>
+                  <div>
+                    <p className="text-sm text-blue-900 font-semibold mb-1">
+                      Tahap Persiapan Mental
+                    </p>
+                    <p className="text-xs text-blue-800">
+                      Setelah klik "Mulai Berlatih", kamu akan mendapat waktu{" "}
+                      <span className="font-bold">15 detik</span> untuk
+                      relaksasi sebelum recording dimulai.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fallback speed */}
             {!speechReady && isRecording && trainingMode === "full-text" && (
               <div className="mt-4 text-sm text-gray-700 flex items-center gap-3">
                 Teleprompter: auto-scroll (fallback)
@@ -670,8 +852,8 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             )}
 
             {/* Mode-specific info */}
-            {trainingMode === "topic-image" && (
-              <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
+            {trainingMode === "topic-image" && !isPreparation && (
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <p className="text-sm text-blue-900 font-semibold mb-2">
                   💡 Tips Mode Topik + Gambar:
                 </p>
@@ -684,8 +866,8 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
               </div>
             )}
 
-            {trainingMode === "custom-topic" && (
-              <div className="mt-4 bg-purple-50 border-2 border-purple-200 rounded-2xl p-4">
+            {trainingMode === "custom-topic" && !isPreparation && (
+              <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
                 <p className="text-sm text-purple-900 font-semibold mb-2">
                   ✨ Tips Mode Topik Kustom:
                 </p>

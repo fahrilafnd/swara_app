@@ -247,176 +247,172 @@ export default function PilihTopikPage() {
   // Full-text mode: Show topic list with random button
   return (
     <>
-      <SkorSwaraHeader />
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white shadow-md rounded-xl p-8">
-            {/* Back Button */}
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-semibold">Kembali</span>
-            </button>
+      <div className="min-h-screen bg-white rounded-xl py-12 px-4">
+        <div className="bg-white shadow-md rounded-xl p-8">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-semibold">Kembali</span>
+          </button>
 
-            {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-black text-gray-900 mb-4">
-                Pilih Topik Latihan
-              </h1>
-              <p className="text-lg text-gray-600 mb-6">
-                {mode === "full-text"
-                  ? "Pilih topik dengan teks lengkap untuk latihan membaca"
-                  : "Pilih topik dengan visual untuk latihan improvisasi"}
-              </p>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-black text-gray-900 mb-4">
+              Pilih Topik Latihan
+            </h1>
+            <p className="text-lg text-gray-600 mb-6">
+              {mode === "full-text"
+                ? "Pilih topik dengan teks lengkap untuk latihan membaca"
+                : "Pilih topik dengan visual untuk latihan improvisasi"}
+            </p>
 
-              {/* Random Button for Full-Text Mode */}
-              {mode === "full-text" && (
-                <button
-                  onClick={handleRandomTopic}
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-pink-600 text-white rounded-2xl font-bold hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            {/* Random Button for Full-Text Mode */}
+            {mode === "full-text" && (
+              <button
+                onClick={handleRandomTopic}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-pink-600 text-white rounded-2xl font-bold hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <Shuffle className="w-5 h-5" />
+                Random Topik
+              </button>
+            )}
+          </div>
+
+          {/* Search & Filter */}
+          <div className="bg-gray-50 rounded-2xl p-6 mb-8">
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Search */}
+              <div className="md:col-span-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Cari topik..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Category Filter */}
+              <div className="md:col-span-1">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors appearance-none bg-white"
                 >
-                  <Shuffle className="w-5 h-5" />
-                  Random Topik
-                </button>
-              )}
-            </div>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat === "all" ? "Semua Kategori" : cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Search & Filter */}
-            <div className="bg-gray-50 rounded-2xl p-6 mb-8">
-              <div className="grid md:grid-cols-3 gap-4">
-                {/* Search */}
-                <div className="md:col-span-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Cari topik..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors bg-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Category Filter */}
-                <div className="md:col-span-1">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors appearance-none bg-white"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat === "all" ? "Semua Kategori" : cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Difficulty Filter */}
-                <div className="md:col-span-1">
-                  <select
-                    value={selectedDifficulty}
-                    onChange={(e) => setSelectedDifficulty(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors appearance-none bg-white"
-                  >
-                    <option value="all">Semua Tingkat</option>
-                    <option value="easy">Mudah</option>
-                    <option value="medium">Sedang</option>
-                    <option value="hard">Sulit</option>
-                  </select>
-                </div>
+              {/* Difficulty Filter */}
+              <div className="md:col-span-1">
+                <select
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors appearance-none bg-white"
+                >
+                  <option value="all">Semua Tingkat</option>
+                  <option value="easy">Mudah</option>
+                  <option value="medium">Sedang</option>
+                  <option value="hard">Sulit</option>
+                </select>
               </div>
             </div>
+          </div>
 
-            {/* Topics Grid */}
-            {filteredTopics.length === 0 ? (
-              <div className="text-center py-16">
-                <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">
-                  Tidak ada topik yang sesuai dengan filter
-                </p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredTopics.map((topic) => (
-                  <div
-                    key={topic.id}
-                    onClick={() => handleSelectTopic(topic)}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group"
-                  >
-                    {/* Image for topic-image mode */}
-                    {mode === "topic-image" && topic.image && (
-                      <div className="h-48 bg-gradient-to-br from-orange-400 to-pink-500 relative overflow-hidden">
-                        <img
-                          src={topic.image}
-                          alt={topic.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {/* Topics Grid */}
+          {filteredTopics.length === 0 ? (
+            <div className="text-center py-16">
+              <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg">
+                Tidak ada topik yang sesuai dengan filter
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTopics.map((topic) => (
+                <div
+                  key={topic.id}
+                  onClick={() => handleSelectTopic(topic)}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group"
+                >
+                  {/* Image for topic-image mode */}
+                  {mode === "topic-image" && topic.image && (
+                    <div className="h-48 bg-gradient-to-br from-orange-400 to-pink-500 relative overflow-hidden">
+                      <img
+                        src={topic.image}
+                        alt={topic.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </div>
+                  )}
+
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+                        {topic.category}
+                      </span>
+                      <span
+                        className={`text-xs font-bold px-3 py-1 rounded-full ${getDifficultyColor(
+                          topic.difficulty
+                        )}`}
+                      >
+                        {getDifficultyLabel(topic.difficulty)}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
+                      {topic.title}
+                    </h3>
+
+                    {/* For topic-image mode, show keywords */}
+                    {mode === "topic-image" && topic.keywords && (
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 mb-2">
+                          Keyword hints:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {topic.keywords.slice(0, 3).map((kw, idx) => (
+                            <span
+                              key={idx}
+                              className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                            >
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
-                          {topic.category}
-                        </span>
-                        <span
-                          className={`text-xs font-bold px-3 py-1 rounded-full ${getDifficultyColor(
-                            topic.difficulty
-                          )}`}
-                        >
-                          {getDifficultyLabel(topic.difficulty)}
-                        </span>
-                      </div>
+                    {/* For full-text mode, show preview */}
+                    {mode === "full-text" && topic.text && (
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                        {topic.text}
+                      </p>
+                    )}
 
-                      <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
-                        {topic.title}
-                      </h3>
-
-                      {/* For topic-image mode, show keywords */}
-                      {mode === "topic-image" && topic.keywords && (
-                        <div className="mb-4">
-                          <p className="text-xs text-gray-500 mb-2">
-                            Keyword hints:
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {topic.keywords.slice(0, 3).map((kw, idx) => (
-                              <span
-                                key={idx}
-                                className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
-                              >
-                                {kw}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* For full-text mode, show preview */}
-                      {mode === "full-text" && topic.text && (
-                        <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                          {topic.text}
-                        </p>
-                      )}
-
-                      <button className="w-full py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 group-hover:shadow-lg transition-all">
-                        Pilih Topik
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button className="w-full py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 group-hover:shadow-lg transition-all">
+                      Pilih Topik
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>
