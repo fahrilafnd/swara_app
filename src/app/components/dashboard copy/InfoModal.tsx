@@ -94,7 +94,7 @@ export default function InfoModal({
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 2,
@@ -146,7 +146,7 @@ export default function InfoModal({
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 3,
@@ -203,7 +203,7 @@ export default function InfoModal({
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 4,
@@ -260,7 +260,7 @@ export default function InfoModal({
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 5,
@@ -322,7 +322,7 @@ export default function InfoModal({
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
   ];
 
@@ -370,7 +370,7 @@ export default function InfoModal({
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 2,
@@ -422,7 +422,7 @@ export default function InfoModal({
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 3,
@@ -474,7 +474,7 @@ export default function InfoModal({
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 4,
@@ -526,7 +526,7 @@ export default function InfoModal({
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 5,
@@ -578,7 +578,7 @@ export default function InfoModal({
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
   ];
 

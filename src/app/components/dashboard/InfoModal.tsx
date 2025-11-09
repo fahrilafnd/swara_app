@@ -94,7 +94,7 @@ export default function InfoModal({
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 2,
@@ -146,7 +146,7 @@ export default function InfoModal({
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 3,
@@ -203,7 +203,7 @@ export default function InfoModal({
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 4,
@@ -260,7 +260,7 @@ export default function InfoModal({
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 5,
@@ -322,7 +322,7 @@ export default function InfoModal({
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
   ];
 
@@ -370,7 +370,7 @@ export default function InfoModal({
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 2,
@@ -422,7 +422,7 @@ export default function InfoModal({
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 3,
@@ -474,7 +474,7 @@ export default function InfoModal({
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 4,
@@ -526,7 +526,7 @@ export default function InfoModal({
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
     {
       level: 5,
@@ -578,7 +578,7 @@ export default function InfoModal({
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor",
     },
   ];
 
@@ -586,11 +586,25 @@ export default function InfoModal({
     setActiveLevel(activeLevel === level ? null : level);
   };
 
+  const renameKesesuaianTopikForSkor = (levels: typeof LEVELS_FULL) =>
+    levels.map((lvl) =>
+      lvl.level >= 3 && lvl.level <= 5
+        ? {
+            ...lvl,
+            indicators: lvl.indicators.map((ind: any) =>
+              ind.name === "Kesesuaian Topik"
+                ? { ...ind, name: "Kesesuaian Topik (Level 3, 4, & 5)" }
+                : ind
+            ),
+          }
+        : lvl
+    );
+
   const getLevelsData = () => {
-    if (activeModal === "podium-swara") {
-      return LEVELS_PODIUM;
-    }
-    return LEVELS_FULL;
+    if (activeModal === "podium-swara") return LEVELS_PODIUM; // tetap
+    if (activeModal === "skor-swara")
+      return renameKesesuaianTopikForSkor(LEVELS_FULL);
+    return LEVELS_FULL; // adu-swara: tidak diubah sama sekali
   };
 
   const shouldShowLevels =

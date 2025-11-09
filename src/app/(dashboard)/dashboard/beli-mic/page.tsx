@@ -418,25 +418,15 @@ export default function BeliMic() {
                 fitur.
               </p>
             </div>
-            <div className="border-l-4 border-blue-500 pl-4">
-              <h3 className="font-bold text-gray-900 mb-2">
-                Apakah mic bisa expired?
-              </h3>
-              <p className="text-sm text-gray-600">
-                Mic yang dibeli valid sesuai durasi paket (30-60 hari). Setelah
-                expired, mic yang tersisa akan hangus.
-              </p>
-            </div>
             <div className="border-l-4 border-green-500 pl-4">
               <h3 className="font-bold text-gray-900 mb-2">
-                Apakah ada cara gratis mendapat mic?
+                Apakah ada cara mendapat mic selain membeli?
               </h3>
               <p className="text-sm text-gray-600">
-                Ya! Selesaikan Daily Mission setiap hari untuk mendapatkan mic
-                bonus gratis.
+                Ya! Selesaikan Daily Mission setiap hari untuk mendapatkan bonus mic!
               </p>
             </div>
-            <div className="border-l-4 border-purple-500 pl-4">
+            <div className="border-l-4 border-blue-500 pl-4">
               <h3 className="font-bold text-gray-900 mb-2">
                 Bagaimana jika pembayaran gagal?
               </h3>

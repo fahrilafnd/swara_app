@@ -16,7 +16,12 @@ import {
   type Player,
 } from "@/lib/matchmaking";
 
-type MatchmakingState = "idle" | "searching" | "found" | "countdown" | "no_players";
+type MatchmakingState =
+  | "idle"
+  | "searching"
+  | "found"
+  | "countdown"
+  | "no_players";
 
 export default function Adu() {
   const router = useRouter();
@@ -244,7 +249,10 @@ export default function Adu() {
                 💡 <strong>Tips:</strong>
               </p>
               <ul className="text-sm text-blue-700 text-left space-y-1">
-                <li>• Coba lagi di jam-jam ramai (12:00 - 14:00 atau 19:00 - 21:00)</li>
+                <li>
+                  • Coba lagi di jam-jam ramai (12:00 - 14:00 atau 19:00 -
+                  21:00)
+                </li>
                 <li>• Ajak teman untuk bermain bersama</li>
                 <li>• Latihan solo dulu di fitur Latihan</li>
               </ul>
@@ -439,8 +447,8 @@ export default function Adu() {
                   💡 Tips Cepat:
                 </p>
                 <p className="text-xs text-blue-700">
-                  Setiap pemain punya 60 detik. Berbicaralah dengan percaya
-                  diri dan jelas!
+                  Setiap pemain punya 60 detik. Berbicaralah dengan percaya diri
+                  dan jelas!
                 </p>
               </div>
 
@@ -479,12 +487,12 @@ export default function Adu() {
           <div className="bg-white rounded-2xl mb-6 p-10 flex items-center">
             <div>
               <img
-                src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
+                src="/profil.jpg"
                 alt="profile"
-                className="w-[280px] rounded-full mb-6"
+                className="w-[280px] object-cover h-[280px] rounded-full mb-6"
               />
               <h2 className="text-center text-[#39363D] text-3xl font-semibold">
-                Kimberly
+                Talitha
               </h2>
             </div>
             <div className="flex-1 ml-12">
@@ -523,55 +531,69 @@ export default function Adu() {
             </div>
           </div>
           <div className="bg-white grid grid-cols-2 rounded-2xl p-7 gap-6 mb-7">
+            {/* 1. Tempo */}
             <div className="bg-[#F0712220] border border-[#F07122] rounded-2xl p-6">
               <span className="flex items-center mb-4">
-                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">🎯</p>
-                <p className="text-[#39363D] ml-4">Kelancaran & Pengucapan</p>
+                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">⏱️</p>
+                <p className="text-[#39363D] ml-4">Tempo</p>
               </span>
-              <p className="text-sm text-[#39363D] mb-3">Poin: 0-5</p>
+              <p className="text-sm text-[#39363D] mb-3">Skor: 0-5</p>
               <p className="text-sm text-[#39363D]">
-                Swara akan menilai kelancaran penyampaianmu, termasuk mendeteksi
-                jeda yang terlalu lama. Pastikan setiap kata diucapkan dengan
-                jelas.
+                Menilai kecepatan berbicara dalam satu menit.
               </p>
             </div>
+
+            {/* 2. Artikulasi */}
             <div className="bg-[#F0712220] border border-[#F07122] rounded-2xl p-6">
               <span className="flex items-center mb-4">
-                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">📝</p>
-                <p className="text-[#39363D] ml-4">Isi</p>
+                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">🗣️</p>
+                <p className="text-[#39363D] ml-4">Artikulasi</p>
               </span>
-              <p className="text-sm text-[#39363D] mb-3">Poin: 0-5</p>
+              <p className="text-sm text-[#39363D] mb-3">Skor: 0-5</p>
               <p className="text-sm text-[#39363D]">
-                Swara akan menilai kelancaran penyampaianmu, termasuk mendeteksi
-                jeda yang terlalu lama. Pastikan setiap kata diucapkan dengan
-                jelas.
+                Menilai kejelasan pengucapan.
               </p>
             </div>
+
+            {/* 3. Kontak Mata */}
             <div className="bg-[#F0712220] border border-[#F07122] rounded-2xl p-6">
               <span className="flex items-center mb-4">
-                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">🏗️</p>
-                <p className="text-[#39363D] ml-4">Organisasi & Struktur</p>
+                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">👀</p>
+                <p className="text-[#39363D] ml-4">Kontak Mata</p>
               </span>
-              <p className="text-sm text-[#39363D] mb-3">Poin: 0-5</p>
+              <p className="text-sm text-[#39363D] mb-3">Skor: 0-5</p>
               <p className="text-sm text-[#39363D]">
-                Swara akan menilai kelancaran penyampaianmu, termasuk mendeteksi
-                jeda yang terlalu lama. Pastikan setiap kata diucapkan dengan
-                jelas.
+                Menilai seberapa lama pengguna mengalihkan pandangan.
               </p>
             </div>
+
+            {/* 4. Kesesuaian Topik */}
             <div className="bg-[#F0712220] border border-[#F07122] rounded-2xl p-6">
               <span className="flex items-center mb-4">
-                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">💬</p>
-                <p className="text-[#39363D] ml-4">Penggunaan Bahasa</p>
+                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">👌🏻</p>
+                <p className="text-[#39363D] ml-4">Kesesuaian Topik</p>
               </span>
-              <p className="text-sm text-[#39363D] mb-3">Poin: 0-5</p>
+              <p className="text-sm text-[#39363D] mb-3">Skor: 0-5</p>
               <p className="text-sm text-[#39363D]">
-                Swara akan menilai kelancaran penyampaianmu, termasuk mendeteksi
-                jeda yang terlalu lama. Pastikan setiap kata diucapkan dengan
-                jelas.
+                Menilai relevansi teks sesuai kata kunci yang sudah disediakan
+                setiap topik.
+              </p>
+            </div>
+
+            {/* 5. Struktur — Baris sendirian (gunakan col-span-2 agar full) */}
+            <div className="col-span-2 bg-[#F0712220] border border-[#F07122] rounded-2xl p-6">
+              <span className="flex items-center mb-4">
+                <p className="text-2xl bg-[#F0712220] p-2 rounded-xl">📑</p>
+                <p className="text-[#39363D] ml-4">Struktur</p>
+              </span>
+              <p className="text-sm text-[#39363D] mb-3">Skor: 0-5</p>
+              <p className="text-sm text-[#39363D]">
+                Mengidentifikasi frasa yang menandai pembuka, isi, dan penutup
+                pada public speaking.
               </p>
             </div>
           </div>
+
           <button
             onClick={startMatchmaking}
             disabled={matchmakingState !== "idle"}

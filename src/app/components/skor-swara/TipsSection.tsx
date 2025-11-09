@@ -8,7 +8,7 @@ interface TipsSectionProps {
 
 export default function TipsSection({ tips }: TipsSectionProps) {
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 md:p-8 shadow-lg border border-blue-200 mb-8">
+    <div className="bg-gradient-to-br mt-8 from-blue-50 to-blue-100 rounded-2xl p-6 md:p-8 shadow-lg border border-blue-200 mb-8">
       <div className="flex items-center gap-3 mb-6">
         <span className="text-2xl">💡</span>
         <h2 className="text-blue-600 text-xl font-bold">Tips Skor Swara</h2>

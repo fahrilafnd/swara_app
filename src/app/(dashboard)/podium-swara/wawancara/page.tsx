@@ -12,9 +12,14 @@ import {
   Wind,
   Heart,
   Smile,
+  // [ADD] ikon untuk modal waktu habis (opsional)
+  AlarmClock,
+  RotateCcw,
+  ArrowLeft,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 
 type CameraFeedProps = {
   className?: string;
@@ -202,6 +207,10 @@ export default function Pidato() {
   const isLastQuestion =
     currentQuestionIndex === INTERVIEW_QUESTIONS.length - 1;
 
+  // [ADD] Limit 1 menit
+  const MAX_TOTAL_TIME = 60;
+  const [timeUp, setTimeUp] = useState(false);
+
   // Current relaxation step
   const currentRelaxationStep = useMemo(() => {
     const elapsed = PREPARATION_TIME - preparationTimer;
@@ -224,6 +233,26 @@ export default function Pidato() {
       return () => clearInterval(timer);
     }
   }, [isPaused, interviewState]);
+
+  // [ADD] Otomatis berhenti ketika mencapai 60 detik
+  useEffect(() => {
+    if (
+      totalTime >= MAX_TOTAL_TIME &&
+      !timeUp &&
+      interviewState !== "not-started" &&
+      interviewState !== "preparation"
+    ) {
+      // hentikan audio & rekaman
+      if (audioRef.current) audioRef.current.pause();
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
+      // jeda semua timer & munculkan modal
+      setIsPaused(true);
+      setTimeUp(true);
+    }
+  }, [totalTime, timeUp, interviewState, isRecording]);
 
   // Timer untuk waktu jawaban user
   useEffect(() => {
@@ -285,6 +314,11 @@ export default function Pidato() {
   const handleStartInterview = () => {
     setInterviewState("preparation");
     setPreparationTimer(PREPARATION_TIME);
+    // [ADD] reset limit
+    setTotalTime(0);
+    setAnswerTime(0);
+    setIsPaused(false);
+    setTimeUp(false);
   };
 
   // Handle cancel preparation
@@ -354,6 +388,9 @@ export default function Pidato() {
 
   // Handle pause/resume
   const handlePauseResume = () => {
+    // [ADD] jika waktu habis, tombol tidak berfungsi
+    if (timeUp) return;
+
     setIsPaused(!isPaused);
 
     if (audioRef.current) {
@@ -375,7 +412,6 @@ export default function Pidato() {
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  
 
   return (
     <div className="pr-8">
@@ -408,6 +444,10 @@ export default function Pidato() {
               <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/20 rounded-xl">
                 <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-2xl w-full mx-8">
                   <div className="text-center">
+                    <Link href={"/podium-swara"} className="flex items-center gap-2">
+                      <ArrowLeft />
+                      Kembali
+                    </Link>
                     <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Mic className="w-12 h-12 text-orange-500" />
                     </div>
@@ -447,108 +487,106 @@ export default function Pidato() {
 
             {/* PREPARATION PHASE - Modal */}
             {mounted && interviewState === "preparation"
-                    ? createPortal(
-            
-              <div>
-                {/* Overlay */}
-                <div
-                  className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
-                  onClick={handleCancelPreparation}
-                  aria-hidden="true"
-                />
+              ? createPortal(
+                  <div>
+                    {/* Overlay */}
+                    <div
+                      className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
+                      onClick={handleCancelPreparation}
+                      aria-hidden="true"
+                    />
 
-                {/* Modal container */}
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    className="w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden"
-                  >
-                    {/* Modal header/background */}
-                    <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-8">
-                      <div className="text-center px-2 sm:px-6">
-                        {/* Large Countdown Circle */}
-                        <div className="relative w-56 h-56 mx-auto mb-10">
-                          <svg className="w-56 h-56 transform -rotate-90">
-                            <circle
-                              cx="112"
-                              cy="112"
-                              r="100"
-                              stroke="rgba(255,255,255,0.2)"
-                              strokeWidth="8"
-                              fill="none"
-                            />
-                            <circle
-                              cx="112"
-                              cy="112"
-                              r="100"
-                              stroke="white"
-                              strokeWidth="8"
-                              fill="none"
-                              strokeDasharray={`${2 * Math.PI * 100}`}
-                              strokeDashoffset={`${
-                                2 *
-                                Math.PI *
-                                100 *
-                                (1 - preparationTimer / PREPARATION_TIME)
-                              }`}
-                              className="transition-all duration-1000 ease-linear"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center">
-                              <div className="text-8xl font-black text-white mb-2">
-                                {preparationTimer}
-                              </div>
-                              <div className="text-lg text-white/80 font-semibold">
-                                detik
+                    {/* Modal container */}
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                      <div
+                        role="dialog"
+                        aria-modal="true"
+                        className="w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden"
+                      >
+                        {/* Modal header/background */}
+                        <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-8">
+                          <div className="text-center px-2 sm:px-6">
+                            {/* Large Countdown Circle */}
+                            <div className="relative w-56 h-56 mx-auto mb-10">
+                              <svg className="w-56 h-56 transform -rotate-90">
+                                <circle
+                                  cx="112"
+                                  cy="112"
+                                  r="100"
+                                  stroke="rgba(255,255,255,0.2)"
+                                  strokeWidth="8"
+                                  fill="none"
+                                />
+                                <circle
+                                  cx="112"
+                                  cy="112"
+                                  r="100"
+                                  stroke="white"
+                                  strokeWidth="8"
+                                  fill="none"
+                                  strokeDasharray={`${2 * Math.PI * 100}`}
+                                  strokeDashoffset={`${
+                                    2 *
+                                    Math.PI *
+                                    100 *
+                                    (1 - preparationTimer / PREPARATION_TIME)
+                                  }`}
+                                  className="transition-all duration-1000 ease-linear"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="text-8xl font-black text-white mb-2">
+                                    {preparationTimer}
+                                  </div>
+                                  <div className="text-lg text-white/80 font-semibold">
+                                    detik
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
 
-                        {/* Relaxation Card */}
-                        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border-2 border-white/30 max-w-2xl mx-auto">
-                          <div className="flex items-center justify-center mb-5">
-                            <div className="bg-white/20 p-5 rounded-2xl">
-                              <StepIcon className="w-12 h-12 text-white" />
+                            {/* Relaxation Card */}
+                            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border-2 border-white/30 max-w-2xl mx-auto">
+                              <div className="flex items-center justify-center mb-5">
+                                <div className="bg-white/20 p-5 rounded-2xl">
+                                  <StepIcon className="w-12 h-12 text-white" />
+                                </div>
+                              </div>
+                              <h3 className="text-3xl font-bold text-white mb-3">
+                                {currentStep.text}
+                              </h3>
+                              <p className="text-lg text-white/90">
+                                {currentStep.subtext}
+                              </p>
                             </div>
+
+                            {/* Bottom Info */}
+                            <div className="mt-10 space-y-3">
+                              <p className="text-white/80 text-base">
+                                💡 Bersiaplah untuk wawancara
+                              </p>
+                              <p className="text-white/70 text-sm">
+                                Wawancara akan dimulai otomatis
+                              </p>
+                            </div>
+
+                            {/* Actions */}
+                            <button
+                              onClick={handleCancelPreparation}
+                              className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all border border-white/30"
+                            >
+                              Batalkan
+                            </button>
                           </div>
-                          <h3 className="text-3xl font-bold text-white mb-3">
-                            {currentStep.text}
-                          </h3>
-                          <p className="text-lg text-white/90">
-                            {currentStep.subtext}
-                          </p>
                         </div>
-
-                        {/* Bottom Info */}
-                        <div className="mt-10 space-y-3">
-                          <p className="text-white/80 text-base">
-                            💡 Bersiaplah untuk wawancara
-                          </p>
-                          <p className="text-white/70 text-sm">
-                            Wawancara akan dimulai otomatis
-                          </p>
-                        </div>
-
-                        {/* Actions */}
-                        <button
-                          onClick={handleCancelPreparation}
-                          className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all border border-white/30"
-                        >
-                          Batalkan
-                        </button>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>,
-            document.body
-          )
-        : null}
-
+                  </div>,
+                  document.body
+                )
+              : null}
 
             {/* Camera Feeds - Always visible in background */}
             <CameraFeed
@@ -725,6 +763,55 @@ export default function Pidato() {
         onEnded={handleAudioEnded}
         className="hidden"
       />
+
+      {/* [ADD] Modal waktu habis 1 menit */}
+      {mounted && timeUp
+        ? createPortal(
+            <div>
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
+              <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl p-8 text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
+                    <AlarmClock className="w-10 h-10 text-orange-500" />
+                  </div>
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">
+                    Waktu Habis (1 Menit)
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Rekaman & pertanyaan dihentikan otomatis karena mencapai
+                    batas <strong>60 detik</strong>.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => router.push("/podium-swara/selesai")}
+                      className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-bold hover:from-green-600 hover:to-green-700"
+                    >
+                      Akhiri & Lihat Hasil
+                    </button>
+                    <button
+                      onClick={() => {
+                        // reset ke awal sesi
+                        setInterviewState("not-started");
+                        setPreparationTimer(PREPARATION_TIME);
+                        setCurrentQuestionIndex(0);
+                        setTotalTime(0);
+                        setAnswerTime(0);
+                        setIsPaused(false);
+                        setTimeUp(false);
+                      }}
+                      className="flex-1 bg-gray-100 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-200 flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                      Ulangi dari Awal
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

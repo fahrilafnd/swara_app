@@ -11,6 +11,11 @@ import {
   User,
   ArrowRight,
   Smile,
+  Timer,
+  Megaphone,
+  Eye,
+  ListChecks,
+  Layers,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -73,54 +78,80 @@ export default function PodiumSwara() {
                 </div>
               </Link>
             </div>
-            {/* 3 Card Penilaian */}
-            <div className="grid grid-cols-1 mt-8 md:grid-cols-3 gap-4 mb-8">
-              {/* Kelancaran & Pengucapan */}
-              <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
-                <h3 className="font-semibold text-gray-800 mb-4">
-                  Kelancaran & Pengucapan
-                </h3>
-                <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
-                  <Target className="w-8 h-8 text-orange-500" />
+            {/* 5 Card Penilaian (sesuai tabel) */}
+            <div className="mt-8 space-y-4 mb-8">
+              {/* Row 1 → 3 kolom */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Tempo */}
+                <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-4">Tempo</h3>
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
+                    <Timer className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Menilai kecepatan berbicara dalam satu menit.
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Swara akan menilai kelancaran penyampaianmu, termasuk
-                  mendeteksi jeda yang terlalu lama. Pastikan setiap kata
-                  diucapkan dengan jelas.
-                </p>
+
+                {/* 2. Artikulasi */}
+                <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-4">
+                    Artikulasi
+                  </h3>
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
+                    <Megaphone className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Menilai kejelasan pengucapan.
+                  </p>
+                </div>
+
+                {/* 3. Kontak Mata */}
+                <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-4">
+                    Kontak Mata
+                  </h3>
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
+                    <Eye className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Menilai seberapa lama pengguna mengalihkan pandangan.
+                  </p>
+                </div>
               </div>
 
-              {/* Kontak Mata & Ekspresi */}
-              <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
-                <h3 className="font-semibold text-gray-800 mb-4">
-                  Kontak Mata & Ekspresi
-                </h3>
-                <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
-                  <Smile className="w-8 h-8 text-orange-500" />
+              {/* Row 2 → 2 kolom */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 4. Kesesuaian Topik */}
+                <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-4">
+                    Kesesuaian Topik
+                  </h3>
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
+                    <ListChecks className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Menilai relevansi teks sesuai kata kunci yang sudah
+                    disediakan setiap topik.
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Swara akan menganalisis kontak mata dan ekspresi wajah.
-                  Pertahankan kontak mata dan tunjukkan ekspresi yang percaya
-                  diri.
-                </p>
-              </div>
 
-              {/* Penggunaan Bahasa */}
-              <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
-                <h3 className="font-semibold text-gray-800 mb-4">
-                  Penggunaan Bahasa
-                </h3>
-                <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
-                  <MessageSquare className="w-8 h-8 text-orange-500" />
+                {/* 5. Struktur */}
+                <div className="rounded-2xl border border-orange-200 bg-[#FFF7F2] p-6 text-center shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-4">Struktur</h3>
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/80 flex items-center justify-center shadow">
+                    <Layers className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Mengidentifikasi frasa yang menandai pembuka, isi, dan
+                    penutup pada public speaking.
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mb-3">Poin: 0-5</p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Swara akan menganalisis pilihan kata, termasuk mendeteksi
-                  penggunaan kata pengisi yang tidak perlu (seperti “emmm?”) dan
-                  pengulangan kata.
-                </p>
               </div>
             </div>
           </div>

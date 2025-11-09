@@ -88,7 +88,7 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 2,
@@ -140,7 +140,7 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 3,
@@ -192,7 +192,7 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 4,
@@ -244,7 +244,7 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 5,
@@ -296,7 +296,7 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
   ];
 
@@ -336,8 +336,8 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
                 Podium Swara adalah simulasi panggung virtual berbasis AI dengan
                 audiens 3D yang responsif dan sistem gamifikasi 5 level. Fitur
                 ini memungkinkan pengguna berlatih public speaking secara
-                realistis melalui berbagai skenario seperti Pidato
-                Wawancara dengan pengalaman yang imersif.
+                realistis melalui berbagai skenario seperti Pidato Wawancara
+                dengan pengalaman yang imersif.
               </p>
             </div>
 
@@ -524,32 +524,6 @@ export default function PodiumSwaraIntroModal({ open, onClose }: Props) {
                     </p>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Scenario Features */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
-              <h3 className="text-purple-700 font-bold text-lg mb-3 flex items-center gap-2">
-                <Presentation className="w-5 h-5" />
-                Fitur Podium Virtual
-              </h3>
-              <div className="space-y-2 text-sm text-purple-900">
-                <p>
-                  • <strong>Audiens 3D Responsif:</strong> Reaksi audiens yang
-                  dinamis sesuai dengan performa Anda
-                </p>
-                <p>
-                  • <strong>Multi Skenario:</strong> Pilih antara Pidato, MC,
-                  atau Wawancara sesuai kebutuhan latihan
-                </p>
-                <p>
-                  • <strong>Simulasi Realistis:</strong> Pengalaman panggung
-                  yang mendekati situasi nyata
-                </p>
-                <p>
-                  • <strong>Feedback Real-time:</strong> Penilaian langsung dari
-                  AI untuk meningkatkan skill
-                </p>
               </div>
             </div>
 

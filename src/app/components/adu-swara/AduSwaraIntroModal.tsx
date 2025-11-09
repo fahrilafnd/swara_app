@@ -87,7 +87,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP duel",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor duel",
     },
     {
       level: 2,
@@ -139,7 +139,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP duel",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor duel",
     },
     {
       level: 3,
@@ -196,7 +196,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP duel",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor duel",
     },
     {
       level: 4,
@@ -253,7 +253,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP duel",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor duel",
     },
     {
       level: 5,
@@ -315,7 +315,7 @@ export default function AduSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP duel",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor duel",
     },
   ];
 

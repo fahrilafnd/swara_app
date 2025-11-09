@@ -201,12 +201,19 @@ export default function LatihanDasar() {
   );
   const [showLevelModal, setShowLevelModal] = useState(false);
 
-  const totalLevels = exercises.reduce((sum, ex) => sum + ex.levels.length, 0);
-  const completedLevels = exercises.reduce(
-    (sum, ex) => sum + ex.levels.filter((l) => l.isCompleted).length,
-    0
+  const groupLevelCount = Math.max(...exercises.map((ex) => ex.levels.length)); // 5
+  const overallCompleted = Array.from(
+    { length: groupLevelCount },
+    (_, i) => i + 1
+  ).filter((levelId) =>
+    exercises.every((ex) =>
+      ex.levels.some((l) => l.id === levelId && l.isCompleted)
+    )
+  ).length; // berapa "level gabungan" yang sudah tuntas (0..5)
+
+  const overallProgress = Math.round(
+    (overallCompleted / groupLevelCount) * 100
   );
-  const overallProgress = Math.round((completedLevels / totalLevels) * 100);
 
   const openLevelModal = (exercise: Exercise) => {
     setSelectedExercise(exercise);
@@ -248,7 +255,7 @@ export default function LatihanDasar() {
                   Progress Keseluruhan
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  {completedLevels} dari {totalLevels} level selesai
+                  {overallCompleted} dari {groupLevelCount} level selesai
                 </p>
               </div>
               <div className="text-right">
@@ -391,7 +398,10 @@ export default function LatihanDasar() {
         {/* Achievement Preview */}
         <div className="mt-8 bg-gradient-to-r from-blue-500 to-pink-500 rounded-3xl p-8 text-white text-center shadow-2xl">
           <Trophy className="w-16 h-16 mx-auto mb-4 opacity-90" />
-          <h3 className="text-2xl font-black mb-2">Unlock Premium Features!</h3>
+          <h3 className="text-2xl font-black mb-2">
+            {" "}
+            Buka fitur evaluasi untuk menerapkan hasil latihanmu!
+          </h3>
           <p className="text-purple-100 text-lg mb-4">
             Selesaikan masing-masing 1 latihan untuk membuka akses ke:
           </p>
@@ -400,10 +410,7 @@ export default function LatihanDasar() {
               🎤 Podium Swara
             </span>
             <span className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full font-semibold">
-              📚 Inspira Swara
-            </span>
-            <span className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full font-semibold">
-              👥 Mentoring
+              💯 Skor Swara
             </span>
             <span className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full font-semibold">
               🎯 Adu Swara

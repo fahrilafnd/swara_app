@@ -163,73 +163,76 @@ export default function SwaraProfilePage() {
   React.useEffect(() => setMounted(true), []);
   const badges = [
     {
-      id: "dedikasi-tinggi",
-      name: "Dedikasi Tinggi",
-      description: "Konsisten hadir & menyelesaikan latihan.",
-      icon: "/badge/Dedikasi Tinggi.svg",
-      unlocked: true,
-    },
-    {
-      id: "komitmen",
-      name: "Komitmen",
-      description: "Menjaga komitmen belajar public speaking.",
-      icon: "/badge/Komitmen.svg",
-      unlocked: true,
-    },
-    {
       id: "langkah-pertama",
       name: "Langkah Pertama",
-      description: "Menyelesaikan sesi latihan perdana.",
-      icon: "/badge/Langkah Pertama.svg",
-      unlocked: true,
-    },
-    {
-      id: "master-waktu",
-      name: "Master Waktu",
-      description: "Latihan tepat waktu & disiplin.",
-      icon: "/badge/Master Waktu.svg",
-      unlocked: true,
-    },
-    {
-      id: "penakluk-panggung",
-      name: "Penakluk Panggung",
-      description: "Berani tampil di depan audiens.",
-      icon: "/badge/Penakluk Panggung.svg",
-      unlocked: true,
-    },
-    {
-      id: "penakluk-panggung-2",
-      name: "Penakluk Panggung 2",
-      description: "Level lanjut: kontrol panggung makin mantap.",
-      icon: "/badge/Penakluk Panggung 2.svg",
-      unlocked: true,
-    },
-    {
-      id: "penakluk-panggung-3",
-      name: "Penakluk Panggung 3",
-      description: "Level mahir: gestur & ekspresi efektif.",
-      icon: "/badge/Penakluk Panggung 3.svg",
-      unlocked: true,
-    },
-    {
-      id: "penakluk-panggung-4",
-      name: "Penakluk Panggung 4",
-      description: "Level expert: aura panggung konsisten.",
-      icon: "/badge/Penakluk Panggung 4.svg",
-      unlocked: true,
-    },
-    {
-      id: "presenter-hebat",
-      name: "Presenter Hebat",
-      description: "Struktur materi jelas & meyakinkan.",
-      icon: "/badge/Presenter Hebat.svg",
+      description: "Menyelesaikan sesi latihan pertama.",
+      icon: "/badge/Langkah Pertama.png",
       unlocked: true,
     },
     {
       id: "rajin-berlatih",
       name: "Rajin Berlatih",
-      description: "Rutin berlatih setiap minggu.",
-      icon: "/badge/Rajin Berlatih.svg",
+      description: "Latihan beruntun selama 3 hari.",
+      icon: "/badge/Rajin Berlatih.png",
+      unlocked: true,
+    },
+    {
+      id: "dedikasi-tinggi",
+      name: "Dedikasi Tinggi",
+      description: "Latiihan beruntun selama 7 hari.",
+      icon: "/badge/Dedikasi Tinggi.png",
+      unlocked: true,
+    },
+    {
+      id: "komitmen",
+      name: "Komitmen",
+      description: "Latihan beruntun selama 1 bulan.",
+      icon: "/badge/Komitmen.png",
+      unlocked: true,
+    },
+    {
+      id: "presenter-hebat",
+      name: "Presenter Hebat",
+      description: "Mendapatkan skor sempurna di satu latihan.",
+      icon: "/badge/Presenter Hebat.png",
+      unlocked: true,
+    },
+    {
+      id: "master-waktu",
+      name: "Master Waktu",
+      description:
+        "Mencapai total waktu latihan sebanyak 20 menit (20 kali latihan).",
+      icon: "/badge/Master Waktu.png",
+      unlocked: true,
+    },
+    {
+      id: "penakluk-panggung",
+      name: "Penakluk Panggung",
+      description:
+        "Mendapat skor sempurna pada indikator Kontak Mata & Gestur.",
+      icon: "/badge/Penakluk Panggung.png",
+      unlocked: true,
+    },
+    {
+      id: "sang-penjelajah",
+      name: "Sang Penjelajah",
+      description: "Mencoba semua fitur latihan SWARA.",
+      icon: "/badge/Sang Penjelajah.png",
+      unlocked: true,
+    },
+    {
+      id: "Kolektor-Topik",
+      name: "Kolektor Topik",
+      description:
+        "Menyelesaikan latihan dengan 10 topik teks yang berbeda di Skor Swara dan Adu Swara",
+      icon: "/badge/Kolektor Topik.png",
+      unlocked: true,
+    },
+    {
+      id: "Kritikus-Andal",
+      name: "Kritikus Handal",
+      description: "Menambahkan catatan pada 5 video di Inspira Swara.",
+      icon: "/badge/Kritikus Handal.png",
       unlocked: true,
     },
   ];
@@ -445,12 +448,12 @@ export default function SwaraProfilePage() {
         {/* Main Content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
           {/* Level Alert */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white mb-8 shadow-lg">
+          <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white mb-8 shadow-lg">
             <div className="flex items-start gap-3">
               <span className="text-3xl">📚</span>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">
-                  Orator Pemula - Level 2
+                  Penjelajah Suara - Level 2
                 </h3>
                 <p className="text-indigo-100">
                   Kamu sudah mulai menguasai dasar-dasar public speaking!
@@ -469,9 +472,11 @@ export default function SwaraProfilePage() {
             <div className="p-8">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-6">
-                  <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-5xl font-bold text-white">F</span>
-                  </div>
+                  <img
+                    src="./Profil.jpg"
+                    alt=""
+                    className="w-24 h-24 object-cover rounded-full flex items-center justify-center shadow-lg"
+                  />
                   <div>
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
                       {userData.name}
@@ -504,34 +509,22 @@ export default function SwaraProfilePage() {
                 </div>
                 <button
                   onClick={() => setShowSettingsModal(true)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="bg-primary px-4 py-2 rounded-xl flex items-center justify-center text-white"
                 >
-                  <ChevronRight className="w-6 h-6 text-gray-400" />
+                  Edit
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border-2 border-orange-200">
                   <div className="text-4xl font-bold text-orange-600 mb-2">
                     {userData.stats.completedTraining}
                   </div>
                   <div className="text-sm text-gray-600">Latihan selesai</div>
                 </div>
-                <div className="text-center p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
-                  <div className="text-4xl font-bold text-gray-700 mb-2">
-                    {userData.stats.minutesPracticed}
-                  </div>
-                  <div className="text-sm text-gray-600">Menit berlatih</div>
-                </div>
-                <div className="text-center p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
-                  <div className="text-4xl font-bold text-gray-700 mb-2">
-                    {userData.stats.successRate}%
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Tingkat keberhasilan
-                  </div>
-                </div>
+
                 <div className="text-center p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
                   <div className="text-4xl font-bold text-gray-700 mb-2">
                     {userData.stats.badgesEarned}

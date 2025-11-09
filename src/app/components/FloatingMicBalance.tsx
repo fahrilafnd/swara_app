@@ -78,9 +78,16 @@ export default function FloatingMicBalance({
           </div>
 
           {/* Mic Balance */}
-          <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-5xl font-black text-white">{micBalance}</span>
-            <span className="text-2xl font-bold text-white/80">/ {maxMic}</span>
+          <div className="flex justify-between items-center">
+            <div className="flex items-baseline gap-2 mb-3">
+              <span className="text-5xl font-black text-white">
+                {micBalance}
+              </span>
+              <span className="text-2xl font-bold text-white/80">
+                / {maxMic}
+              </span>
+            </div>
+            <p className="text-white">Level 1</p>
           </div>
 
           {/* Progress Bar */}

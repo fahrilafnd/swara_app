@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Trophy,
   ArrowLeft,
+  Mic, // ⬅️ mic icon
 } from "lucide-react";
 import SkorSwaraHeader from "@/app/components/skor-swara/SkorSwaraHeader";
 import {
@@ -19,6 +20,7 @@ import {
   getLevelInfo,
   type TrainingMode,
 } from "../config/levels";
+import Link from "next/link";
 
 interface ModeCard {
   id: TrainingMode;
@@ -28,20 +30,20 @@ interface ModeCard {
   difficulty: string;
   minLevel: number;
   features: string[];
-  color: string;
+  color: string; // tailwind gradient classes
+  micCost: number; // ⬅️ token mic yang dibutuhkan
 }
 
 export default function PilihModePage() {
   const router = useRouter();
-  const [userLevel, setUserLevel] = useState<number | null>(null); // Start dengan null
+  const [userLevel, setUserLevel] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load user level setelah component mount
     const level = getUserLevel();
     setUserLevel(level);
     setIsLoading(false);
-    console.log("🎯 Current User Level:", level); // Debug log
+    console.log("🎯 Current User Level:", level);
   }, []);
 
   const currentLevelConfig = userLevel ? getLevelInfo(userLevel) : null;
@@ -62,6 +64,7 @@ export default function PilihModePage() {
         "Fokus pada intonasi & tempo",
       ],
       color: "from-green-500 to-emerald-600",
+      micCost: 1, // ⬅️
     },
     {
       id: "topic-image",
@@ -77,6 +80,7 @@ export default function PilihModePage() {
         "Melatih spontanitas",
       ],
       color: "from-blue-500 to-indigo-600",
+      micCost: 2, // ⬅️
     },
     {
       id: "custom-topic",
@@ -92,6 +96,7 @@ export default function PilihModePage() {
         "Challenge maksimal",
       ],
       color: "from-orange-500 to-orange-600",
+      micCost: 3, // ⬅️
     },
   ];
 
@@ -104,12 +109,29 @@ export default function PilihModePage() {
       );
       return;
     }
-
     sessionStorage.setItem("skor-swara:selectedMode", mode);
     router.push(`/skor-swara/pilih-topik?mode=${mode}`);
   };
 
-  // Show loading state
+  const renderMicTokens = (count: number, dimmed?: boolean) => (
+    <div
+      className="flex items-center gap-1"
+      aria-label={`${count} mic diperlukan`}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={`w-6 h-6 rounded-full bg-white/90 flex items-center justify-center shadow ${
+            dimmed ? "opacity-70" : ""
+          }`}
+          title="Mic token"
+        >
+          <Mic className="w-3.5 h-3.5 text-orange-600" />
+        </div>
+      ))}
+    </div>
+  );
+
   if (isLoading || userLevel === null) {
     return (
       <>
@@ -127,13 +149,14 @@ export default function PilihModePage() {
   return (
     <>
       <div className="bg-white shadow-md rounded-xl p-8 mb-10">
-        <button
-          onClick={() => router.back()}
+        <Link
+          href={"/skor-swara"}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-semibold">Kembali</span>
-        </button>
+        </Link>
+
         {/* User Level Card */}
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
           <div className="flex items-center gap-4">
@@ -150,7 +173,7 @@ export default function PilihModePage() {
             </div>
           </div>
 
-          {/* Debug info - helpful for development */}
+          {/* Debug info */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <p className="text-xs text-gray-500">
               🔍 Debug: Level {userLevel} | Unlocked modes:{" "}
@@ -185,10 +208,20 @@ export default function PilihModePage() {
                 }`}
                 onClick={() => !locked && handleSelectMode(mode.id)}
               >
-                {/* Header dengan gradient */}
+                {/* Header */}
                 <div
                   className={`bg-gradient-to-r ${mode.color} p-6 text-white relative`}
                 >
+                  {/* Mic token pill (selalu tampil) */}
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2">
+                      {renderMicTokens(mode.micCost, locked)}
+                      <span className="text-xs font-bold">
+                        {mode.micCost} Mic
+                      </span>
+                    </div>
+                  </div>
+
                   {locked && (
                     <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-2">
                       <Lock className="w-4 h-4" />
@@ -205,6 +238,7 @@ export default function PilihModePage() {
 
                 {/* Content */}
                 <div className="p-6">
+                  {/* Difficulty & min level */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-sm">
                       <Trophy className="w-4 h-4 text-gray-600" />
@@ -215,6 +249,7 @@ export default function PilihModePage() {
                     </div>
                   </div>
 
+                  {/* Fitur */}
                   <div className="space-y-2 mb-6">
                     {mode.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-2">
@@ -262,7 +297,7 @@ export default function PilihModePage() {
           })}
         </div>
 
-        {/* Tips Section */}
+        {/* Tips */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-200">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0">

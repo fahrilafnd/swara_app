@@ -87,7 +87,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-0.25 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 2,
@@ -139,7 +139,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-0.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 3,
@@ -163,7 +163,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           maxPoints: 5,
         },
         {
-          name: "Kesesuaian Topik",
+          name: "Kesesuaian Topik (Level 3, 4, dan 5)",
           description: "17-20 kata relevan dengan topik",
           maxPoints: 5,
         },
@@ -196,7 +196,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-1 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 4,
@@ -220,7 +220,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           maxPoints: 5,
         },
         {
-          name: "Kesesuaian Topik",
+          name: "Kesesuaian Topik (Level 3, 4, dan 5)",
           description: "17-20 kata on-topic",
           maxPoints: 5,
         },
@@ -253,7 +253,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-1.5 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
     {
       level: 5,
@@ -277,7 +277,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           maxPoints: 5,
         },
         {
-          name: "Kesesuaian Topik",
+          name: "Kesesuaian Topik (Level 3, 4, dan 5)",
           description: "17-20 kata highly relevant",
           maxPoints: 5,
         },
@@ -315,7 +315,7 @@ export default function SkorSwaraIntroModal({ open, onClose }: Props) {
           penalty: "-2 poin",
         },
       ],
-      specialRule: "⚠️ Kata tidak senonoh → STOP latihan",
+      specialRule: "⚠️ Kata tidak senonoh → -5 skor latihan",
     },
   ];
 

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Bell, CheckCheck, Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
-
+import Profil from "./Profil.jpg";
 /** ====== Types ====== */
 type NotifType = "info" | "success" | "warning";
 type Notif = {
@@ -193,8 +193,8 @@ export default function Header() {
 
           <Link href="/profile" className="hover:opacity-80 transition-opacity">
             <img
-              src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
-              className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer"
+              src="/profil.jpg"
+              className="w-[48px] object-cover h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer"
               alt="pp"
             />
           </Link>

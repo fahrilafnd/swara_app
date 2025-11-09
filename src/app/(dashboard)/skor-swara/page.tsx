@@ -42,22 +42,31 @@ export default function SkorSwaraPage() {
 
   const scoreCards: ScoreCard[] = [
     {
-      title: "Kelancaran & Pengucapan",
-      icon: "🎯",
-      description:
-        "Swara akan menilai kelancaran penyampaianmu, termasuk mendeteksi jeda yang terlalu lama. Pastikan setiap kata diucapkan dengan jelas.",
+      title: "Tempo",
+      icon: "⏱️",
+      description: "Menilai kecepatan berbicara dalam satu menit.",
     },
     {
-      title: "Kontak Mata & Ekspresi",
-      icon: "😄",
-      description:
-        "Swara akan menganalisis kontak mata dan ekspresi wajah. Pertahankan kontak mata dan tunjukkan ekspresi yang percaya diri.",
+      title: "Artikulasi",
+      icon: "🗣️",
+      description: "Menilai kejelasan pengucapan.",
     },
     {
-      title: "Penggunaan Bahasa",
-      icon: "💬",
+      title: "Kontak Mata",
+      icon: "👀",
+      description: "Menilai seberapa lama pengguna mengalihkan pandangan.",
+    },
+    {
+      title: "Kesesuaian Topik",
+      icon: "👌🏻",
       description:
-        'Swara akan menganalisis pilihan kata, termasuk mendeteksi penggunaan kata pengisi yang tidak perlu (seperti "emmm") dan pengulangan kata.',
+        "Menilai relevansi teks sesuai kata kunci yang sudah disediakan setiap topik.",
+    },
+    {
+      title: "Struktur",
+      icon: "📑",
+      description:
+        "Mengidentifikasi frasa yang menandai pembuka, isi, dan penutup pada public speaking.",
     },
   ];
 
@@ -108,7 +117,7 @@ export default function SkorSwaraPage() {
         }}
       />
 
-      <div className="min-h-screen bg-white rounded-3xl p-3 md:p-6 lg:p-8">
+      <div className="min-h-screen mb-10 bg-white rounded-3xl p-3 md:p-6 lg:p-8">
         <div className="w-full">
           {/* Level Badge */}
           <div className="mb-6 flex justify-end">
@@ -159,8 +168,6 @@ export default function SkorSwaraPage() {
           </div>
         </div>
       </div>
-
-      <HistorySection historyItems={historyItems} />
     </div>
   );
 }

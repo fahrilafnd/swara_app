@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Pause, Play, Check } from "lucide-react";
+import { Pause, Play, Check, AlarmClock, RotateCcw } from "lucide-react"; // [ADD] icons
 import Link from "next/link";
+import { createPortal } from "react-dom"; // [ADD]
 
 type PeopleRowProps = {
   count?: number;
@@ -252,8 +253,12 @@ function PeopleRow({
 
 export default function Pidato() {
   const [isPaused, setIsPaused] = useState(false);
-  const [time, setTime] = useState(292);
+  const [time, setTime] = useState(60); // [ADD] batasi ke 1 menit
+  const [timeUp, setTimeUp] = useState(false); // [ADD]
+  const [mounted, setMounted] = useState(false); // [ADD]
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => setMounted(true), []); // [ADD]
 
   useEffect(() => {
     const el = document.getElementById("");
@@ -274,6 +279,17 @@ export default function Pidato() {
       return () => clearInterval(timer);
     }
   }, [isPaused, time]);
+
+  // [ADD] ketika waktu habis: pause & munculkan modal
+  useEffect(() => {
+    if (time === 0 && !timeUp) {
+      setIsPaused(true);
+      setTimeUp(true);
+      // hentikan track kamera supaya hemat resource (opsional)
+      const stream = videoRef.current?.srcObject as MediaStream | null;
+      stream?.getTracks().forEach((tr) => tr.stop());
+    }
+  }, [time, timeUp]);
 
   useEffect(() => {
     const enableCamera = async () => {
@@ -314,7 +330,9 @@ export default function Pidato() {
                 </p>
               </div>
               <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
-                <p className="text-orange-500 font-bold text-lg">Mode : Pidato</p>
+                <p className="text-orange-500 font-bold text-lg">
+                  Mode : Pidato
+                </p>
               </div>
             </div>
             <div className="mt-2">
@@ -358,7 +376,7 @@ export default function Pidato() {
             <div className="bg-white flex items-center justify-center w-[90%] h-40 rounded-2xl shadow-md">
               <div className="flex items-center gap-4 z-40">
                 <button
-                  onClick={() => setIsPaused(!isPaused)}
+                  onClick={() => !timeUp && setIsPaused(!isPaused)} // [ADD] nonaktif saat timeUp
                   className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
                   {isPaused ? (
@@ -385,6 +403,61 @@ export default function Pidato() {
           </div>
         </section>
       </div>
+
+      {/* [ADD] Modal waktu habis */}
+      {mounted && timeUp
+        ? createPortal(
+            <div>
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
+              <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl p-8 text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
+                    <AlarmClock className="w-10 h-10 text-orange-500" />
+                  </div>
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">
+                    Waktu Habis (1 Menit)
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Sesi pidato dihentikan otomatis karena mencapai batas{" "}
+                    <strong>60 detik</strong>.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link
+                      href="/podium-swara/selesai"
+                      className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-bold hover:from-green-600 hover:to-green-700 text-center"
+                    >
+                      Akhiri & Lihat Hasil
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsPaused(false);
+                        setTime(60);
+                        setTimeUp(false);
+                        // hidupkan kamera lagi
+                        (async () => {
+                          try {
+                            const stream =
+                              await navigator.mediaDevices.getUserMedia({
+                                video: true,
+                              });
+                            if (videoRef.current)
+                              videoRef.current.srcObject = stream;
+                          } catch {}
+                        })();
+                      }}
+                      className="flex-1 bg-gray-100 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-200 flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                      Ulangi dari Awal
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
