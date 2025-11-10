@@ -81,3 +81,37 @@ body.modal-open .fixed {
 .scrollbar-custom::-webkit-scrollbar-thumb:hover {
   background: #F0712295; 
 }
+
+/* Custom scrollbar untuk tabel horizontal */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #F07122 #f1f1f1;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #F07122;
+  border-radius: 10px;
+  border: 2px solid #f1f1f1;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #d96419;
+}
+
+.scrollbar-thumb-orange-300::-webkit-scrollbar-thumb {
+  background: #fdba74;
+}
+
+.scrollbar-track-gray-100::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}

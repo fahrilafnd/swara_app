@@ -363,9 +363,11 @@ export default function MonitoringMentoring() {
       {/* Main Content Card */}
       <div className="bg-white p-6 rounded-2xl shadow-md">
         {/* Section Title */}
-        <div className="p-6 border-b flex  justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Pengguna</h2>
-          <div className="flex bg-gray-100 flex-wrap gap-3 p-6 rounded-xl">
+        <div className="p-6 border-b">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Pengguna</h2>
+          
+          {/* Desktop - Horizontal Tabs */}
+          <div className="hidden md:flex bg-gray-100 flex-wrap gap-3 p-4 rounded-xl">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -383,9 +385,28 @@ export default function MonitoringMentoring() {
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Tabs */}
+          {/* Mobile - Dropdown */}
+          <div className="md:hidden">
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(e) => {
+                  setActiveTab(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl appearance-none text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                {tabs.map((tab) => (
+                  <option key={tab.id} value={tab.id}>
+                    {tab.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+        </div>
 
         {/* Search */}
         <div className="p-6 border-b">

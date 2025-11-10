@@ -263,32 +263,32 @@ export default function ManajemenPengguna() {
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+      <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm mb-4 sm:mb-6">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">
             Manajemen Pengguna
           </h1>
-          <p className="text-gray-500">
+          <p className="text-gray-500 text-sm sm:text-base">
             Kelola data pengguna, mentor, dan hak akses dalam platform SWARA
           </p>
         </div>
 
         {/* Statistic Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {stats.map((s, i) => (
-            <div key={i} className="bg-gray-50 rounded-xl p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <s.icon className="w-6 h-6 text-green-500" />
+            <div key={i} className="bg-gray-50 rounded-xl p-4 sm:p-6">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className="bg-green-50 p-2 sm:p-3 rounded-lg">
+                  <s.icon className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
                 </div>
-                <span className="text-sm font-semibold text-green-500">
+                <span className="text-xs sm:text-sm font-semibold text-green-500">
                   {s.change}
                 </span>
               </div>
-              <h3 className="text-3xl font-bold text-gray-800 mb-1">
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">
                 {s.value}
               </h3>
-              <p className="text-gray-500 text-sm">{s.label}</p>
+              <p className="text-gray-500 text-xs sm:text-sm">{s.label}</p>
             </div>
           ))}
         </div>
@@ -296,17 +296,17 @@ export default function ManajemenPengguna() {
 
       {/* Table Section */}
       <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800">Pengguna</h2>
+        <div className="p-4 sm:p-6 border-b border-gray-100">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Pengguna</h2>
         </div>
 
         {/* Tabs */}
-        <div className="px-6 pt-4 flex gap-2 border-b border-gray-100">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-4 flex gap-1 sm:gap-2 border-b border-gray-100 overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab
                   ? "text-orange-500 border-b-2 border-orange-500"
                   : "text-gray-500 hover:text-gray-700"
@@ -318,10 +318,10 @@ export default function ManajemenPengguna() {
         </div>
 
         {/* Add Mentor Button */}
-        <div className="px-6 py-4">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-lg font-medium hover:from-orange-600 hover:to-orange-700 transition-colors"
+            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2.5 sm:py-3 rounded-lg font-medium hover:from-orange-600 hover:to-orange-700 transition-colors text-sm sm:text-base"
           >
             Tambahkan Mentor
           </button>
@@ -329,7 +329,7 @@ export default function ManajemenPengguna() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead className="bg-gray-50 border-y border-gray-200">
               <tr>
                 <Th
@@ -367,7 +367,7 @@ export default function ManajemenPengguna() {
                 >
                   Bergabung
                 </Th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
@@ -379,56 +379,56 @@ export default function ManajemenPengguna() {
                   key={user.id}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <Link href={`/admin/profile/${user.id}`}>
                         <div
-                          className={`w-10 h-10 ${user.avatarColor} rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity`}
+                          className={`w-8 h-8 sm:w-10 sm:h-10 ${user.avatarColor} rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity`}
                         >
-                          <span className="text-white font-semibold">
+                          <span className="text-white font-semibold text-xs sm:text-sm">
                             {user.avatar}
                           </span>
                         </div>
                       </Link>
-                      <div>
-                        <div className="text-sm font-medium text-gray-800">
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                           {user.nama}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs sm:text-sm text-gray-500 truncate">
                           {user.email}
                         </div>
                       </div>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${user.roleColor}`}
+                      className={`inline-flex px-2 sm:px-3 py-1 text-xs font-medium rounded-full ${user.roleColor}`}
                     >
                       {user.role}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${user.statusColor}`}
+                      className={`inline-flex px-2 sm:px-3 py-1 text-xs font-medium rounded-full ${user.statusColor}`}
                     >
                       {user.status}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-800">{user.skor}</span>
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-800">{user.skor}</span>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-800">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-800">
                       {user.bergabung}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center justify-center gap-3">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3">
                       <Link
                         href={`/admin/manage-pengguna/user-performance/${user.id}`}
                       >
@@ -436,7 +436,7 @@ export default function ManajemenPengguna() {
                           className="p-1 text-gray-400 hover:text-green-500 transition-colors"
                           title="Lihat Performance"
                         >
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </Link>
 
@@ -445,7 +445,7 @@ export default function ManajemenPengguna() {
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         title="Nonaktifkan Pengguna"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </div>
                   </td>
@@ -456,7 +456,7 @@ export default function ManajemenPengguna() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-6 py-10 text-center text-gray-500"
+                    className="px-4 sm:px-6 py-8 sm:py-10 text-center text-gray-500 text-sm sm:text-base"
                   >
                     Tidak ada data
                   </td>
@@ -467,22 +467,22 @@ export default function ManajemenPengguna() {
         </div>
 
         {/* Pagination (dummy) */}
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+          <div className="text-xs sm:text-sm text-gray-500">
             Menampilkan {sortedUsers.length} data
           </div>
           <div className="flex gap-2">
             <button
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
+              className="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50"
               disabled
             >
               Previous
             </button>
-            <button className="px-3 py-1 bg-orange-500 text-white rounded-lg text-sm">
+            <button className="px-2 sm:px-3 py-1 bg-orange-500 text-white rounded-lg text-xs sm:text-sm">
               1
             </button>
             <button
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
+              className="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50"
               disabled
             >
               Next
@@ -493,10 +493,10 @@ export default function ManajemenPengguna() {
 
       {/* Modal Tambah (contoh form sederhana) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-800">Tambah</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Tambah</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -513,11 +513,11 @@ export default function ManajemenPengguna() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-800 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-800 mb-1 sm:mb-2">
                       Judul 1
                     </label>
                     <input
@@ -526,11 +526,11 @@ export default function ManajemenPengguna() {
                       value={formData.input1}
                       onChange={handleInputChange}
                       placeholder="Input 1"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-600 placeholder-gray-400"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-600 placeholder-gray-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-800 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-800 mb-1 sm:mb-2">
                       Judul 2
                     </label>
                     <input
@@ -539,13 +539,13 @@ export default function ManajemenPengguna() {
                       value={formData.input2}
                       onChange={handleInputChange}
                       placeholder="Input 2"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-600 placeholder-gray-400"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-600 placeholder-gray-400"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-800 mb-1 sm:mb-2">
                     Judul 3
                   </label>
                   <input
@@ -554,15 +554,15 @@ export default function ManajemenPengguna() {
                     value={formData.input3}
                     onChange={handleInputChange}
                     placeholder="Input 3"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-600 placeholder-gray-400"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-600 placeholder-gray-400"
                   />
                 </div>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-lg font-medium hover:from-orange-600 hover:to-orange-700 transition-colors text-lg"
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 sm:py-4 rounded-lg font-medium hover:from-orange-600 hover:to-orange-700 transition-colors text-sm sm:text-base md:text-lg"
                 >
                   Simpan …..
                 </button>
@@ -589,18 +589,18 @@ function Th({
 }) {
   return (
     <th
-      className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer select-none"
+      className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer select-none"
       onClick={onClick}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         {children}
         <svg
-          width="10"
-          height="10"
-          viewBox="0 0 10 10"
-          className={`transition-transform ${
+          width="8"
+          height="8"
+          className={`sm:w-[10px] sm:h-[10px] transition-transform ${
             active && dir === "desc" ? "rotate-180" : ""
           }`}
+          viewBox="0 0 10 10"
         >
           <path
             d="M1 3.5L5 7.5L9 3.5"

@@ -3,18 +3,45 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function AdminHeader() {
+export default function AdminHeader({
+  setIsCollapsed,
+}: {
+  setIsCollapsed: (v: boolean) => void;
+}) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 flex w-full pr-12 py-5">
+    <header className="sticky top-0 z-30 flex w-full px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 bg-[#F5F2E9]">
       <div className="flex w-full rounded-3xl">
-        <div className="flex grow items-center justify-between">
-          <div className="w-full pl-14 sm:gap-4 lg:pl-0 flex items-center">
+        <div className="flex grow items-center justify-between gap-2 sm:gap-3 md:gap-4">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="lg:hidden mobile-menu-button p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+            aria-label="Open menu"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 12H21M3 6H21M3 18H21"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <div className="w-full flex items-center gap-2 sm:gap-3 md:gap-4">
             {pathname.includes("/user-performance") ? (
               <Link
                 href={"/admin/manage-pengguna"}
-                className="flex items-center p-4 pr-6 bg-white rounded-2xl"
+                className="flex items-center p-2 sm:p-3 md:p-4 pr-3 sm:pr-4 md:pr-6 bg-white rounded-xl sm:rounded-2xl"
               >
                 <svg
                   width="22"
@@ -28,13 +55,13 @@ export default function AdminHeader() {
                     fill="#F07122"
                   />
                 </svg>
-                <p className="text-[#F07122] font-medium font-lexend ml-4">
-                  Kembali ke Manajemen Pengguna
+                <p className="text-[#F07122] font-medium font-lexend ml-2 sm:ml-3 md:ml-4 text-xs sm:text-sm md:text-base">
+                  <span className="hidden sm:inline">Kembali ke </span>Manajemen Pengguna
                 </p>
               </Link>
             ) : (
               <>
-                <div className="flex w-[160px] md:w-[300px] relative">
+                <div className="flex w-full sm:w-[200px] md:w-[250px] lg:w-[300px] relative">
                   <label
                     htmlFor="search"
                     className="absolute left-4 top-0 bottom-0 m-auto h-max w-max"
@@ -56,7 +83,7 @@ export default function AdminHeader() {
                     type="text"
                     name="search"
                     id="search"
-                    className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline focus:outline-[#F07122] "
+                    className="w-full font-lexend text-[#F07122] bg-white py-2 sm:py-3 md:py-4 rounded-xl sm:rounded-2xl pl-10 sm:pl-12 md:pl-14 pr-3 sm:pr-4 text-sm sm:text-base focus:outline-2 focus:outline focus:outline-[#F07122]"
                     placeholder="Search"
                   />
                 </div>
@@ -64,11 +91,12 @@ export default function AdminHeader() {
             )}
           </div>
 
-          <div className="gap-4 px-0 flex items-center">
-            <div className="cursor-pointer">
+          <div className="gap-2 sm:gap-3 md:gap-4 px-0 flex items-center flex-shrink-0">
+            <div className="cursor-pointer hidden sm:block">
               <svg
-                width="25"
-                height="26"
+                width="22"
+                height="23"
+                className="sm:w-[25px] sm:h-[26px]"
                 viewBox="0 0 25 26"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +113,7 @@ export default function AdminHeader() {
             <Link href="/admin/profile">
               <img
                 src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
-                className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer ml-2 hover:opacity-80 transition-opacity"
+                className="w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] md:w-[48px] md:h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer hover:opacity-80 transition-opacity"
                 alt="pp"
               />
             </Link>

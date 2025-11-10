@@ -20,6 +20,7 @@ import {
   Tag,
   BarChart3,
   SortAsc,
+  Menu,
 } from "lucide-react";
 
 type TEntry = {
@@ -457,9 +458,10 @@ export default function ManajemenInspira() {
       </div>
       {/* Main Content Card */}
       <div className="bg-white rounded-2xl shadow-md">
-        {/* Category Tabs */}
-        <div className="flex items-center justify-between border-b p-6">
-          <div className="flex bg-gray-100 rounded-xl p-4 flex-wrap gap-3">
+        {/* Category Tabs - RESPONSIVE VERSION */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b p-6">
+          {/* Desktop - Horizontal Tabs */}
+          <div className="hidden md:flex bg-gray-100 rounded-xl p-4 flex-wrap gap-3">
             {categories.map((category) => (
               <button
                 key={category}
@@ -477,9 +479,31 @@ export default function ManajemenInspira() {
               </button>
             ))}
           </div>
+
+          {/* Mobile - Dropdown */}
+          <div className="w-full md:hidden">
+            <div className="relative">
+              <select
+                value={activeCategory}
+                onChange={(e) => {
+                  setActiveCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl appearance-none text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
           >
             <Plus className="w-5 h-5" />
             Tambah Video
