@@ -18,40 +18,42 @@ export default function UserPerformance() {
   return (
     <div className="min-h-screen">
         {/* User Header Card */}
-        <div className="rounded-2xl shadow-sm p-8 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl font-bold">R</span>
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-4 sm:gap-6 flex-1 min-w-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-2xl sm:text-3xl font-bold">R</span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-1">Rina Sari</h1>
-                <p className="text-gray-500 mb-3">rina.s@email.com</p>
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 truncate">Rina Sari</h1>
+                <p className="text-gray-500 mb-2 sm:mb-3 text-sm sm:text-base truncate">rina.s@email.com</p>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <span className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap">
                     Pengguna Umum
                   </span>
-                  <span className="px-3 py-1 bg-green-100 text-green-600 text-sm font-medium rounded-full">
+                  <span className="px-2 sm:px-3 py-1 bg-green-100 text-green-600 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap">
                     Aktif
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
                     Bergabung sejak 15 Januari 2025
                   </span>
                 </div>
               </div>
             </div>
-            <button className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors">
-              Nonaktifkan
-            </button>
+            <div className="flex gap-2 sm:gap-3 flex-shrink-0">
+              <button className="px-4 sm:px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors text-sm sm:text-base whitespace-nowrap">
+                Nonaktifkan
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column - Personal Info */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Informasi Pribadi</h2>
-              <p className="text-sm text-gray-500 mb-6">Data lengkap pengguna</p>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Informasi Pribadi</h2>
+              <p className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">Data lengkap pengguna</p>
 
               <div className="space-y-4">
                 <div>
@@ -88,11 +90,11 @@ export default function UserPerformance() {
           </div>
 
           {/* Right Column - Statistics & Progress */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Statistics Card */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Statistik Perkembangan</h2>
-              <p className="text-sm text-gray-500 mb-6">Perkembangan kemampuan public speaking</p>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Statistik Perkembangan</h2>
+              <p className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">Perkembangan kemampuan public speaking</p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {stats.map((stat, index) => (
@@ -106,9 +108,9 @@ export default function UserPerformance() {
             </div>
 
             {/* Progress Card */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Progres Keterampilan</h2>
-              <p className="text-sm text-gray-500 mb-6">Evaluasi per aspek</p>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Progres Keterampilan</h2>
+              <p className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">Evaluasi per aspek</p>
 
               <div className="space-y-6">
                 {progressData.map((item, index) => (

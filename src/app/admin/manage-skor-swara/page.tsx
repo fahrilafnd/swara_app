@@ -117,67 +117,67 @@ export default function ManageSkorSwara() {
 
   return (
     <div className="font-lexend h-full flex flex-col">
-      <div className="bg-white rounded-2xl p-6 mb-6">
-        <p className="font-bold text-xl mb-1">Manajemen Skor Swara</p>
-        <p className="text-gray-600 mb-4">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
+        <p className="font-bold text-lg sm:text-xl mb-1">Manajemen Skor Swara</p>
+        <p className="text-gray-600 mb-4 text-sm sm:text-base">
           Kelola data latihan skor swara dan olah kalimat yang ingin disajikan.
         </p>
-        <div className="flex justify-between space-x-8">
-          <div className="flex-1 bg-white rounded-2xl border border-[#B3C8CF] shadow py-3 px-6">
-            <p className="text-[#41A745] bg-[#E9F6EC] text-sm w-max py-1 px-3 rounded-full mb-6">
+        <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-6 sm:space-x-0">
+          <div className="flex-1 bg-white rounded-xl sm:rounded-2xl border border-[#B3C8CF] shadow py-3 sm:py-4 px-4 sm:px-6">
+            <p className="text-[#41A745] bg-[#E9F6EC] text-xs sm:text-sm w-max py-1 px-2 sm:px-3 rounded-full mb-4 sm:mb-6">
               +12%
             </p>
-            <p className="font-bold text-5xl text-[#39363D] mb-1">50</p>
-            <p className="text-gray-600">Total Penggunaan</p>
+            <p className="font-bold text-3xl sm:text-4xl md:text-5xl text-[#39363D] mb-1">50</p>
+            <p className="text-gray-600 text-sm sm:text-base">Total Penggunaan</p>
           </div>
-          <div className="flex-1 bg-white rounded-2xl border border-[#B3C8CF] shadow py-3 px-6">
-            <p className="text-[#41A745] bg-[#E9F6EC] text-sm w-max py-1 px-3 rounded-full mb-6">
+          <div className="flex-1 bg-white rounded-xl sm:rounded-2xl border border-[#B3C8CF] shadow py-3 sm:py-4 px-4 sm:px-6">
+            <p className="text-[#41A745] bg-[#E9F6EC] text-xs sm:text-sm w-max py-1 px-2 sm:px-3 rounded-full mb-4 sm:mb-6">
               +3
             </p>
-            <p className="font-bold text-5xl text-[#39363D] mb-1">20</p>
-            <p className="text-gray-600">Kalimat dibuat</p>
+            <p className="font-bold text-3xl sm:text-4xl md:text-5xl text-[#39363D] mb-1">20</p>
+            <p className="text-gray-600 text-sm sm:text-base">Kalimat dibuat</p>
           </div>
         </div>
       </div>
-      <div className="bg-white rounded-2xl p-6">
-        <div className="flex justify-between items-center">
-          <p className="font-bold text-xl mb-4">Skor Swara</p>
-          <div className="bg-primary px-6 py-4"></div>
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
+          <p className="font-bold text-lg sm:text-xl">Skor Swara</p>
+          <div className="bg-primary px-4 sm:px-6 py-2 sm:py-4 hidden sm:block"></div>
         </div>
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[500px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("topik")}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       TOPIK
                       {sortField === "topik" &&
                         (sortOrder === "asc" ? (
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp className="w-3 h-3 sm:w-4 sm:h-4" />
                         ) : (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                         ))}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("kalimat")}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       KALIMAT
                       {sortField === "kalimat" &&
                         (sortOrder === "asc" ? (
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp className="w-3 h-3 sm:w-4 sm:h-4" />
                         ) : (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                         ))}
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     AKSI
                   </th>
                 </tr>
@@ -188,29 +188,29 @@ export default function ManageSkorSwara() {
                     key={item.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-6 py-4">
-                      <span className="font-semibold text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">
                         {item.topik}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="text-gray-700 text-sm">{item.kalimat}</p>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <p className="text-gray-700 text-xs sm:text-sm">{item.kalimat}</p>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="p-2 hover:bg-orange-50 rounded-lg transition-colors"
+                          className="p-1.5 sm:p-2 hover:bg-orange-50 rounded-lg transition-colors"
                           title="Edit"
                         >
-                          <Edit2 className="w-5 h-5 text-orange-600" />
+                          <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(item)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-colors"
                           title="Hapus"
                         >
-                          <Trash2 className="w-5 h-5 text-red-600" />
+                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                         </button>
                       </div>
                     </td>
@@ -220,8 +220,8 @@ export default function ManageSkorSwara() {
             </table>
 
             {sortedData.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Tidak ada data</p>
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-500 text-sm sm:text-lg">Tidak ada data</p>
               </div>
             )}
           </div>
@@ -229,10 +229,10 @@ export default function ManageSkorSwara() {
       </div>
       {/* Modal Edit */}
       {showEditModal && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 shadow-lg w-[600px]">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-semibold">Edit Skor Swara</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg w-full max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-5">
+              <h2 className="text-base sm:text-lg font-semibold">Edit Skor Swara</h2>
               <button onClick={() => setShowEditModal(false)}>
                 <svg
                   width="14"
@@ -249,9 +249,9 @@ export default function ManageSkorSwara() {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Topik
                 </label>
                 <input
@@ -260,13 +260,13 @@ export default function ManageSkorSwara() {
                   onChange={(e) =>
                     setFormData({ ...formData, topik: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-[#B3C8CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F07122]"
+                  className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-[#B3C8CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F07122]"
                   placeholder="Masukkan topik"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Kalimat
                 </label>
                 <textarea
@@ -274,7 +274,7 @@ export default function ManageSkorSwara() {
                   onChange={(e) =>
                     setFormData({ ...formData, kalimat: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-[#B3C8CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F07122] resize-none"
+                  className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-[#B3C8CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F07122] resize-none"
                   rows={4}
                   placeholder="Masukkan kalimat"
                 />
@@ -283,7 +283,7 @@ export default function ManageSkorSwara() {
 
             <button
               onClick={handleSaveEdit}
-              className="bg-[#F07122] w-full py-3 text-white font-medium rounded-lg mt-6 mx-auto block hover:bg-[#d96419] transition-colors text-sm"
+              className="bg-[#F07122] w-full py-2.5 sm:py-3 text-white font-medium rounded-lg mt-4 sm:mt-6 mx-auto block hover:bg-[#d96419] transition-colors text-xs sm:text-sm"
             >
               Simpan
             </button>
@@ -293,10 +293,10 @@ export default function ManageSkorSwara() {
 
       {/* Modal Delete */}
       {showDeleteModal && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 shadow-lg w-[600px]">
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg w-full max-w-[600px]">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Konfirmasi</h2>
+              <h2 className="text-base sm:text-lg font-semibold">Konfirmasi</h2>
               <button onClick={() => setShowDeleteModal(false)}>
                 <svg
                   width="14"
