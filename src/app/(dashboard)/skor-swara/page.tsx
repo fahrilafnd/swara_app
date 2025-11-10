@@ -120,7 +120,7 @@ export default function SkorSwaraPage() {
       <div className="min-h-screen mb-10 bg-white rounded-3xl p-3 md:p-6 lg:p-8">
         <div className="w-full">
           {/* Level Badge */}
-          <div className="mb-6 flex justify-end">
+          {/* <div className="mb-6 flex justify-end">
             <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-md">
               <span className="text-2xl">{levelInfo?.badge}</span>
               <div>
@@ -130,7 +130,7 @@ export default function SkorSwaraPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <HeroSection onStartTraining={handleStartTraining} />
           <ScoreCards scoreCards={scoreCards} />

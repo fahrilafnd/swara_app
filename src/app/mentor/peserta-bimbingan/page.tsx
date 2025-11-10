@@ -30,7 +30,6 @@ export default function PesertaBimbingan() {
       date: "23 Agustus 2025",
       time: "14:00 - 15:00",
       totalHours: "20.24 W1B",
-      platform: "Zoom/Google Meeting",
       rating: null,
       status: "Terjadwal",
       image:
@@ -42,7 +41,6 @@ export default function PesertaBimbingan() {
       role: "Pelajar SMA",
       date: "22 Agustus 2025",
       time: "10:00 - 11:00",
-      platform: "Zoom/Google Meeting",
       rating: 4.95,
       totalRatings: "120+",
       status: "Selesai",
@@ -55,7 +53,6 @@ export default function PesertaBimbingan() {
       role: "Mahasiswa",
       date: "22 Agustus 2025",
       time: "15:00 - 16:00",
-      platform: "Zoom/Google Meeting",
       rating: 4.6,
       totalRatings: "80+",
       status: "Selesai",
@@ -68,7 +65,6 @@ export default function PesertaBimbingan() {
       role: "Mahasiswa",
       date: "21 Agustus 2025",
       time: "11:00 - 12:00",
-      platform: "Zoom/Google Meeting",
       rating: 4.85,
       totalRatings: "90+",
       status: "Selesai",
@@ -81,7 +77,6 @@ export default function PesertaBimbingan() {
       role: "Pelajar SMP",
       date: "20 Agustus 2025",
       time: "13:00 - 14:00",
-      platform: "Zoom/Google Meeting",
       rating: 4.65,
       totalRatings: "50+",
       status: "Selesai",
@@ -94,7 +89,6 @@ export default function PesertaBimbingan() {
       role: "Pelajar SMA",
       date: "24 Agustus 2025",
       time: "09:00 - 10:00",
-      platform: "Zoom/Google Meeting",
       rating: 4.92,
       totalRatings: "110+",
       status: "Terjadwal",
@@ -107,7 +101,6 @@ export default function PesertaBimbingan() {
       role: "Mahasiswa",
       date: "19 Agustus 2025",
       time: "14:00 - 15:00",
-      platform: "Zoom/Google Meeting",
       rating: null,
       status: "Dibatalkan",
       image:
@@ -236,8 +229,8 @@ export default function PesertaBimbingan() {
         <div className="space-y-4 mb-6">
           {currentStudents.length > 0 ? (
             currentStudents.map((student) => (
-                
-              <Link href={"/mentor/peserta-bimbingan/detail"}
+              <Link
+                href={"/mentor/peserta-bimbingan/detail"}
                 key={student.id}
                 className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 flex items-center justify-between"
               >
@@ -290,13 +283,6 @@ export default function PesertaBimbingan() {
 
                 {/* Platform and Time */}
                 <div className="flex items-center gap-6">
-                  {student.status !== "Dibatalkan" && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-4 h-4 text-red-500" />
-                      <span className="text-sm">{student.platform}</span>
-                    </div>
-                  )}
-
                   {/* Time Badge */}
                   <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2.5 rounded-xl font-semibold min-w-[140px] text-center">
                     {student.time}

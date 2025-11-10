@@ -45,12 +45,12 @@ export default function PayButton() {
   const handlePay = async () => {
     // contoh data dummy
     const payload = {
-      amount: 150000,
+      amount: 50000,
       customer: { first_name: "Yudi", email: "yudi@example.com" },
       items: [
         {
           id: "mentor-basic",
-          price: 150000,
+          price: 50000,
           quantity: 1,
           name: "Sesi Mentoring",
         },

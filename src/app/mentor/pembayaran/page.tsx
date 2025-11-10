@@ -401,9 +401,9 @@ export default function Pembayaran() {
       menteeImage:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
       sessionTitle: "Public Speaking Dasar - Sesi 1",
-      amount: 150000,
-      fee: 7500,
-      netAmount: 142500,
+      amount: 50000,
+      fee: 10000,
+      netAmount: 40000,
       paymentMethod: "BCA Virtual Account",
       status: "settlement",
       transactionDate: "2025-10-15 14:30",
@@ -418,9 +418,9 @@ export default function Pembayaran() {
       menteeImage:
         "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
       sessionTitle: "Presentasi Bisnis Advanced",
-      amount: 200000,
+      amount: 50000,
       fee: 10000,
-      netAmount: 190000,
+      netAmount: 40000,
       paymentMethod: "Gopay",
       status: "pending",
       transactionDate: "2025-10-20 10:15",
@@ -435,9 +435,9 @@ export default function Pembayaran() {
       menteeImage:
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
       sessionTitle: "Story Telling untuk Presentasi",
-      amount: 150000,
-      fee: 7500,
-      netAmount: 142500,
+      amount: 50000,
+      fee: 10000,
+      netAmount: 40000,
       paymentMethod: "Mandiri Virtual Account",
       status: "settlement",
       transactionDate: "2025-10-10 16:45",
@@ -452,9 +452,9 @@ export default function Pembayaran() {
       menteeImage:
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100",
       sessionTitle: "MC & Public Speaking",
-      amount: 175000,
-      fee: 8750,
-      netAmount: 166250,
+      amount: 50000,
+      fee: 10000,
+      netAmount: 40000,
       paymentMethod: "Credit Card",
       status: "expire",
       transactionDate: "2025-10-05 09:00",
@@ -467,9 +467,9 @@ export default function Pembayaran() {
   const withdrawalHistory = [
     {
       id: "WD001",
-      amount: 1500000,
-      fee: 2500,
-      netAmount: 1497500,
+      amount: 50000,
+      fee: 10000,
+      netAmount: 40000,
       status: "success",
       requestDate: "2025-09-25",
       processedDate: "2025-09-26",
@@ -478,9 +478,9 @@ export default function Pembayaran() {
     },
     {
       id: "WD002",
-      amount: 1500000,
-      fee: 2500,
-      netAmount: 1497500,
+      amount: 50000,
+      fee: 10000,
+      netAmount: 40000,
       status: "success",
       requestDate: "2025-09-10",
       processedDate: "2025-09-11",
@@ -1139,7 +1139,7 @@ export default function Pembayaran() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">
-                          Biaya Platform (5%)
+                          Biaya Platform (10%)
                         </span>
                         <span className="font-semibold text-red-600">
                           - {formatCurrency(selectedTransaction.fee)}

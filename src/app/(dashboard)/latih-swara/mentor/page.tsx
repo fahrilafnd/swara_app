@@ -135,7 +135,7 @@ export default function Mentor() {
                 Biaya Mentoring (1 Sesi)
               </span>
               <span className="text-2xl font-bold text-orange-600">
-                Rp 150.000
+                Rp 50.000
               </span>
             </div>
             

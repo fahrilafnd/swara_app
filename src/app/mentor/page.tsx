@@ -8,13 +8,13 @@ export default function Mentor() {
     {
       label: "Total Peserta Bimbingan",
       value: "24",
-      trend: "↑ 3 peserta baru bulan ini",
+      trend: "3 peserta baru bulan ini",
       trendColor: "text-green-600",
     },
     {
       label: "Sesi Mentoring",
       value: "156",
-      trend: "↑ 12 sesi minggu ini",
+      trend: "12 sesi minggu ini",
       trendColor: "text-green-600",
     },
     {
@@ -22,7 +22,7 @@ export default function Mentor() {
       value: "4.8",
       trend: (
         <span className="flex items-center gap-1 text-sm text-green-600">
-          <Star className="w-4 h-4 text-yellow-400" /> dari 98 ulasan
+          dari 98 ulasan
         </span>
       ),
       trendColor: "text-green-600",
@@ -30,7 +30,7 @@ export default function Mentor() {
     {
       label: "Total Peserta Bimbingan",
       value: "24",
-      trend: "↑ 3 peserta baru bulan ini",
+      trend: "3 peserta baru bulan ini",
       trendColor: "text-green-600",
     },
   ];
@@ -39,25 +39,21 @@ export default function Mentor() {
     {
       name: "Ahmad Rizki Pramono",
       topic: "Presentasi Bisnis",
-      platform: "Zoom/Google Meeting",
       time: "14:00 - 15:00",
     },
     {
       name: "Sarah Melinda Putri",
       topic: "Public Speaking Dasar",
-      platform: "Zoom/Google Meeting",
       time: "14:00 - 15:00",
     },
     {
       name: "Daffa Arif Setyawan",
       topic: "Teknik Story Telling",
-      platform: "Zoom/Google Meeting",
       time: "14:00 - 15:00",
     },
     {
       name: "Ahmad Rizki Pramono",
       topic: "Presentasi Bisnis",
-      platform: "Zoom/Google Meeting",
       time: "14:00 - 15:00",
     },
   ];
@@ -98,7 +94,6 @@ export default function Mentor() {
         <p className="text-gray-600 text-sm mb-2">Total Jam Mengajar</p>
         <p className="text-orange-500 text-5xl font-bold mb-3">248</p>
         <div className="flex items-center gap-1">
-          <ArrowUp className="w-4 h-4 text-green-600" />
           <p className="text-sm text-green-600">↑ 18 jam bulan ini</p>
         </div>
       </div>
@@ -106,7 +101,7 @@ export default function Mentor() {
       {/* Sesi Mentoring Mendatang */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          Sesi Mentoring Mendatang
+          Sesi Mentoring Hari Ini
         </h2>
         <div className="space-y-4 bg-white rounded-xl shadow-md p-6">
           {upcomingSessions.map((session, index) => (
@@ -124,11 +119,6 @@ export default function Mentor() {
               </div>
 
               <div className="flex items-center gap-8">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="w-4 h-4 text-red-500" />
-                  <span className="text-sm">{session.platform}</span>
-                </div>
-
                 <div className="bg-orange-500 text-white px-6 py-2 rounded-xl font-semibold">
                   {session.time}
                 </div>

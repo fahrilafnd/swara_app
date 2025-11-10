@@ -1,23 +1,36 @@
 // src/app/(dashboard)/dashboard/beli-mic/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Mic,
   Check,
-  Sparkles,
   Zap,
   Crown,
   ArrowLeft,
-  CreditCard,
-  Smartphone,
-  Building2,
   ShoppingCart,
   Gift,
-  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+declare global {
+  interface Window {
+    snap: {
+      pay: (
+        token: string,
+        opts?: {
+          onSuccess?: (result: unknown) => void;
+          onPending?: (result: unknown) => void;
+          onError?: (result: unknown) => void;
+          onClose?: () => void;
+        }
+      ) => void;
+    };
+  }
+}
+
+const SNAP_SANDBOX = "https://app.sandbox.midtrans.com/snap/snap.js";
+const SNAP_PROD = "https://app.midtrans.com/snap/snap.js";
 
 interface MicPackage {
   id: string;
@@ -36,9 +49,22 @@ interface MicPackage {
 }
 
 export default function BeliMic() {
-  const router = useRouter();
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>("gopay");
+  // muat Snap.js sekali
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+        ? SNAP_PROD
+        : SNAP_SANDBOX;
+    script.setAttribute(
+      "data-client-key",
+      process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""
+    );
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const packages: MicPackage[] = [
     {
@@ -46,7 +72,6 @@ export default function BeliMic() {
       name: "Starter Pack",
       price: 5000,
       mics: 5,
-    
       gradient: "from-blue-500 to-cyan-500",
       iconBg: "bg-blue-100",
     },
@@ -62,7 +87,6 @@ export default function BeliMic() {
         icon: <Zap className="w-3 h-3" />,
       },
       savings: "Hemat 50%",
-     
       gradient: "from-orange-500 to-red-500",
       iconBg: "bg-orange-100",
     },
@@ -77,73 +101,90 @@ export default function BeliMic() {
         icon: <Crown className="w-3 h-3" />,
       },
       savings: "Hemat 70%",
-     
       gradient: "from-green-500 to-emerald-500",
       iconBg: "bg-green-100",
     },
   ];
 
-  const paymentMethods = [
-    {
-      id: "gopay",
-      name: "GoPay",
-      icon: <Smartphone className="w-5 h-5" />,
-      description: "Bayar pakai GoPay",
-    },
-    {
-      id: "dana",
-      name: "DANA",
-      icon: <Smartphone className="w-5 h-5" />,
-      description: "Bayar pakai DANA",
-    },
-    {
-      id: "ovo",
-      name: "OVO",
-      icon: <Smartphone className="w-5 h-5" />,
-      description: "Bayar pakai OVO",
-    },
-    {
-      id: "bank",
-      name: "Transfer Bank",
-      icon: <Building2 className="w-5 h-5" />,
-      description: "Transfer via bank",
-    },
-    {
-      id: "qris",
-      name: "QRIS",
-      icon: <CreditCard className="w-5 h-5" />,
-      description: "Scan QRIS code",
-    },
-  ];
-
-  const handleBuyPackage = (pkg: MicPackage) => {
-    setSelectedPackage(pkg.id);
-    // Scroll ke payment section
-    document.getElementById("payment-section")?.scrollIntoView({
-      behavior: "smooth",
-    });
-  };
-
-  const handleCheckout = () => {
-    const selectedPkg = packages.find((p) => p.id === selectedPackage);
-    if (!selectedPkg) return;
-
-    // TODO: Implement payment gateway integration
-    alert(
-      `Checkout: ${selectedPkg.name} (${
-        selectedPkg.mics
-      } mic) - Rp ${selectedPkg.price.toLocaleString(
-        "id-ID"
-      )} via ${paymentMethod}`
-    );
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("id-ID", {
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(price);
+
+  // helper: ambil email dari storage bila ada, kalau tidak buat dummy yang valid
+  function resolveBuyerEmail() {
+    try {
+      // contoh lokasi penyimpanan profilmu (ubah kunci sesuai app-mu)
+      const raw1 = localStorage.getItem("swara:user");
+      if (raw1) {
+        const u = JSON.parse(raw1);
+        if (typeof u?.email === "string" && u.email.includes("@"))
+          return u.email;
+      }
+      const raw2 = sessionStorage.getItem("swara:user");
+      if (raw2) {
+        const u = JSON.parse(raw2);
+        if (typeof u?.email === "string" && u.email.includes("@"))
+          return u.email;
+      }
+    } catch {}
+    // fallback agar lolos validasi Zod & Midtrans
+    return `guest_${Date.now()}@swara.local`;
+  }
+
+  const handleBuyNow = async (pkg: MicPackage) => {
+    try {
+      const email = resolveBuyerEmail();
+
+      const payload = {
+        amount: pkg.price, // Rp
+        customer: {
+          first_name: "Pengguna", // opsional; isi dari profilmu bila ada
+          email, // <-- WAJIB untuk Zod schema kamu
+        },
+        items: [
+          {
+            id: `mic-${pkg.id}`,
+            price: pkg.price,
+            quantity: 1,
+            name: `${pkg.name} - ${pkg.mics} Mic`,
+          },
+        ],
+        metadata: { mics: pkg.mics, packageId: pkg.id, source: "beli-mic" },
+      };
+
+      const res = await fetch("/api/payments/midtrans/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json?.token) {
+        alert(json?.message || "Gagal membuat transaksi.");
+        return;
+      }
+
+      window.snap.pay(json.token, {
+        onSuccess() {
+          window.location.href = "/latih-swara/mentor-saya";
+        },
+        onPending() {
+          window.location.href = "/latih-swara/mentor-saya?status=pending";
+        },
+        onError() {
+          alert("Pembayaran gagal! Silakan coba lagi.");
+        },
+        onClose() {
+          /* user menutup Snap */
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      alert("Terjadi kesalahan jaringan.");
+    }
   };
 
   return (
@@ -172,7 +213,7 @@ export default function BeliMic() {
             </p>
           </div>
 
-          {/* Benefits Bar */}
+          {/* Benefit bar tetap */}
           <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-2xl p-4 mb-8">
             <div className="flex flex-wrap justify-center gap-6">
               <div className="flex items-center gap-2">
@@ -224,13 +265,11 @@ export default function BeliMic() {
 
               {/* Card */}
               <div
-                className={`relative bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 ${
-                  selectedPackage === pkg.id
-                    ? "border-orange-500 ring-4 ring-orange-200"
-                    : "border-gray-100 hover:border-orange-300"
-                } ${pkg.popular ? "scale-105" : ""}`}
+                className={`relative bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-orange-300 ${
+                  pkg.popular ? "scale-105" : ""
+                }`}
               >
-                {/* Savings Badge */}
+                {/* Savings */}
                 {pkg.savings && (
                   <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
                     {pkg.savings}
@@ -244,12 +283,12 @@ export default function BeliMic() {
                   <Mic className="w-8 h-8 text-gray-700" />
                 </div>
 
-                {/* Package Name */}
+                {/* Name */}
                 <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
                   {pkg.name}
                 </h3>
 
-                {/* Mic Count */}
+                {/* Mic count */}
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <span className="text-5xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
@@ -271,135 +310,17 @@ export default function BeliMic() {
                   <div className="text-xs text-gray-500">Sekali bayar</div>
                 </div>
 
-            
-                {/* CTA Button */}
+                {/* BUY NOW -> langsung Snap */}
                 <button
-                  onClick={() => handleBuyPackage(pkg)}
-                  className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-300 ${
-                    selectedPackage === pkg.id
-                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105"
-                      : `bg-gradient-to-r ${pkg.gradient} text-white hover:shadow-xl hover:scale-105`
-                  }`}
+                  onClick={() => handleBuyNow(pkg)}
+                  className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-300 bg-gradient-to-r ${pkg.gradient} text-white hover:shadow-xl hover:scale-105`}
                 >
-                  {selectedPackage === pkg.id ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Check className="w-5 h-5" />
-                      Dipilih
-                    </span>
-                  ) : (
-                    "Pilih Paket"
-                  )}
+                  Beli Paket
                 </button>
               </div>
             </div>
           ))}
         </div>
-
-        {/* Payment Section */}
-        {selectedPackage && (
-          <div
-            id="payment-section"
-            className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border-2 border-orange-100 mb-8 animate-fade-in"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <CreditCard className="w-7 h-7 text-orange-500" />
-              Pilih Metode Pembayaran
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => setPaymentMethod(method.id)}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
-                    paymentMethod === method.id
-                      ? "border-orange-500 bg-orange-50 shadow-md"
-                      : "border-gray-200 hover:border-orange-300 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        paymentMethod === method.id
-                          ? "bg-orange-500 text-white"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {method.icon}
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900">
-                        {method.name}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {method.description}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Checkout Summary */}
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 border-2 border-orange-200 mb-6">
-              <h3 className="font-bold text-gray-900 mb-4">
-                Ringkasan Pesanan
-              </h3>
-              {(() => {
-                const pkg = packages.find((p) => p.id === selectedPackage);
-                if (!pkg) return null;
-                return (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">Paket:</span>
-                      <span className="font-bold text-gray-900">
-                        {pkg.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">Jumlah Mic:</span>
-                      <span className="font-bold text-orange-600">
-                        {pkg.mics} Mic
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">Metode Pembayaran:</span>
-                      <span className="font-bold text-gray-900">
-                        {
-                          paymentMethods.find((m) => m.id === paymentMethod)
-                            ?.name
-                        }
-                      </span>
-                    </div>
-                    <div className="border-t-2 border-orange-200 pt-3 mt-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-gray-900">
-                          Total Bayar:
-                        </span>
-                        <span className="text-2xl font-black text-orange-600">
-                          {formatPrice(pkg.price)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Checkout Button */}
-            <button
-              onClick={handleCheckout}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-5 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3"
-            >
-              <ShoppingCart className="w-6 h-6" />
-              Lanjutkan Pembayaran
-            </button>
-
-            <p className="text-xs text-gray-500 text-center mt-4">
-              🔒 Pembayaran aman dan terenkripsi
-            </p>
-          </div>
-        )}
 
         {/* FAQ Section */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border-2 border-gray-100">
@@ -423,7 +344,8 @@ export default function BeliMic() {
                 Apakah ada cara mendapat mic selain membeli?
               </h3>
               <p className="text-sm text-gray-600">
-                Ya! Selesaikan Daily Mission setiap hari untuk mendapatkan bonus mic!
+                Ya! Selesaikan Daily Mission setiap hari untuk mendapatkan bonus
+                mic!
               </p>
             </div>
             <div className="border-l-4 border-blue-500 pl-4">

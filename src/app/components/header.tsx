@@ -136,7 +136,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 flex w-full pr-12 py-5">
       <div className="flex w-full items-center justify-between">
         {/* Left: Back button / Search */}
-        <div className="flex-1 flex justify-start">
+        {/* <div className="flex-1 flex justify-start">
           {shouldShowBackButton ? (
             <button
               onClick={handleBackNavigation}
@@ -173,6 +173,9 @@ export default function Header() {
               />
             </div>
           )}
+        </div> */}
+        <div>
+          
         </div>
 
         {/* Right: Notification & Profile */}

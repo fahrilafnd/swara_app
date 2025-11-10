@@ -275,7 +275,7 @@ export default function Home() {
                     ))}
                   </div>
                   <p className="text-sm text-gray-600">
-                    <span className="font-semibold text-gray-900">10,000+</span>{" "}
+                    <span className="font-semibold text-gray-900">25+</span>{" "}
                     pengguna mempercayai SWARA
                   </p>
                 </div>
@@ -316,7 +316,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-orange-300 text-white backdrop-blur">
+      {/* <section className="py-12 px-4 sm:px-6 lg:px-8 bg-orange-300 text-white backdrop-blur">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
@@ -331,7 +331,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Benefits Section */}
       <section id="benefits" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
@@ -389,12 +389,45 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {features.map((feature, index) => (
+          {/* Baris Atas — 3 Kolom */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {features.slice(0, 3).map((feature, index) => (
               <div
                 key={index}
                 className="group relative p-6 lg:p-8 rounded-2xl bg-white border-2 border-gray-100 hover:border-orange-500 hover:shadow-2xl transition-all duration-300 cursor-pointer"
                 onMouseEnter={() => setActiveFeature(index)}
+              >
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300`}
+                ></div>
+                <div className="relative z-10">
+                  <div
+                    className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300 shadow-lg`}
+                  >
+                    <div className="text-white">{feature.icon}</div>
+                  </div>
+                  <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed mb-4">
+                    {feature.description}
+                  </p>
+                  <div className="flex items-center text-orange-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Pelajari lebih lanjut
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Baris Bawah — 2 Kolom */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-6">
+            {features.slice(3).map((feature, index) => (
+              <div
+                key={3 + index}
+                className="group relative p-6 lg:p-8 rounded-2xl bg-white border-2 border-gray-100 hover:border-orange-500 hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                onMouseEnter={() => setActiveFeature(3 + index)}
               >
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300`}
@@ -673,6 +706,7 @@ export default function Home() {
           <div className="absolute top-0 left-1/4 w-64 h-64 bg-white rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
+
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
             Siap Menjadi Public Speaker Handal?
@@ -681,16 +715,22 @@ export default function Home() {
             Bergabunglah dengan ribuan pengguna yang telah meningkatkan
             kemampuan public speaking mereka bersama SWARA
           </p>
+
+          {/* Primary actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/dashboard">
               <button className="px-10 py-4 bg-white text-orange-600 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all">
                 Mulai Gratis Sekarang
               </button>
             </Link>
-            <button className="px-10 py-4 bg-transparent border-2 border-white text-white rounded-full font-bold text-lg hover:bg-white hover:text-orange-600 transition-all">
-              Pelajari Lebih Lanjut
-            </button>
+            <Link href="/tentang">
+              <button className="px-10 py-4 bg-transparent border-2 border-white text-white rounded-full font-bold text-lg hover:bg-white hover:text-orange-600 transition-all">
+                Pelajari Lebih Lanjut
+              </button>
+            </Link>
           </div>
+
+          {/* Trust bullets */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-orange-100">
             <p className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5" />
@@ -705,6 +745,34 @@ export default function Home() {
               Dukungan 24/7
             </p>
           </div>
+          <hr className="text-white mt-10" />
+          {/* === Offer: Jadi Mentor / Hubungi Admin === */}
+          <div className="mt-10 mx-auto max-w-3xl">
+            <div className="bg-white/10 border border-white/20 backdrop-blur-sm rounded-2xl p-5 sm:p-6">
+              <p className="text-white/90 text-base sm:text-lg leading-relaxed">
+                <span className="font-bold text-white">
+                  Punya pengalaman public speaking atau mengajar?
+                </span>
+                &nbsp;Bergabung sebagai{" "}
+                <span className="font-semibold">mentor SWARA</span> dan bantu
+                ribuan pelajar berkembang. Anda akan mendapatkan profil mentor,
+                jadwal fleksibel, dan kompensasi per sesi.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {/* <Link href="/mentor/daftar">
+                  <button className="px-6 py-3 bg-white text-orange-700 rounded-full font-semibold hover:shadow-xl transition">
+                    Daftar Jadi Mentor
+                  </button>
+                </Link> */}
+                <Link href="/kontak">
+                  <button className="px-6 py-3 bg-transparent border-2 border-white text-white rounded-full font-semibold hover:bg-white hover:text-orange-700 transition">
+                    Hubungi Admin Swara
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+          {/* === End mentor block === */}
         </div>
       </section>
 
@@ -720,17 +788,6 @@ export default function Home() {
                 Platform pembelajaran public speaking berbasis AI yang inklusif
                 dan inovatif untuk semua.
               </p>
-              <div className="flex gap-3">
-                <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-600 transition-colors cursor-pointer">
-                  <span className="text-xl">📧</span>
-                </div>
-                <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-600 transition-colors cursor-pointer">
-                  <span className="text-xl">💼</span>
-                </div>
-                <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-600 transition-colors cursor-pointer">
-                  <span className="text-xl">📱</span>
-                </div>
-              </div>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-lg">Fitur</h4>

@@ -25,7 +25,7 @@ const MENTORS: Mentor[] = [
     name: "Daffa Arif Setyawan",
     title: "CEO Merah Putih",
     bio: "Halo, disini aku bantu kamu untuk skill up public speakingmu!",
-    price: 30000,
+    price: 50000,
     rating: 4.78,
     ratingsCount: 40,
     image:
@@ -38,7 +38,7 @@ const MENTORS: Mentor[] = [
     name: "Ayla Putri",
     title: "HR Interviewer",
     bio: "Siap bantu persiapan interview kerja dengan simulasi real.",
-    price: 45000,
+    price: 50000,
     rating: 4.9,
     ratingsCount: 62,
     image:
@@ -51,7 +51,7 @@ const MENTORS: Mentor[] = [
     name: "Raka Pratama",
     title: "Presentation Coach",
     bio: "Bangun presentasi yang padat, jelas, & engaging.",
-    price: 35000,
+    price: 50000,
     rating: 4.7,
     ratingsCount: 28,
     image:
@@ -64,7 +64,7 @@ const MENTORS: Mentor[] = [
     name: "Nadya Rahma",
     title: "Public Speaker",
     bio: "Latihan artikulasi & storytelling biar makin percaya diri.",
-    price: 30000,
+    price: 50000,
     rating: 4.85,
     ratingsCount: 51,
     image:
@@ -90,7 +90,7 @@ const MENTORS: Mentor[] = [
     name: "Rina Maharani",
     title: "Slide Designer",
     bio: "Buat deck presentasi yang rapi & profesional.",
-    price: 32000,
+    price: 50000,
     rating: 4.76,
     ratingsCount: 22,
     image:
@@ -163,7 +163,7 @@ export default function LatihSwara() {
         {/* GRID CARD — tetap sesuai desainmu */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           {current.map((m) => (
-            <div key={m.id} className="border-2 border-gray-200 p-4 rounded-lg">
+            <div key={m.id} className="border-2 border-gray-200 p-4 rounded-xl">
               <div className="flex items-center gap-3 ">
                 <Star className="text-yellow-300" />
                 <p className="font-bold">{m.rating.toFixed(2)}</p>

@@ -1,10 +1,9 @@
+// src/app/(dashboard)/profile/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-
 import {
-  User,
   MapPin,
   Calendar,
   Star,
@@ -19,20 +18,81 @@ import {
   Plus,
 } from "lucide-react";
 
+/** ===== Helpers ===== */
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
+const getCookie = (name: string) => {
+  if (typeof document === "undefined") return "";
+  const m = document.cookie.match(new RegExp("(^|;\\s*)" + name + "=([^;]*)"));
+  return m ? decodeURIComponent(m[2]) : "";
+};
+
+/** ===== Types (sesuai respons) ===== */
+type ApiProfile = {
+  success: boolean;
+  message: string;
+  data: {
+    user_id: number;
+    full_name: string | null;
+    email: string | null;
+    phone_number: string | null;
+    birth_date: string | null;
+    address: string | null;
+    created_at: string; // ISO
+    role_id: number;
+    gender_id: number | null;
+    refreshTokenExpiresAt?: string;
+    status?: string;
+    role?: { role_id: number; role_name: string };
+    gender?: unknown;
+    mentee?: Array<{
+      point: number;
+      exercise_count: number;
+      minute_count: number;
+    }>;
+  };
+};
+
 export default function SwaraProfilePage() {
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // Form data state
-  const [formData, setFormData] = useState({
-    name: "Talitha",
-    email: "Talitha",
-    phone: "+62 812-3456-7890",
-    birthDate: "12/12/2006",
-    bio: "",
-  });
+  /** ===== Default (fallback) content ===== */
+  const fallbackForm = useMemo(
+    () => ({
+      name: "Talitha",
+      email: "talitha@example.com",
+      phone: "+62 812-3456-7890",
+      birthDate: "2006-12-12",
+      bio: "",
+    }),
+    []
+  );
 
-  // Interests state
+  const fallbackUser = useMemo(
+    () => ({
+      name: "Fabyan Yastika Permana",
+      level: 2,
+      xp: 650,
+      maxXp: 1000,
+      location: "Jakarta, Indonesia",
+      joinDate: "Bergabung 31 Agustus 2025",
+      totalPoints: 2340,
+      stats: {
+        completedTraining: 24,
+        minutesPracticed: 256,
+        successRate: 60,
+        badgesEarned: 12,
+      },
+    }),
+    []
+  );
+
+  /** ===== Local states yang akan diisi dari API / fallback ===== */
+  const [formData, setFormData] = useState(fallbackForm);
+  const [userCard, setUserCard] = useState(fallbackUser);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  /** ===== Minat (statis di sisi klien) ===== */
   const [interests, setInterests] = useState([
     { id: 1, name: "Presentasi", color: "bg-orange-500" },
     { id: 2, name: "Wawancara", color: "bg-teal-500" },
@@ -41,126 +101,79 @@ export default function SwaraProfilePage() {
   const [newInterest, setNewInterest] = useState("");
   const [showAddInterest, setShowAddInterest] = useState(false);
 
-  // Function to add new interest
-  const addInterest = () => {
-    if (newInterest.trim()) {
-      const colors = [
-        "bg-orange-500",
-        "bg-teal-500",
-        "bg-blue-500",
-        "bg-purple-500",
-        "bg-green-500",
-        "bg-pink-500",
-      ];
-      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  /** ===== Ambil profil dari API ===== */
+  useEffect(() => {
+    let cancelled = false;
 
-      setInterests([
-        ...interests,
-        {
-          id: interests.length + 1,
-          name: newInterest.trim(),
-          color: randomColor,
-        },
-      ]);
-      setNewInterest("");
-      setShowAddInterest(false);
-    }
-  };
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setApiError(null);  
 
-  // Function to remove interest
-  const removeInterest = (id: number) => {
-    setInterests(interests.filter((interest) => interest.id !== id));
-  };
+        // panggil lewat proxy server (route.ts kamu)
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
 
-  // Function to save changes
-  const saveChanges = () => {
-    // Here you would typically save to a backend or update global state
-    console.log("Saving profile changes:", { formData, interests });
-    // For now, just close the modal
-    setShowSettingsModal(false);
-    // You could add a success toast notification here
-  };
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
 
-  // Function to cancel changes
-  const cancelChanges = () => {
-    // Reset form data to original values
-    setFormData({
-      name: "Talitha",
-      email: "Talitha",
-      phone: "+62 812-3456-7890",
-      birthDate: "12/12/2006",
-      bio: "",
-    });
-    setInterests([
-      { id: 1, name: "Presentasi", color: "bg-orange-500" },
-      { id: 2, name: "Wawancara", color: "bg-teal-500" },
-      { id: 3, name: "Storytelling", color: "bg-blue-500" },
-    ]);
-    setShowSettingsModal(false);
-  };
+        // bentuk respons sama dengan API upstream
+        const json = await res.json(); // { success, message, data: {...} }
+        const d = json?.data;
+        if (!d) throw new Error("Format API tidak sesuai");
 
-  const userData = {
-    name: "Fabyan Yastika Permana",
-    level: 2,
-    xp: 650,
-    maxXp: 1000,
-    location: "Jakarta, Indonesia",
-    joinDate: "Bergabung 31 Agustus 2025",
-    totalPoints: 2340,
-    stats: {
-      completedTraining: 24,
-      minutesPracticed: 256,
-      successRate: 60,
-      badgesEarned: 12,
-    },
-    badges: [
-      {
-        id: 1,
-        name: "Langkah Pertama",
-        description: "Menyelesaikan latihan pertama",
-        icon: "🎯",
-        unlocked: true,
-      },
-      {
-        id: 2,
-        name: "Rajin Berlatih",
-        description: "Berlatih 7 hari berturut-turut",
-        icon: "🔥",
-        unlocked: true,
-      },
-      {
-        id: 3,
-        name: "Presenter Hebat",
-        description: "Mendapat rating 5 bintang",
-        icon: "⭐",
-        unlocked: true,
-      },
-      {
-        id: 4,
-        name: "Eksplorasi",
-        description: "10 latihan berbeda",
-        icon: "🎪",
-        unlocked: true,
-      },
-      {
-        id: 5,
-        name: "Dedikasi Tinggi",
-        description: "Streak 7 hari (2/7)",
-        icon: "🏆",
-        unlocked: false,
-      },
-      {
-        id: 6,
-        name: "Pagi Produktif",
-        description: "Latihan sebelum jam 9 pagi",
-        icon: "⏰",
-        unlocked: false,
-      },
-    ],
-  };
+        if (cancelled) return;
 
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+        const mentee = Array.isArray(d.mentee) ? d.mentee[0] : undefined;
+
+        // tanggal bergabung dari created_at
+        const created = d.created_at ? new Date(d.created_at) : new Date();
+        const joinDate = `Bergabung ${created.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })}`;
+
+        // KARTU PROFIL (pakai nilai API; 0 tetap dihormati)
+        setUserCard({
+          name: d.full_name ?? "Pengguna Swara",
+          level: 2, // jika backend nanti kirim level, map di sini
+          xp: Math.max(0, Math.min(1000, Number(mentee?.point ?? 0))),
+          maxXp: 1000,
+          location: d.address ?? "Indonesia",
+          joinDate,
+          totalPoints: Number(mentee?.point ?? 0),
+          stats: {
+            completedTraining: Number(mentee?.exercise_count ?? 0),
+            minutesPracticed: Number(mentee?.minute_count ?? 0),
+            successRate: 60,
+            badgesEarned: 12,
+          },
+        });
+
+        // FORM EDIT
+        setFormData({
+          name: d.full_name ?? "",
+          email: d.email ?? "",
+          phone: d.phone_number ?? "",
+          birthDate: d.birth_date ? d.birth_date.slice(0, 10) : "",
+          bio: "",
+        });
+      } catch (e: any) {
+        console.error("Gagal memuat profil:", e);
+        if (!cancelled) setApiError(e?.message || "Gagal memuat profil");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [API_BASE, fallbackForm, fallbackUser]);
+
+  /** ===== Badge dummy (tetap) ===== */
   const badges = [
     {
       id: "langkah-pertama",
@@ -237,17 +250,49 @@ export default function SwaraProfilePage() {
     },
   ];
 
+  /** ===== Interest handlers ===== */
+  const addInterest = () => {
+    if (!newInterest.trim()) return;
+    const colors = [
+      "bg-orange-500",
+      "bg-teal-500",
+      "bg-blue-500",
+      "bg-purple-500",
+      "bg-green-500",
+      "bg-pink-500",
+    ];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    setInterests((prev) => [
+      ...prev,
+      { id: prev.length + 1, name: newInterest.trim(), color: randomColor },
+    ]);
+    setNewInterest("");
+    setShowAddInterest(false);
+  };
+  const removeInterest = (id: number) =>
+    setInterests((prev) => prev.filter((x) => x.id !== id));
+
+  /** ===== Save / Cancel ===== */
+  const saveChanges = () => {
+    // TODO: panggil API update profil bila sudah tersedia
+    setShowSettingsModal(false);
+  };
+  const cancelChanges = () => {
+    // Kembalikan ke data terakhir (API ataupun fallback)
+    setShowSettingsModal(false);
+  };
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
   return (
     <div className="flex min-h-screen bg-white rounded-xl">
-      {/* Sidebar */}
-
-      {/* Main Content Area */}
       <div className="flex flex-col flex-1 ">
-        {/* Profile Settings Modal */}
+        {/* Modal Pengaturan Profil */}
         {mounted && showSettingsModal
           ? createPortal(
               <div
-                className="fixed inset-0 text-black z-50 flex items-center justify-center bg-black bg-opacity-50"
+                className="fixed inset-0 text-black z-50 flex items-center justify-center bg-black/50"
                 onClick={() => setShowSettingsModal(false)}
               >
                 <div
@@ -270,11 +315,9 @@ export default function SwaraProfilePage() {
                     </button>
                   </div>
 
-                  {/* Form Content */}
+                  {/* Form */}
                   <div className="p-6">
-                    {/* Form Fields */}
                     <div className="space-y-6">
-                      {/* Name and Email Row */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -284,7 +327,10 @@ export default function SwaraProfilePage() {
                             type="text"
                             value={formData.name}
                             onChange={(e) =>
-                              setFormData({ ...formData, name: e.target.value })
+                              setFormData((p) => ({
+                                ...p,
+                                name: e.target.value,
+                              }))
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                           />
@@ -297,17 +343,16 @@ export default function SwaraProfilePage() {
                             type="email"
                             value={formData.email}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
+                              setFormData((p) => ({
+                                ...p,
                                 email: e.target.value,
-                              })
+                              }))
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                           />
                         </div>
                       </div>
 
-                      {/* Phone and Birth Date Row */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -317,10 +362,10 @@ export default function SwaraProfilePage() {
                             type="tel"
                             value={formData.phone}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
+                              setFormData((p) => ({
+                                ...p,
                                 phone: e.target.value,
-                              })
+                              }))
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                           />
@@ -329,23 +374,20 @@ export default function SwaraProfilePage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Tanggal lahir
                           </label>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              value={formData.birthDate}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  birthDate: e.target.value,
-                                })
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                            />
-                          </div>
+                          <input
+                            type="date"
+                            value={formData.birthDate}
+                            onChange={(e) =>
+                              setFormData((p) => ({
+                                ...p,
+                                birthDate: e.target.value,
+                              }))
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                          />
                         </div>
                       </div>
 
-                      {/* Bio Section */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Bio / Deskripsi
@@ -353,7 +395,7 @@ export default function SwaraProfilePage() {
                         <textarea
                           value={formData.bio}
                           onChange={(e) =>
-                            setFormData({ ...formData, bio: e.target.value })
+                            setFormData((p) => ({ ...p, bio: e.target.value }))
                           }
                           rows={4}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
@@ -361,7 +403,7 @@ export default function SwaraProfilePage() {
                         />
                       </div>
 
-                      {/* Interests and Preferences */}
+                      {/* Minat */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                           Minat dan Preferensi
@@ -395,7 +437,7 @@ export default function SwaraProfilePage() {
                                 type="text"
                                 value={newInterest}
                                 onChange={(e) => setNewInterest(e.target.value)}
-                                onKeyPress={(e) =>
+                                onKeyDown={(e) =>
                                   e.key === "Enter" && addInterest()
                                 }
                                 placeholder="Minat baru..."
@@ -423,7 +465,6 @@ export default function SwaraProfilePage() {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-3 pt-6 border-t">
                       <button
                         onClick={saveChanges}
@@ -447,21 +488,22 @@ export default function SwaraProfilePage() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          {/* Level Alert */}
+          {/* Info level */}
           <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white mb-8 shadow-lg">
             <div className="flex items-start gap-3">
               <span className="text-3xl">📚</span>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">
-                  Penjelajah Suara - Level 2
+                  Penjelajah Suara - Level {userCard.level}
                 </h3>
                 <p className="text-indigo-100">
                   Kamu sudah mulai menguasai dasar-dasar public speaking!
                   Teruskan latihan untuk mencapai level berikutnya.
                 </p>
                 <p className="text-sm mt-2 text-indigo-200">
-                  ➡️ Level selanjutnya: Pembicara Percaya Diri (Level 3) - Butuh
-                  350 XP lagi!
+                  ➡️ Level selanjutnya: Pembicara Percaya Diri (Level{" "}
+                  {userCard.level + 1}) - Butuh{" "}
+                  {Math.max(0, userCard.maxXp - userCard.xp)} XP lagi!
                 </p>
               </div>
             </div>
@@ -475,38 +517,39 @@ export default function SwaraProfilePage() {
                   <img
                     src="./Profil.jpg"
                     alt=""
-                    className="w-24 h-24 object-cover rounded-full flex items-center justify-center shadow-lg"
+                    className="w-24 h-24 object-cover rounded-full shadow-lg"
                   />
                   <div>
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                      {userData.name}
+                      {userCard.name}
                     </h1>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="bg-orange-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                        Level {userData.level}
+                        Level {userCard.level}
                       </span>
                       <span className="text-orange-600 font-bold">
-                        {userData.xp}/{userData.maxXp} XP
+                        {userCard.xp}/{userCard.maxXp} XP
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-gray-600 text-sm">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
-                        <span>{userData.location}</span>
+                        <span>{userCard.location}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{userData.joinDate}</span>
+                        <span>{userCard.joinDate}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
                         <span>
-                          Total Poin: {userData.totalPoints.toLocaleString()}
+                          Total Poin: {userCard.totalPoints.toLocaleString()}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
+
                 <button
                   onClick={() => setShowSettingsModal(true)}
                   className="bg-primary px-4 py-2 rounded-xl flex items-center justify-center text-white"
@@ -516,34 +559,31 @@ export default function SwaraProfilePage() {
                 </button>
               </div>
 
-              {/* Stats Grid */}
+              {/* Stats */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border-2 border-orange-200">
                   <div className="text-4xl font-bold text-orange-600 mb-2">
-                    {userData.stats.completedTraining}
+                    {userCard.stats.completedTraining}
                   </div>
                   <div className="text-sm text-gray-600">Latihan selesai</div>
                 </div>
 
                 <div className="text-center p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
                   <div className="text-4xl font-bold text-gray-700 mb-2">
-                    {userData.stats.badgesEarned}
+                    {userCard.stats.badgesEarned}
                   </div>
                   <div className="text-sm text-gray-600">Badge diraih</div>
                 </div>
               </div>
 
-              {/* Logout Button */}
+              {/* Logout */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <button
                   onClick={async () => {
                     try {
                       await fetch("/api/auth/logout", { method: "POST" });
-
                       document.cookie =
                         "swara_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
-                      // Redirect ke halaman login
                       window.location.href = "/masuk";
                     } catch (err) {
                       console.error("Gagal logout:", err);
@@ -567,34 +607,47 @@ export default function SwaraProfilePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {badges.map((badge) => (
-                <div
-                  key={badge.id}
-                  className={`p-6 rounded-2xl text-center transition-all ${
-                    badge.unlocked
-                      ? "bg-gradient-to-br from-orange-100 to-amber-100 border-2 border-orange-300 hover:scale-105"
-                      : "bg-gray-100 opacity-60"
-                  }`}
-                >
-                  <div className="mb-3 flex items-center justify-center">
-                    <img
-                      src={badge.icon}
-                      alt={badge.name}
-                      className="w-16 h-16"
-                      loading="lazy"
-                    />
-                  </div>
-                  <h3 className="font-bold text-gray-800 mb-1">{badge.name}</h3>
-                  <p className="text-xs text-gray-600">{badge.description}</p>
-                  {!badge.unlocked && (
-                    <div className="mt-2 text-xs text-gray-500 italic">
-                      Belum terbuka
+            {apiError && (
+              <div className="mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+                Tidak bisa memuat profil dari server: {apiError}. Menampilkan
+                data sementara.
+              </div>
+            )}
+
+            {loading ? (
+              <div className="text-center text-gray-500">Memuat data…</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {badges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className={`p-6 rounded-2xl text-center transition-all ${
+                      badge.unlocked
+                        ? "bg-gradient-to-br from-orange-100 to-amber-100 border-2 border-orange-300 hover:scale-105"
+                        : "bg-gray-100 opacity-60"
+                    }`}
+                  >
+                    <div className="mb-3 flex items-center justify-center">
+                      <img
+                        src={badge.icon}
+                        alt={badge.name}
+                        className="w-16 h-16"
+                        loading="lazy"
+                      />
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <h3 className="font-bold text-gray-800 mb-1">
+                      {badge.name}
+                    </h3>
+                    <p className="text-xs text-gray-600">{badge.description}</p>
+                    {!badge.unlocked && (
+                      <div className="mt-2 text-xs text-gray-500 italic">
+                        Belum terbuka
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </main>
       </div>

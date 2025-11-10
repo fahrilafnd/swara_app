@@ -25,7 +25,7 @@ export default function SkillCards({
       id: "skor-swara" as ModalType,
       title: "Skor Swara",
       bg: "from-[#34C38F] to-[#11998E]",
-      micCost: 1,
+      micCost: [1, 2, 3],
     },
     {
       id: "adu-swara" as ModalType,

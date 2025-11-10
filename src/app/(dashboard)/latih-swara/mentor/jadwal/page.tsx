@@ -184,7 +184,7 @@ export default function Jadwal() {
                     Biaya Mentoring (1 Sesi)
                   </span>
                   <span className="text-2xl font-bold text-orange-600">
-                    Rp 150.000
+                    Rp 50.000
                   </span>
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed">

@@ -1,8 +1,9 @@
+// app/(dashboard)/latihan-dasar/artikulasi/page.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Mic,
   MicOff,
@@ -18,35 +19,216 @@ import {
   X,
   Home,
   ArrowLeft,
+  BookOpen,
+  Star,
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 
-interface VokalProgress {
-  letter: string;
+// ============ LEVEL CONFIGURATION ============
+interface LevelConfig {
+  id: number;
+  title: string;
+  description: string;
+  instructions: string[];
+  items: string[];
+  minAccuracy: number;
+  tips: string[];
+}
+
+const LEVEL_CONFIGS: Record<number, LevelConfig> = {
+  1: {
+    id: 1,
+    title: "Pengenalan Vokal",
+    description: "Pelajari cara mengucapkan huruf vokal dengan jelas",
+    instructions: [
+      "Ucapkan setiap huruf vokal dengan jelas dan tegas",
+      "Pastikan mikrofon Anda berfungsi dengan baik",
+      "Ucapkan saat tombol 'Mulai Rekam' ditekan",
+      "Target akurasi minimal 85% untuk melanjutkan",
+    ],
+    items: ["A", "I", "U", "E", "O"],
+    minAccuracy: 85,
+    tips: [
+      "Buka mulut lebar untuk vokal A",
+      "Senyum tipis untuk vokal I",
+      "Bentuk bibir melingkar untuk vokal U",
+      "Posisi mulut antara I dan A untuk vokal E",
+      "Bentuk bibir bulat untuk vokal O",
+    ],
+  },
+  2: {
+    id: 2,
+    title: "Konsonan Dasar",
+    description: "Latihan pengucapan konsonan yang tepat",
+    instructions: [
+      "Ucapkan setiap kombinasi konsonan dengan jelas",
+      "Perhatikan perbedaan antara konsonan bersuara dan tak bersuara",
+      "Jeda sebentar antar suku kata",
+      "Target akurasi minimal 85%",
+    ],
+    items: [
+      "BA",
+      "PA",
+      "DA",
+      "TA",
+      "GA",
+      "KA",
+      "FA",
+      "VA",
+      "SA",
+      "ZA",
+      "MA",
+      "NA",
+      "NGA",
+      "NYA",
+      "RA",
+      "LA",
+    ],
+    minAccuracy: 85,
+    tips: [
+      "BA vs PA: BA bersuara, PA tidak bersuara",
+      "DA vs TA: Perhatikan getaran pita suara",
+      "NGA: Suara dari hidung",
+      "NYA: Lidah menempel langit-langit",
+      "RA: Getarkan ujung lidah",
+    ],
+  },
+  3: {
+    id: 3,
+    title: "Kombinasi Suku Kata",
+    description: "Gabungkan vokal dan konsonan menjadi suku kata",
+    instructions: [
+      "Ucapkan kombinasi suku kata dengan lancar",
+      "Perhatikan transisi antar suku kata",
+      "Jaga tempo yang konsisten",
+      "Target akurasi minimal 85%",
+    ],
+    items: [
+      "BA-BE-BI-BU-BO",
+      "TA-TI-TU-TE-TO",
+      "KA-KI-KU-KE-KO",
+      "RA-RI-RU-RE-RO",
+      "LA-LI-LU-LE-LO",
+      "CHA-CHI-CHU",
+      "CHE-CHO",
+      "STRA-STRI-STRU",
+      "STRE-STRO",
+      "AK-IK-UK-EK-OK",
+    ],
+    minAccuracy: 85,
+    tips: [
+      "Ucapkan dengan ritme yang konsisten",
+      "Jangan terburu-buru pada suku kata kompleks",
+      "STRA: Latih pelan dulu, lalu percepat",
+      "Perhatikan transisi konsonan ganda",
+    ],
+  },
+  4: {
+    id: 4,
+    title: "Kata Sulit",
+    description: "Ucapkan kata-kata yang menantang dengan jelas",
+    instructions: [
+      "Ucapkan setiap kata dengan artikulasi yang jelas",
+      "Jangan terburu-buru, fokus pada kejelasan",
+      "Perhatikan setiap suku kata",
+      "Target akurasi minimal 80%",
+    ],
+    items: [
+      "PSIKOLOGI",
+      "STRATEGI",
+      "IMPLEMENTASI",
+      "INFRASTRUKTUR",
+      "KHARISMATIK",
+      "TRANSKRIPSI",
+      "OTORITER",
+      "PROBABILITAS",
+      "KUALITAS",
+      "SPESIFIKASI",
+    ],
+    minAccuracy: 80,
+    tips: [
+      "PSIKOLOGI: PSI-KO-LO-GI (4 suku kata)",
+      "IMPLEMENTASI: IM-PLE-MEN-TA-SI (5 suku kata)",
+      "INFRASTRUKTUR: IN-FRA-STRUK-TUR (4 suku kata)",
+      "Latih suku kata yang sulit secara terpisah dulu",
+    ],
+  },
+  5: {
+    id: 5,
+    title: "Kalimat Kompleks",
+    description: "Master artikulasi dengan kalimat panjang",
+    instructions: [
+      "Ucapkan setiap kalimat dengan jelas dan lengkap",
+      "Perhatikan jeda natural antar kata",
+      "Jaga kecepatan yang konsisten",
+      "Target akurasi minimal 75%",
+    ],
+    items: [
+      "ULAR LARI LURUS DI ATAS REL LURUS",
+      "KUKU KAKI KAKEK KAKAKKU KAKU DAN KOTOR",
+      "SATU SATE TUJUH TUSUK DUA SATE EMPAT BELAS TUSUK",
+      "KEPALA DIPARUT KELAPA DIGARUK JANGAN SAMPAI TERTUKAR",
+      "PSIKOLOGI MEMPELAJARI PROSES-PROSES PSIKIS SECARA SPESIFIK",
+      "STRATEGI IMPLEMENTASI INFRASTRUKTUR TRANSISIONAL HARUS JELAS",
+      "KLAIM-KLAIM KLIMAKS KLASIK KELOMPOK KITA KIAN KRITIS",
+    ],
+    minAccuracy: 75,
+    tips: [
+      "Baca kalimat dulu sebelum merekam",
+      "Fokus pada kata-kata yang berulang (tongue twister)",
+      "Ambil napas sebelum memulai",
+      "Kecepatan tidak penting, kejelasan yang utama",
+    ],
+  },
+};
+
+// ============ INTERFACES ============
+interface ItemProgress {
+  item: string;
   attempts: number;
   accuracy: number;
   isCompleted: boolean;
   feedback: string;
 }
 
-export default function Artikulasi() {
+// ============ MAIN COMPONENT ============
+export default function ArtikualasiLatihan() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Get level from query param, default to 1
+  const levelParam = searchParams.get("level");
+  const currentLevel = levelParam ? parseInt(levelParam) : 1;
+
+  // Check if level is valid
+  if (!LEVEL_CONFIGS[currentLevel]) {
+    // Redirect to level 1 if invalid
+    router.push("/latihan-dasar/artikulasi?level=1");
+    return null;
+  }
+
+  const levelConfig = LEVEL_CONFIGS[currentLevel];
+
+  // ============ STATE ============
   const [isRecording, setIsRecording] = useState(false);
-  const [currentVokalIndex, setCurrentVokalIndex] = useState(0);
+  const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showResult, setShowResult] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  // Audio refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  const vokals = ["A", "I", "U", "E", "O"];
-
-  const [vokalProgress, setVokalProgress] = useState<VokalProgress[]>(
-    vokals.map((letter) => ({
-      letter,
+  // Progress tracking
+  const [itemProgress, setItemProgress] = useState<ItemProgress[]>(
+    levelConfig.items.map((item) => ({
+      item,
       attempts: 0,
       accuracy: 0,
       isCompleted: false,
@@ -54,10 +236,14 @@ export default function Artikulasi() {
     }))
   );
 
-  const currentVokal = vokals[currentVokalIndex];
-  const currentProgress = vokalProgress[currentVokalIndex];
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  // Simulate voice recognition and feedback
+  const currentItem = levelConfig.items[currentItemIndex];
+  const currentProgress = itemProgress[currentItemIndex];
+
+  // ============ SIMULATION ============
   const simulateRecognition = () => {
     // Simulate accuracy between 60-100%
     const accuracy = Math.floor(Math.random() * 40) + 60;
@@ -65,10 +251,10 @@ export default function Artikulasi() {
     let feedback = "";
     let isCompleted = false;
 
-    if (accuracy >= 85) {
+    if (accuracy >= levelConfig.minAccuracy) {
       feedback = "Sempurna! Pengucapan sangat jelas!";
       isCompleted = true;
-    } else if (accuracy >= 70) {
+    } else if (accuracy >= levelConfig.minAccuracy - 15) {
       feedback = "Bagus! Coba sekali lagi untuk hasil lebih baik.";
     } else {
       feedback = "Kurang jelas. Ucapkan dengan lebih tegas!";
@@ -77,6 +263,7 @@ export default function Artikulasi() {
     return { accuracy, feedback, isCompleted };
   };
 
+  // ============ RECORDING ============
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -104,11 +291,13 @@ export default function Artikulasi() {
       updateAudioLevel();
       setIsRecording(true);
 
-      // Auto stop after 2 seconds and give feedback
+      // Auto stop based on level complexity
+      const recordDuration =
+        currentLevel <= 2 ? 2000 : currentLevel === 3 ? 3000 : 5000;
       setTimeout(() => {
         stopRecording();
         provideFeedback();
-      }, 2000);
+      }, recordDuration);
     } catch (error) {
       console.error("Error accessing microphone:", error);
       alert(
@@ -137,28 +326,30 @@ export default function Artikulasi() {
   const provideFeedback = () => {
     const { accuracy, feedback, isCompleted } = simulateRecognition();
 
-    const updatedProgress = [...vokalProgress];
-    updatedProgress[currentVokalIndex] = {
-      ...updatedProgress[currentVokalIndex],
-      attempts: updatedProgress[currentVokalIndex].attempts + 1,
+    const updatedProgress = [...itemProgress];
+    updatedProgress[currentItemIndex] = {
+      ...updatedProgress[currentItemIndex],
+      attempts: updatedProgress[currentItemIndex].attempts + 1,
       accuracy,
       isCompleted,
       feedback,
     };
 
-    setVokalProgress(updatedProgress);
+    setItemProgress(updatedProgress);
     setCurrentFeedback(feedback);
     setShowFeedback(true);
 
     // Auto hide feedback and move to next
     setTimeout(() => {
       setShowFeedback(false);
-      if (isCompleted && currentVokalIndex < vokals.length - 1) {
+      if (isCompleted && currentItemIndex < levelConfig.items.length - 1) {
         setTimeout(() => {
-          setCurrentVokalIndex(currentVokalIndex + 1);
+          setCurrentItemIndex(currentItemIndex + 1);
         }, 500);
-      } else if (isCompleted && currentVokalIndex === vokals.length - 1) {
-        // All completed
+      } else if (
+        isCompleted &&
+        currentItemIndex === levelConfig.items.length - 1
+      ) {
         setTimeout(() => {
           setShowResult(true);
         }, 500);
@@ -166,19 +357,19 @@ export default function Artikulasi() {
     }, 2000);
   };
 
-  const repeatCurrentVokal = () => {
-    const updatedProgress = [...vokalProgress];
-    updatedProgress[currentVokalIndex].isCompleted = false;
-    updatedProgress[currentVokalIndex].accuracy = 0;
-    setVokalProgress(updatedProgress);
+  const repeatCurrentItem = () => {
+    const updatedProgress = [...itemProgress];
+    updatedProgress[currentItemIndex].isCompleted = false;
+    updatedProgress[currentItemIndex].accuracy = 0;
+    setItemProgress(updatedProgress);
     setShowFeedback(false);
   };
 
   const restartLevel = () => {
-    setCurrentVokalIndex(0);
-    setVokalProgress(
-      vokals.map((letter) => ({
-        letter,
+    setCurrentItemIndex(0);
+    setItemProgress(
+      levelConfig.items.map((item) => ({
+        item,
         attempts: 0,
         accuracy: 0,
         isCompleted: false,
@@ -189,18 +380,23 @@ export default function Artikulasi() {
     setShowFeedback(false);
   };
 
-  const completeLevel = () => {
-    // Navigate to next level or back to exercise list
-    alert("Level 1 Selesai! Menuju Level 2...");
+  const goToNextLevel = () => {
+    if (currentLevel < 5) {
+      router.push(`/latihan-dasar/artikulasi?level=${currentLevel + 1}`);
+    } else {
+      router.push("/latihan-dasar");
+    }
   };
 
+  // ============ CALCULATIONS ============
   const totalAccuracy = Math.round(
-    vokalProgress.reduce((sum, v) => sum + v.accuracy, 0) / vokals.length
+    itemProgress.reduce((sum, v) => sum + v.accuracy, 0) /
+      levelConfig.items.length
   );
 
-  const completedCount = vokalProgress.filter((v) => v.isCompleted).length;
+  const completedCount = itemProgress.filter((v) => v.isCompleted).length;
 
-  // Waveform bars
+  // ============ WAVEFORM ============
   const generateWaveform = () => {
     const bars = [];
     const barCount = 40;
@@ -224,88 +420,100 @@ export default function Artikulasi() {
     return bars;
   };
 
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
-
   return (
     <div>
       <div className="min-h-screen bg-white rounded-2xl shadow-md mb-10 p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.history.back()}
-              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center hover:shadow-lg transition-all"
+            <Link
+              href="/latihan-dasar"
+              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center hover:shadow-lg transition-all border-2 border-gray-200"
             >
               <ArrowLeft className="w-6 h-6 text-gray-700" />
-            </button>
+            </Link>
             <div>
+              <div className="flex items-center gap-3 mb-1">
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                  Level {currentLevel}/5
+                </span>
+                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold">
+                  Artikulasi
+                </span>
+              </div>
               <h1 className="text-3xl font-black text-gray-900">
-                Level 1: Pengenalan Vokal
+                {levelConfig.title}
               </h1>
               <p className="text-gray-600 font-medium">
-                Latihan Dasar Artikulasi
+                {levelConfig.description}
               </p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl px-6 py-3 shadow-lg">
+          <div className="bg-white rounded-2xl px-6 py-3 shadow-lg border-2 border-blue-200">
             <p className="text-sm text-gray-600 mb-1">Progress</p>
             <p className="text-2xl font-black text-blue-600">
-              {completedCount}/{vokals.length}
+              {completedCount}/{levelConfig.items.length}
             </p>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Vokal Progress Bar */}
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-gray-100">
+          {/* Progress Bar */}
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
-            <div className="flex items-center justify-center gap-3">
-              {vokals.map((vokal, index) => (
-                <div key={vokal} className="relative">
-                  <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl transition-all ${
-                      index === currentVokalIndex
-                        ? "bg-white text-blue-600 shadow-xl scale-110"
-                        : vokalProgress[index].isCompleted
-                        ? "bg-green-500 text-white"
-                        : "bg-white/20 text-white/60"
-                    }`}
-                  >
-                    {vokalProgress[index].isCompleted ? (
-                      <CheckCircle className="w-7 h-7" />
-                    ) : (
-                      vokal
-                    )}
-                  </div>
-                  {vokalProgress[index].isCompleted && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-3 h-3 text-white" />
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white font-bold">
+                Item {currentItemIndex + 1} dari {levelConfig.items.length}
+              </span>
+              <span className="text-white/90 text-sm">
+                {completedCount} selesai
+              </span>
+            </div>
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all duration-500"
+                style={{
+                  width: `${
+                    (completedCount / levelConfig.items.length) * 100
+                  }%`,
+                }}
+              />
             </div>
           </div>
 
-          {/* Current Vokal Display */}
-          <div className="p-12 text-center">
+          {/* Current Item Display */}
+          <div className="p-8 sm:p-12 text-center">
             <div className="mb-8">
-              <p className="text-gray-600 font-semibold mb-4 text-lg">
-                Ucapkan huruf vokal berikut dengan jelas:
-              </p>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <BookOpen className="w-5 h-5 text-gray-600" />
+                <p className="text-gray-600 font-semibold text-lg">
+                  Ucapkan dengan jelas:
+                </p>
+              </div>
               <div
-                className={`inline-flex items-center justify-center w-48 h-48 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-2xl transition-all ${
-                  isRecording ? "animate-pulse scale-110" : ""
+                className={`inline-flex items-center justify-center min-w-[200px] px-8 py-6 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-2xl transition-all ${
+                  isRecording ? "animate-pulse scale-105" : ""
                 }`}
               >
-                <span className="text-9xl font-black">{currentVokal}</span>
+                <span
+                  className={`font-black ${
+                    currentLevel === 1
+                      ? "text-8xl"
+                      : currentLevel <= 3
+                      ? "text-5xl"
+                      : currentLevel === 4
+                      ? "text-4xl"
+                      : "text-2xl sm:text-3xl"
+                  }`}
+                >
+                  {currentItem}
+                </span>
               </div>
 
               {/* Accuracy Display */}
               {currentProgress.accuracy > 0 && (
                 <div className="mt-6">
-                  <div className="inline-flex items-center gap-2 bg-blue-50 px-6 py-3 rounded-2xl">
+                  <div className="inline-flex items-center gap-2 bg-blue-50 px-6 py-3 rounded-2xl border-2 border-blue-200">
                     <TrendingUp className="w-5 h-5 text-blue-600" />
                     <span className="text-sm text-gray-600 font-semibold">
                       Akurasi Terakhir:
@@ -320,7 +528,7 @@ export default function Artikulasi() {
 
             {/* Waveform Visualization */}
             <div className="mb-8">
-              <div className="h-32 bg-gray-50 rounded-3xl flex items-center justify-center gap-1 px-8">
+              <div className="h-32 bg-gray-50 rounded-3xl flex items-center justify-center gap-1 px-8 border-2 border-gray-100">
                 {generateWaveform()}
               </div>
             </div>
@@ -331,7 +539,7 @@ export default function Artikulasi() {
                 className={`mb-6 p-6 rounded-3xl animate-fadeIn ${
                   currentProgress.isCompleted
                     ? "bg-green-50 border-2 border-green-300"
-                    : currentProgress.accuracy >= 70
+                    : currentProgress.accuracy >= levelConfig.minAccuracy - 15
                     ? "bg-yellow-50 border-2 border-yellow-300"
                     : "bg-red-50 border-2 border-red-300"
                 }`}
@@ -378,7 +586,7 @@ export default function Artikulasi() {
                 currentProgress.attempts > 0 &&
                 !currentProgress.isCompleted && (
                   <button
-                    onClick={repeatCurrentVokal}
+                    onClick={repeatCurrentItem}
                     className="px-6 py-5 bg-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-300 transition-all flex items-center gap-2"
                   >
                     <RotateCcw className="w-5 h-5" />
@@ -400,145 +608,198 @@ export default function Artikulasi() {
         <div className="mt-6 bg-blue-50 border-2 border-blue-200 rounded-3xl p-6">
           <div className="flex gap-4">
             <Volume2 className="w-8 h-8 text-blue-600 flex-shrink-0" />
-            <div>
-              <h3 className="font-bold text-blue-900 mb-2 text-lg">Tips:</h3>
+            <div className="flex-1">
+              <h3 className="font-bold text-blue-900 mb-3 text-lg flex items-center gap-2">
+                <span>Tips Level {currentLevel}:</span>
+              </h3>
               <ul className="space-y-2 text-blue-800">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span>Ucapkan setiap huruf vokal dengan jelas dan tegas</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span>Pastikan mikrofon Anda berfungsi dengan baik</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span>Ucapkan saat tombol "Mulai Rekam" ditekan</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span>Target akurasi minimal 85% untuk melanjutkan</span>
-                </li>
+                {levelConfig.instructions.map((instruction, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>{instruction}</span>
+                  </li>
+                ))}
               </ul>
+
+              {levelConfig.tips.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <p className="font-semibold text-blue-900 mb-2">
+                    💡 Tips Khusus:
+                  </p>
+                  <ul className="space-y-1 text-sm text-blue-700">
+                    {levelConfig.tips.map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-blue-500">→</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* Level Navigation */}
+        <div className="mt-6 flex items-center justify-between bg-gray-50 rounded-2xl p-4 border-2 border-gray-200">
+          <div className="flex items-center gap-2">
+            {[1, 2, 3, 4, 5].map((level) => (
+              <button
+                key={level}
+                onClick={() =>
+                  router.push(`/latihan-dasar/artikulasi?level=${level}`)
+                }
+                className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                  level === currentLevel
+                    ? "bg-blue-600 text-white scale-110"
+                    : level < currentLevel
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-gray-600 font-medium">Level Artikulasi</p>
         </div>
       </div>
 
       {/* Result Modal */}
-      {mounted && showResult
-        ? createPortal(
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-              <div className="bg-white overflow-auto h-[80vh]  rounded-3xl max-w-2xl w-full shadow-2xl animate-fadeIn">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-center text-white rounded-t-3xl">
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Award className="w-12 h-12" />
+      {mounted &&
+        showResult &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white overflow-auto max-h-[90vh] rounded-3xl max-w-2xl w-full shadow-2xl animate-fadeIn">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-center text-white rounded-t-3xl">
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Award className="w-12 h-12" />
+                </div>
+                <h2 className="text-3xl font-black mb-2">
+                  Level {currentLevel} Selesai!
+                </h2>
+                <p className="text-green-100 text-lg">
+                  Selamat! Anda telah menyelesaikan {levelConfig.title}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="p-8">
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-blue-50 rounded-2xl p-4 text-center border-2 border-blue-200">
+                    <p className="text-sm text-gray-600 mb-1">
+                      Total Percobaan
+                    </p>
+                    <p className="text-3xl font-black text-blue-600">
+                      {itemProgress.reduce((sum, v) => sum + v.attempts, 0)}
+                    </p>
                   </div>
-                  <h2 className="text-3xl font-black mb-2">Level 1 Selesai!</h2>
-                  <p className="text-green-100 text-lg">
-                    Selamat! Anda telah menyelesaikan latihan vokal dasar
+                  <div className="bg-green-50 rounded-2xl p-4 text-center border-2 border-green-200">
+                    <p className="text-sm text-gray-600 mb-1">
+                      Akurasi Rata-rata
+                    </p>
+                    <p className="text-3xl font-black text-green-600">
+                      {totalAccuracy}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Item Results */}
+                <div className="mb-8">
+                  <h3 className="font-bold text-gray-900 mb-4 text-lg">
+                    Detail Hasil:
+                  </h3>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {itemProgress.map((progress, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-gray-50 rounded-2xl p-4"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">
+                              {progress.item}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {progress.attempts} percobaan
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-black text-blue-600">
+                            {progress.accuracy}%
+                          </p>
+                          {progress.accuracy >= levelConfig.minAccuracy && (
+                            <CheckCircle className="w-5 h-5 text-green-500 ml-auto mt-1" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Feedback Summary */}
+                <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-8">
+                  <h4 className="font-bold text-green-900 mb-2 flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Feedback Keseluruhan
+                  </h4>
+                  <p className="text-green-800 leading-relaxed">
+                    {totalAccuracy >= 90
+                      ? `Luar biasa! Anda telah menguasai ${
+                          levelConfig.title
+                        } dengan sempurna. ${
+                          currentLevel < 5
+                            ? "Siap melanjutkan ke level berikutnya!"
+                            : "Anda telah menyelesaikan semua level artikulasi!"
+                        }`
+                      : totalAccuracy >= 80
+                      ? `Bagus sekali! Pengucapan Anda sudah baik. ${
+                          currentLevel < 5
+                            ? "Lanjutkan ke level berikutnya untuk tantangan baru!"
+                            : "Pertahankan latihan untuk hasil yang lebih sempurna."
+                        }`
+                      : `Cukup baik! Pertahankan latihan ini untuk meningkatkan kejelasan pengucapan Anda.`}
                   </p>
                 </div>
 
-                {/* Content */}
-                <div className="p-8">
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="bg-blue-50 rounded-2xl p-4 text-center">
-                      <p className="text-sm text-gray-600 mb-1">
-                        Total Percobaan
-                      </p>
-                      <p className="text-3xl font-black text-blue-600">
-                        {vokalProgress.reduce((sum, v) => sum + v.attempts, 0)}
-                      </p>
-                    </div>
-                    <div className="bg-green-50 rounded-2xl p-4 text-center">
-                      <p className="text-sm text-gray-600 mb-1">
-                        Akurasi Rata-rata
-                      </p>
-                      <p className="text-3xl font-black text-green-600">
-                        {totalAccuracy}%
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Vokal Results */}
-                  <div className="mb-8">
-                    <h3 className="font-bold text-gray-900 mb-4 text-lg">
-                      Detail Hasil:
-                    </h3>
-                    <div className="space-y-3">
-                      {vokalProgress.map((progress, index) => (
-                        <div
-                          key={progress.letter}
-                          className="flex items-center justify-between bg-gray-50 rounded-2xl p-4"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xl">
-                              {progress.letter}
-                            </div>
-                            <div>
-                              <p className="font-bold text-gray-900">
-                                Vokal {progress.letter}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {progress.attempts} percobaan
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-black text-blue-600">
-                              {progress.accuracy}%
-                            </p>
-                            {progress.accuracy >= 85 && (
-                              <CheckCircle className="w-5 h-5 text-green-500 ml-auto mt-1" />
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Feedback Summary */}
-                  <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-8">
-                    <h4 className="font-bold text-green-900 mb-2 flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Feedback Keseluruhan
-                    </h4>
-                    <p className="text-green-800 leading-relaxed">
-                      {totalAccuracy >= 90
-                        ? "Luar biasa! Pengucapan vokal Anda sangat jelas dan tepat. Anda siap melanjutkan ke level berikutnya!"
-                        : totalAccuracy >= 80
-                        ? "Bagus sekali! Pengucapan vokal Anda sudah baik. Terus latih untuk hasil yang lebih sempurna."
-                        : "Cukup baik! Pertahankan latihan ini untuk meningkatkan kejelasan pengucapan Anda."}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4">
+                {/* Action Buttons */}
+                <div className="flex gap-4">
+                  <button
+                    onClick={restartLevel}
+                    className="flex-1 px-6 py-4 bg-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-300 transition-all flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                    Ulangi Level
+                  </button>
+                  {currentLevel < 5 ? (
                     <button
-                      onClick={restartLevel}
-                      className="flex-1 px-6 py-4 bg-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-300 transition-all flex items-center justify-center gap-2"
+                      onClick={goToNextLevel}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                     >
-                      <RotateCcw className="w-5 h-5" />
-                      Ulangi Level
+                      Level {currentLevel + 1}
+                      <ArrowRight className="w-5 h-5" />
                     </button>
+                  ) : (
                     <Link
-                      href={"/latihan-dasar"}
-                      //   onClick={completeLevel}
+                      href="/latihan-dasar"
                       className="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                     >
-                      Selesai & Lanjut
-                      <ArrowRight className="w-5 h-5" />
+                      Selesai
+                      <CheckCircle className="w-5 h-5" />
                     </Link>
-                  </div>
+                  )}
                 </div>
               </div>
-            </div>,
-            document.body
-          )
-        : null}
+            </div>
+          </div>,
+          document.body
+        )}
 
       <style jsx>{`
         @keyframes fadeIn {

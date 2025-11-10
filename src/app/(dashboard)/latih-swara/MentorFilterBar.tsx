@@ -21,13 +21,6 @@ const SPESIALISASI = [
   { value: "presentasi", label: "Presentasi" },
 ];
 
-const LOKASI = [
-  { value: "", label: "Semua lokasi" },
-  { value: "jakarta", label: "Jakarta" },
-  { value: "surabaya", label: "Surabaya" },
-  { value: "bandung", label: "Bandung" },
-];
-
 export default function MentorFilterBar({ onSubmit, className = "" }: Props) {
   const [q, setQ] = useState("");
   const [spesialisasi, setSpesialisasi] = useState("");
@@ -70,26 +63,6 @@ export default function MentorFilterBar({ onSubmit, className = "" }: Props) {
           className="appearance-none rounded-2xl bg-white px-4 py-3 pr-10 text-slate-600 shadow-sm outline-none ring-1 ring-transparent focus:ring-2 focus:ring-orange-300"
         >
           {SPESIALISASI.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-      </div>
-
-      {/* Lokasi */}
-      <div className="relative">
-        <label htmlFor="lokasi" className="sr-only">
-          Lokasi
-        </label>
-        <select
-          id="lokasi"
-          value={lokasi}
-          onChange={(e) => setLokasi(e.target.value)}
-          className="appearance-none rounded-2xl bg-white px-4 py-3 pr-10 text-slate-600 shadow-sm outline-none ring-1 ring-transparent focus:ring-2 focus:ring-orange-300"
-        >
-          {LOKASI.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>

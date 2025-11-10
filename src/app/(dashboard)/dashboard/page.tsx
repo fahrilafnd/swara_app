@@ -79,8 +79,8 @@ export default function Dashboard() {
 
   const levelData = {
     level: 2,
-    xp: 650,
-    maxXp: 1000,
+    xp: 200,
+    maxXp: 500,
   };
 
   const historyItems = [

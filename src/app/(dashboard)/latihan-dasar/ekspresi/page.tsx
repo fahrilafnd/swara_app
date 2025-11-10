@@ -1,20 +1,22 @@
+// app/(dashboard)/latihan-dasar/ekspresi/page.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-
+import { useSearchParams, useRouter } from "next/navigation";
 import * as faceapi from "face-api.js";
 import {
   Camera,
   CameraOff,
   Smile,
+  Frown,
+  Meh,
   TrendingUp,
   RotateCcw,
   CheckCircle,
   AlertCircle,
   Trophy,
   ArrowRight,
-  Home,
   Video,
   Award,
   Clock,
@@ -22,43 +24,260 @@ import {
   Zap,
   Loader,
   ArrowLeft,
+  Play,
+  Heart,
+  Focus,
+  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
+
+// ============ TYPES ============
+type EmotionType =
+  | "happy"
+  | "sad"
+  | "neutral"
+  | "angry"
+  | "fearful"
+  | "disgusted"
+  | "surprised";
 
 interface ExpressionData {
-  happiness: number;
-  confidence: number;
-  expressions: faceapi.FaceExpressions;
+  emotions: Record<EmotionType, number>;
+  targetScore: number;
   timestamp: number;
-}
-
-interface SessionResult {
-  avgHappiness: number;
-  maxHappiness: number;
-  duration: number;
-  attempts: number;
   isSuccess: boolean;
 }
 
-export default function Ekspresi() {
+interface SessionResult {
+  sessionNumber: number;
+  avgScore: number;
+  maxScore: number;
+  minScore: number;
+  isSuccess: boolean;
+  dataPoints: number;
+}
+
+interface LevelResult {
+  completedSessions: number;
+  avgScore: number;
+  isLevelComplete: boolean;
+  sessionResults: SessionResult[];
+}
+
+// ============ LEVEL CONFIGURATION ============
+interface LevelConfig {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  bgGradient: string;
+  targetEmotions: EmotionType[];
+  minScore: number;
+  sessionCount: number;
+  sessionDuration: number;
+  instructions: string[];
+  tips: string[];
+  sessionInstructions: (session: number) => string;
+}
+
+const LEVEL_CONFIGS: Record<number, LevelConfig> = {
+  1: {
+    id: 1,
+    title: "Ekspresi Happy/Ceria",
+    description: "Tampilkan senyum dan kegembiraan yang natural",
+    icon: <Smile className="w-8 h-8" />,
+    color: "text-yellow-600",
+    bgGradient: "from-yellow-500 to-orange-600",
+    targetEmotions: ["happy"],
+    minScore: 85,
+    sessionCount: 4,
+    sessionDuration: 10,
+    instructions: [
+      "Tunjukkan senyum yang natural dan tulus",
+      "Senyum dengan menunjukkan gigi",
+      "Pertahankan ekspresi selama 10 detik per sesi",
+      "Selesaikan 4 sesi dengan skor minimal 85%",
+    ],
+    tips: [
+      "Pikirkan hal yang menyenangkan",
+      "Senyum dari hati, bukan dipaksakan",
+      "Tunjukkan gigi saat tersenyum",
+      "Mata ikut tersenyum (crow's feet)",
+      "Pastikan pencahayaan cukup terang",
+    ],
+    sessionInstructions: (session) =>
+      `Sesi ${session}/4: Tunjukkan senyum bahagia yang natural`,
+  },
+  2: {
+    id: 2,
+    title: "Ekspresi Empati/Sedih",
+    description: "Tunjukkan empati dan kesedihan dengan tepat",
+    icon: <Heart className="w-8 h-8" />,
+    color: "text-blue-600",
+    bgGradient: "from-blue-500 to-indigo-600",
+    targetEmotions: ["sad", "neutral"],
+    minScore: 80,
+    sessionCount: 4,
+    sessionDuration: 10,
+    instructions: [
+      "Tunjukkan ekspresi empati atau kesedihan",
+      "Mimik wajah lembut dan penuh perhatian",
+      "Mata menunjukkan kepedulian",
+      "Selesaikan 4 sesi dengan skor minimal 80%",
+    ],
+    tips: [
+      "Pikirkan situasi yang menyentuh hati",
+      "Alis sedikit terangkat dan menyatu",
+      "Mata menatap dengan penuh empati",
+      "Sudut bibir sedikit turun",
+      "Ekspresi lembut, tidak berlebihan",
+    ],
+    sessionInstructions: (session) =>
+      `Sesi ${session}/4: Tunjukkan ekspresi empati dan kesedihan`,
+  },
+  3: {
+    id: 3,
+    title: "Kombinasi Happy + Empati",
+    description: "Gabungkan ekspresi ceria dan empati",
+    icon: <Sparkles className="w-8 h-8" />,
+    color: "text-indigo-600",
+    bgGradient: "from-indigo-500 to-blue-600",
+    targetEmotions: ["happy", "sad", "neutral"],
+    minScore: 80,
+    sessionCount: 4,
+    sessionDuration: 10,
+    instructions: [
+      "Sesi 1 & 3: Tunjukkan ekspresi Happy",
+      "Sesi 2 & 4: Tunjukkan ekspresi Empati",
+      "Transisi yang smooth antar ekspresi",
+      "Selesaikan 4 sesi dengan skor minimal 80%",
+    ],
+    tips: [
+      "Latih transisi antar ekspresi",
+      "Jeda sejenak sebelum berganti ekspresi",
+      "Perhatikan konteks yang berbeda",
+      "Balance antara dua emosi",
+      "Jangan terburu-buru dalam transisi",
+    ],
+    sessionInstructions: (session) => {
+      const isHappy = session === 1 || session === 3;
+      return `Sesi ${session}/4: ${isHappy ? "Happy 😊" : "Empati 💙"}`;
+    },
+  },
+  4: {
+    id: 4,
+    title: "Ekspresi Fokus/Serius",
+    description: "Tunjukkan keseriusan dan fokus profesional",
+    icon: <Focus className="w-8 h-8" />,
+    color: "text-gray-600",
+    bgGradient: "from-gray-600 to-gray-800",
+    targetEmotions: ["neutral", "angry"],
+    minScore: 80,
+    sessionCount: 4,
+    sessionDuration: 10,
+    instructions: [
+      "Tunjukkan ekspresi serius dan fokus",
+      "Mimik wajah tegas dan profesional",
+      "Tatapan mata yang intens",
+      "Selesaikan 4 sesi dengan skor minimal 80%",
+    ],
+    tips: [
+      "Postur tegap dan percaya diri",
+      "Alis sedikit turun (fokus)",
+      "Tatapan mata tajam dan stabil",
+      "Mulut dalam posisi netral atau tertutup rapat",
+      "Hindari senyum atau ekspresi lembut",
+    ],
+    sessionInstructions: (session) =>
+      `Sesi ${session}/4: Tunjukkan ekspresi serius dan fokus`,
+  },
+  5: {
+    id: 5,
+    title: "All Emotions Mastery",
+    description: "Menguasai semua ekspresi: Happy, Empati, dan Fokus",
+    icon: <Trophy className="w-8 h-8" />,
+    color: "text-orange-600",
+    bgGradient: "from-orange-500 to-red-600",
+    targetEmotions: ["happy", "sad", "neutral"],
+    minScore: 75,
+    sessionCount: 4,
+    sessionDuration: 10,
+    instructions: [
+      "Sesi 1: Happy - Tunjukkan kegembiraan",
+      "Sesi 2: Empati - Tunjukkan kepedulian",
+      "Sesi 3: Fokus - Tunjukkan keseriusan",
+      "Sesi 4: Kombinasi - Semua ekspresi dalam 1 sesi",
+    ],
+    tips: [
+      "Master level - kombinasi semua skill",
+      "Fleksibilitas ekspresi wajah",
+      "Adaptasi cepat antar emosi",
+      "Natural dan autentik",
+      "Demonstrasikan emotional intelligence",
+    ],
+    sessionInstructions: (session) => {
+      if (session === 1) return "Sesi 1/4: Happy 😊";
+      if (session === 2) return "Sesi 2/4: Empati 💙";
+      if (session === 3) return "Sesi 3/4: Fokus 🎯";
+      return "Sesi 4/4: Kombinasi Semua 🌟";
+    },
+  },
+};
+
+// ============ MAIN COMPONENT ============
+export default function EkspresiLatihan() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Get level from query param
+  const levelParam = searchParams.get("level");
+  const currentLevel = levelParam ? parseInt(levelParam) : 1;
+
+  if (!LEVEL_CONFIGS[currentLevel]) {
+    router.push("/latihan-dasar/ekspresi?level=1");
+    return null;
+  }
+
+  const levelConfig = LEVEL_CONFIGS[currentLevel];
+
+  // ============ STATE ============
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [currentHappiness, setCurrentHappiness] = useState(0);
-  const [currentConfidence, setCurrentConfidence] = useState(0);
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Session tracking
+  const [currentSession, setCurrentSession] = useState(1);
+  const [sessionData, setSessionData] = useState<ExpressionData[]>([]);
+  const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
+  const [showSessionResult, setShowSessionResult] = useState(false);
+  const [showLevelResult, setShowLevelResult] = useState(false);
+
+  // Current detection
+  const [currentEmotions, setCurrentEmotions] = useState<
+    Record<EmotionType, number>
+  >({
+    happy: 0,
+    sad: 0,
+    neutral: 0,
+    angry: 0,
+    fearful: 0,
+    disgusted: 0,
+    surprised: 0,
+  });
+  const [currentScore, setCurrentScore] = useState(0);
   const [feedback, setFeedback] = useState(
     "Mulai latihan untuk mendapat feedback"
   );
-  const [sessionData, setSessionData] = useState<ExpressionData[]>([]);
-  const [showResult, setShowResult] = useState(false);
-  const [sessionResult, setSessionResult] = useState<SessionResult | null>(
-    null
-  );
+
+  // Timer
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [faceDetected, setFaceDetected] = useState(false);
 
+  // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<number | null>(null);
@@ -66,15 +285,12 @@ export default function Ekspresi() {
   const streamRef = useRef<MediaStream | null>(null);
   const sessionDataRef = useRef<ExpressionData[]>([]);
 
-  const TARGET_HAPPINESS = 85;
-  const SESSION_DURATION = 10;
-
-  // Sync sessionData with ref
   useEffect(() => {
+    setMounted(true);
     sessionDataRef.current = sessionData;
   }, [sessionData]);
 
-  // Load face-api models
+  // ============ LOAD MODELS ============
   const loadModels = async () => {
     setIsLoadingModels(true);
     try {
@@ -84,18 +300,15 @@ export default function Ekspresi() {
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
       ]);
 
       setModelsLoaded(true);
-      console.log("Models loaded successfully!");
+      console.log("✅ Face-api models loaded successfully!");
     } catch (error) {
-      console.error("Error loading models:", error);
-      alert(
-        "Gagal memuat model AI. Pastikan folder models tersedia di public/models. Akan menggunakan mode simulasi."
-      );
-      setModelsLoaded(true); // Set true to continue with simulation
+      console.error("❌ Error loading models:", error);
+      alert("Gagal memuat model AI. Menggunakan mode simulasi.");
+      setModelsLoaded(true);
     } finally {
       setIsLoadingModels(false);
     }
@@ -105,7 +318,7 @@ export default function Ekspresi() {
     loadModels();
   }, []);
 
-  // Start Camera
+  // ============ CAMERA FUNCTIONS ============
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -119,11 +332,7 @@ export default function Ekspresi() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          setIsCameraActive(true);
-        };
+        videoRef.current.onloadedmetadata = () => setIsCameraActive(true);
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -133,7 +342,6 @@ export default function Ekspresi() {
     }
   };
 
-  // Stop Camera
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -145,23 +353,65 @@ export default function Ekspresi() {
     setFaceDetected(false);
   };
 
-  // Real face expression detection using face-api.js
+  // ============ EXPRESSION DETECTION ============
+  const calculateTargetScore = (
+    emotions: Record<EmotionType, number>,
+    session: number
+  ): number => {
+    // Get target emotions for current level and session
+    let targetEmotions: EmotionType[] = [];
+
+    if (currentLevel === 1) {
+      targetEmotions = ["happy"];
+    } else if (currentLevel === 2) {
+      targetEmotions = ["sad", "neutral"];
+    } else if (currentLevel === 3) {
+      // Session 1 & 3: Happy, Session 2 & 4: Empati
+      targetEmotions =
+        session === 1 || session === 3 ? ["happy"] : ["sad", "neutral"];
+    } else if (currentLevel === 4) {
+      targetEmotions = ["neutral", "angry"];
+    } else if (currentLevel === 5) {
+      // Session-specific targets
+      if (session === 1) targetEmotions = ["happy"];
+      else if (session === 2) targetEmotions = ["sad", "neutral"];
+      else if (session === 3) targetEmotions = ["neutral", "angry"];
+      else targetEmotions = ["happy", "sad", "neutral"]; // Kombinasi
+    }
+
+    // Calculate average score for target emotions
+    const scores = targetEmotions.map((e) => emotions[e]);
+    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+    return Math.round(avgScore * 100);
+  };
+
+  const getSessionFeedback = (score: number, session: number): string => {
+    const target = levelConfig.minScore;
+
+    if (score >= target + 10) {
+      return "🌟 Sempurna! Ekspresi sangat natural dan tepat!";
+    } else if (score >= target) {
+      return "✅ Bagus! Ekspresi sudah sesuai target!";
+    } else if (score >= target - 10) {
+      return "⚠️ Hampir! Ekspresi lebih jelas lagi!";
+    } else if (score >= target - 20) {
+      return "💪 Terus berlatih! Perlu lebih ekspresif!";
+    } else {
+      return "❌ Ekspresi belum terdeteksi dengan baik. Coba lagi!";
+    }
+  };
+
   const detectExpression = async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    // Set canvas size to match video
-    const displaySize = {
-      width: video.videoWidth,
-      height: video.videoHeight,
-    };
-
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
     faceapi.matchDimensions(canvas, displaySize);
 
     try {
-      // Detect faces with expressions
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
@@ -170,51 +420,41 @@ export default function Ekspresi() {
       if (detections && detections.length > 0) {
         setFaceDetected(true);
 
-        const detection = detections[0]; // Get first face
+        const detection = detections[0];
         const expressions = detection.expressions;
 
-        // Get happiness score (0-1, convert to 0-100)
-        const happinessScore = expressions.happy * 100;
+        // Convert to our emotion type
+        const emotions: Record<EmotionType, number> = {
+          happy: expressions.happy,
+          sad: expressions.sad,
+          neutral: expressions.neutral,
+          angry: expressions.angry,
+          fearful: expressions.fearful,
+          disgusted: expressions.disgusted,
+          surprised: expressions.surprised,
+        };
 
-        // Calculate confidence (average of all expression probabilities)
-        const allExpressions = Object.values(expressions);
-        const avgConfidence =
-          (allExpressions.reduce((a, b) => a + b, 0) / allExpressions.length) *
-          100;
+        setCurrentEmotions(emotions);
 
-        setCurrentHappiness(Math.round(happinessScore));
-        setCurrentConfidence(Math.round(avgConfidence));
+        // Calculate score based on target emotions
+        const score = calculateTargetScore(emotions, currentSession);
+        setCurrentScore(score);
 
-        // Generate feedback based on happiness
-        let newFeedback = "";
-        if (happinessScore >= 90) {
-          newFeedback = "Sempurna! Senyum Anda sangat natural dan tulus!";
-        } else if (happinessScore >= 80) {
-          newFeedback = "Bagus sekali! Pertahankan ekspresi ini!";
-        } else if (happinessScore >= 70) {
-          newFeedback = "Bagus! Coba senyum sedikit lebih lebar!";
-        } else if (happinessScore >= 60) {
-          newFeedback =
-            "Kurang bahagia. Tunjukkan senyum Anda lebih ekspresif!";
-        } else if (happinessScore >= 40) {
-          newFeedback = "Ekspresi masih netral. Coba tersenyum!";
-        } else {
-          newFeedback = "Belum terdeteksi ekspresi bahagia. Tersenyum ya! 😊";
-        }
-
+        // Generate feedback
+        const newFeedback = getSessionFeedback(score, currentSession);
         setFeedback(newFeedback);
 
         // Record data point
         const dataPoint: ExpressionData = {
-          happiness: Math.round(happinessScore),
-          confidence: Math.round(avgConfidence),
-          expressions: expressions,
+          emotions,
+          targetScore: score,
           timestamp: Date.now(),
+          isSuccess: score >= levelConfig.minScore,
         };
 
         setSessionData((prev) => [...prev, dataPoint]);
 
-        // Draw detections on canvas
+        // Draw on canvas
         const resizedDetections = faceapi.resizeResults(
           detections,
           displaySize
@@ -223,15 +463,15 @@ export default function Ekspresi() {
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          // Draw face box with color based on happiness
           const box = resizedDetections[0].detection.box;
           const color =
-            happinessScore >= 85
+            score >= levelConfig.minScore
               ? "#10b981"
-              : happinessScore >= 70
+              : score >= levelConfig.minScore - 15
               ? "#f59e0b"
               : "#ef4444";
 
+          // Draw box
           ctx.strokeStyle = color;
           ctx.lineWidth = 4;
           ctx.strokeRect(box.x, box.y, box.width, box.height);
@@ -239,41 +479,32 @@ export default function Ekspresi() {
           // Draw corners
           const cornerLength = 30;
           ctx.beginPath();
-          // Top-left
           ctx.moveTo(box.x, box.y + cornerLength);
           ctx.lineTo(box.x, box.y);
           ctx.lineTo(box.x + cornerLength, box.y);
-          // Top-right
           ctx.moveTo(box.x + box.width - cornerLength, box.y);
           ctx.lineTo(box.x + box.width, box.y);
           ctx.lineTo(box.x + box.width, box.y + cornerLength);
-          // Bottom-right
           ctx.moveTo(box.x + box.width, box.y + box.height - cornerLength);
           ctx.lineTo(box.x + box.width, box.y + box.height);
           ctx.lineTo(box.x + box.width - cornerLength, box.y + box.height);
-          // Bottom-left
           ctx.moveTo(box.x + cornerLength, box.y + box.height);
           ctx.lineTo(box.x, box.y + box.height);
           ctx.lineTo(box.x, box.y + box.height - cornerLength);
           ctx.stroke();
 
-          // Draw happiness percentage above face
+          // Draw score
           ctx.fillStyle = color;
-          ctx.font = "bold 24px Arial";
-          ctx.fillText(
-            `${Math.round(happinessScore)}%`,
-            box.x + box.width / 2 - 30,
-            box.y - 10
-          );
+          ctx.font = "bold 28px Arial";
+          ctx.fillText(`${score}%`, box.x + box.width / 2 - 30, box.y - 15);
         }
       } else {
-        // No face detected
         setFaceDetected(false);
-        setCurrentHappiness(0);
-        setCurrentConfidence(0);
-        setFeedback("Wajah tidak terdeteksi. Posisikan wajah di dalam frame.");
+        setCurrentScore(0);
+        setFeedback(
+          "⚠️ Wajah tidak terdeteksi. Posisikan wajah di dalam frame."
+        );
 
-        // Clear canvas
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -284,8 +515,8 @@ export default function Ekspresi() {
     }
   };
 
-  // Start detection session
-  const startDetection = () => {
+  // ============ SESSION CONTROL ============
+  const startSession = () => {
     if (!isCameraActive) {
       alert("Aktifkan kamera terlebih dahulu!");
       return;
@@ -302,30 +533,26 @@ export default function Ekspresi() {
     setTimer(0);
     setIsDetecting(true);
     setIsTimerRunning(true);
-    setAttempts((prev) => prev + 1);
-    setShowResult(false);
+    setShowSessionResult(false);
 
-    // Start detection loop (every 300ms for smoother detection)
+    // Start detection loop
     detectionIntervalRef.current = window.setInterval(() => {
       detectExpression();
     }, 300);
 
-    // Start timer (counts up every second)
+    // Start timer
     let currentTime = 0;
     timerIntervalRef.current = window.setInterval(() => {
       currentTime += 1;
       setTimer(currentTime);
 
-      // Auto stop when reaching session duration
-      if (currentTime >= SESSION_DURATION) {
-        stopDetection();
+      if (currentTime >= levelConfig.sessionDuration) {
+        stopSession();
       }
     }, 1000);
   };
 
-  // Stop detection session
-  const stopDetection = () => {
-    // Clear intervals
+  const stopSession = () => {
     if (detectionIntervalRef.current) {
       clearInterval(detectionIntervalRef.current);
       detectionIntervalRef.current = null;
@@ -339,58 +566,85 @@ export default function Ekspresi() {
     setIsTimerRunning(false);
   };
 
-  // Calculate session results when detection stops
+  // Calculate session result when detection stops
   useEffect(() => {
     if (
       !isDetecting &&
       !isTimerRunning &&
       sessionDataRef.current.length > 0 &&
-      !showResult
+      !showSessionResult
     ) {
-      // Wait a bit to ensure all state updates are complete
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         const data = sessionDataRef.current;
 
         if (data.length === 0) {
-          alert("Tidak ada data yang tercatat. Coba lagi!");
+          alert("Tidak ada data. Coba lagi!");
           return;
         }
 
-        console.log("Calculating results with", data.length, "data points");
-
-        const avgHappiness =
-          data.reduce((sum, d) => sum + d.happiness, 0) / data.length;
-        const maxHappiness = Math.max(...data.map((d) => d.happiness));
-        const isSuccess = avgHappiness >= TARGET_HAPPINESS;
+        const scores = data.map((d) => d.targetScore);
+        const avgScore = Math.round(
+          scores.reduce((a, b) => a + b, 0) / scores.length
+        );
+        const maxScore = Math.max(...scores);
+        const minScore = Math.min(...scores);
+        const isSuccess = avgScore >= levelConfig.minScore;
 
         const result: SessionResult = {
-          avgHappiness: Math.round(avgHappiness),
-          maxHappiness: Math.round(maxHappiness),
-          duration: timer,
-          attempts,
+          sessionNumber: currentSession,
+          avgScore,
+          maxScore,
+          minScore,
           isSuccess,
+          dataPoints: data.length,
         };
 
-        setSessionResult(result);
-        setShowResult(true);
-
-        console.log("Session Result:", result);
-        console.log("Session Data Points:", data.length);
+        setSessionResults((prev) => [...prev, result]);
+        setShowSessionResult(true);
       }, 500);
-
-      return () => clearTimeout(timeoutId);
     }
-  }, [isDetecting, isTimerRunning, timer, attempts, showResult]);
+  }, [
+    isDetecting,
+    isTimerRunning,
+    currentSession,
+    levelConfig.minScore,
+    showSessionResult,
+  ]);
 
-  // Reset session
-  const resetSession = () => {
-    setShowResult(false);
-    setSessionResult(null);
+  const nextSession = () => {
+    if (currentSession < levelConfig.sessionCount) {
+      setCurrentSession((prev) => prev + 1);
+      setShowSessionResult(false);
+      setSessionData([]);
+      sessionDataRef.current = [];
+      setTimer(0);
+      setCurrentScore(0);
+    } else {
+      // Level complete
+      setShowLevelResult(true);
+    }
+  };
+
+  const retrySession = () => {
+    setShowSessionResult(false);
     setSessionData([]);
     sessionDataRef.current = [];
     setTimer(0);
-    setCurrentHappiness(0);
-    setCurrentConfidence(0);
+    setCurrentScore(0);
+
+    // Remove last session result
+    setSessionResults((prev) => prev.slice(0, -1));
+  };
+
+  const resetLevel = () => {
+    setCurrentSession(1);
+    setSessionResults([]);
+    setShowSessionResult(false);
+    setShowLevelResult(false);
+    setSessionData([]);
+    sessionDataRef.current = [];
+    setTimer(0);
+    setCurrentScore(0);
     setFeedback("Mulai latihan untuk mendapat feedback");
 
     if (canvasRef.current) {
@@ -401,14 +655,15 @@ export default function Ekspresi() {
     }
   };
 
-  // Complete level
-  const completeLevel = () => {
-    alert("Level 1 Selesai! +10 Poin. Menuju Level 2...");
-    // Navigate to next level or exercise list
-    window.history.back();
+  const goToNextLevel = () => {
+    if (currentLevel < 5) {
+      router.push(`/latihan-dasar/ekspresi?level=${currentLevel + 1}`);
+    } else {
+      router.push("/latihan-dasar");
+    }
   };
 
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       stopCamera();
@@ -418,54 +673,70 @@ export default function Ekspresi() {
     };
   }, []);
 
-  const getHappinessColor = (happiness: number) => {
-    if (happiness >= 85) return "from-green-500 to-emerald-600";
-    if (happiness >= 70) return "from-yellow-500 to-orange-600";
+  // ============ HELPER FUNCTIONS ============
+  const getScoreColor = (score: number) => {
+    if (score >= levelConfig.minScore) return "from-green-500 to-emerald-600";
+    if (score >= levelConfig.minScore - 15)
+      return "from-yellow-500 to-orange-600";
     return "from-red-500 to-pink-600";
   };
 
-  const getHappinessLabel = (happiness: number) => {
-    if (happiness >= 90) return "Sangat Bahagia";
-    if (happiness >= 80) return "Bahagia";
-    if (happiness >= 70) return "Cukup Bahagia";
-    if (happiness >= 60) return "Kurang Bahagia";
-    if (happiness >= 40) return "Netral";
-    return "Tidak Bahagia";
+  const getCurrentSessionTarget = () => {
+    return levelConfig.sessionInstructions(currentSession);
   };
 
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  const levelProgress =
+    (sessionResults.length / levelConfig.sessionCount) * 100;
+  const levelAvgScore =
+    sessionResults.length > 0
+      ? Math.round(
+          sessionResults.reduce((a, b) => a + b.avgScore, 0) /
+            sessionResults.length
+        )
+      : 0;
 
+  // ============ RENDER ============
   return (
     <div>
       <div className="min-h-screen bg-white rounded-xl mb-10 p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.history.back()}
-              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center hover:shadow-lg transition-all"
+            <Link
+              href="/latihan-dasar"
+              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center hover:shadow-lg transition-all border-2 border-gray-200"
             >
               <ArrowLeft className="w-6 h-6 text-gray-700" />
-            </button>
+            </Link>
             <div>
+              <div className="flex items-center gap-3 mb-1">
+                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold">
+                  Level {currentLevel}/5
+                </span>
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+                  Ekspresi
+                </span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                  Sesi {currentSession}/{levelConfig.sessionCount}
+                </span>
+              </div>
               <h1 className="text-3xl font-black text-gray-900">
-                Level 1: Ekspresi Bahagia
+                {levelConfig.title}
               </h1>
               <p className="text-gray-600 font-medium">
-                Latihan Dasar Ekspresi - AI Face Detection
+                {levelConfig.description}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-white rounded-2xl px-6 py-3 shadow-lg">
-              <p className="text-sm text-gray-600 mb-1">Percobaan</p>
-              <p className="text-2xl font-black text-orange-600">{attempts}</p>
-            </div>
+          <div className="bg-white rounded-2xl px-6 py-3 shadow-lg border-2 border-orange-200">
+            <p className="text-sm text-gray-600 mb-1">Progress Level</p>
+            <p className="text-2xl font-black text-orange-600">
+              {Math.round(levelProgress)}%
+            </p>
           </div>
         </div>
 
-        {/* Loading Models Alert */}
+        {/* Loading Models */}
         {isLoadingModels && (
           <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-6 mb-6">
             <div className="flex items-center gap-4">
@@ -475,7 +746,8 @@ export default function Ekspresi() {
                   Loading AI Models...
                 </h3>
                 <p className="text-blue-800">
-                  Sedang memuat model deteksi wajah. Mohon tunggu sebentar.
+                  Sedang memuat model deteksi ekspresi wajah. Mohon tunggu
+                  sebentar.
                 </p>
               </div>
             </div>
@@ -486,17 +758,21 @@ export default function Ekspresi() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Camera Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-gray-100">
               {/* Camera Header */}
-              <div className="bg-gradient-to-r from-orange-500 to-pink-600 p-6 text-white">
+              <div
+                className={`bg-gradient-to-r ${levelConfig.bgGradient} p-6 text-white`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                      <Video className="w-6 h-6" />
+                      {levelConfig.icon}
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">AI Face Detection</h2>
-                      <p className="text-orange-100 text-sm">
+                      <h2 className="text-xl font-bold">
+                        {getCurrentSessionTarget()}
+                      </h2>
+                      <p className="text-white/80 text-sm">
                         {faceDetected
                           ? "✓ Wajah terdeteksi"
                           : "Posisikan wajah di dalam frame"}
@@ -508,10 +784,28 @@ export default function Ekspresi() {
                       <div className="flex items-center gap-2">
                         <Clock className="w-5 h-5" />
                         <span className="font-bold text-lg">
-                          {timer}s / {SESSION_DURATION}s
+                          {timer}s / {levelConfig.sessionDuration}s
                         </span>
                       </div>
                     </div>
+                  )}
+                </div>
+
+                {/* Session Progress Dots */}
+                <div className="flex items-center gap-2 mt-4">
+                  {Array.from({ length: levelConfig.sessionCount }).map(
+                    (_, i) => (
+                      <div
+                        key={i}
+                        className={`flex-1 h-2 rounded-full transition-all ${
+                          i < sessionResults.length
+                            ? "bg-white"
+                            : i === currentSession - 1
+                            ? "bg-white/50 animate-pulse"
+                            : "bg-white/20"
+                        }`}
+                      />
+                    )
                   )}
                 </div>
               </div>
@@ -530,39 +824,51 @@ export default function Ekspresi() {
                   className="absolute top-0 left-0 w-full h-full"
                 />
 
-                {/* Camera Overlay Info */}
+                {/* Current Score Overlay */}
                 {isCameraActive && isDetecting && faceDetected && (
                   <div className="absolute top-4 left-4 right-4 flex items-start justify-between">
-                    {/* Happiness Indicator */}
                     <div className="bg-black/60 backdrop-blur-sm rounded-2xl px-4 py-3">
-                      <p className="text-white/80 text-sm mb-1">
-                        Tingkat Kebahagiaan
-                      </p>
+                      <p className="text-white/80 text-sm mb-1">Target Score</p>
                       <div className="flex items-center gap-3">
                         <div className="text-3xl font-black text-white">
-                          {currentHappiness}%
+                          {currentScore}%
                         </div>
                         <div className="flex-1">
                           <div className="h-2 w-24 bg-white/20 rounded-full overflow-hidden">
                             <div
-                              className={`h-full bg-gradient-to-r ${getHappinessColor(
-                                currentHappiness
+                              className={`h-full bg-gradient-to-r ${getScoreColor(
+                                currentScore
                               )} transition-all duration-300`}
-                              style={{ width: `${currentHappiness}%` }}
+                              style={{ width: `${currentScore}%` }}
                             />
                           </div>
                           <p className="text-white/80 text-xs mt-1">
-                            {getHappinessLabel(currentHappiness)}
+                            Min: {levelConfig.minScore}%
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Confidence */}
+                    {/* Top Emotions */}
                     <div className="bg-black/60 backdrop-blur-sm rounded-2xl px-4 py-3">
-                      <p className="text-white/80 text-sm mb-1">Confidence</p>
-                      <div className="text-2xl font-black text-white">
-                        {currentConfidence}%
+                      <p className="text-white/80 text-sm mb-2">Top Emotions</p>
+                      <div className="space-y-1">
+                        {Object.entries(currentEmotions)
+                          .sort(([, a], [, b]) => b - a)
+                          .slice(0, 3)
+                          .map(([emotion, value]) => (
+                            <div
+                              key={emotion}
+                              className="flex items-center gap-2"
+                            >
+                              <span className="text-white text-xs capitalize">
+                                {emotion}:
+                              </span>
+                              <span className="text-white font-bold text-sm">
+                                {Math.round(value * 100)}%
+                              </span>
+                            </div>
+                          ))}
                       </div>
                     </div>
                   </div>
@@ -574,12 +880,13 @@ export default function Ekspresi() {
                     <div
                       className={`bg-gradient-to-r ${
                         faceDetected
-                          ? getHappinessColor(currentHappiness)
+                          ? getScoreColor(currentScore)
                           : "from-gray-500 to-gray-600"
                       } rounded-2xl px-6 py-4 text-white shadow-2xl`}
                     >
                       <div className="flex items-center gap-3">
-                        {currentHappiness >= 85 && faceDetected ? (
+                        {currentScore >= levelConfig.minScore &&
+                        faceDetected ? (
                           <CheckCircle className="w-6 h-6" />
                         ) : (
                           <AlertCircle className="w-6 h-6" />
@@ -613,7 +920,9 @@ export default function Ekspresi() {
                     <button
                       onClick={startCamera}
                       disabled={isLoadingModels}
-                      className={`flex-1 px-6 py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2 ${
+                      className={`flex-1 px-6 py-4 bg-gradient-to-r ${
+                        levelConfig.bgGradient
+                      } text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2 ${
                         isLoadingModels ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >
@@ -623,11 +932,12 @@ export default function Ekspresi() {
                   ) : !isDetecting ? (
                     <>
                       <button
-                        onClick={startDetection}
-                        className="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                        onClick={startSession}
+                        className={`flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2`}
                       >
-                        <Smile className="w-5 h-5" />
-                        Mulai Latihan ({SESSION_DURATION}s)
+                        <Play className="w-5 h-5" />
+                        Mulai Sesi {currentSession} (
+                        {levelConfig.sessionDuration}s)
                       </button>
                       <button
                         onClick={stopCamera}
@@ -639,7 +949,7 @@ export default function Ekspresi() {
                     </>
                   ) : (
                     <button
-                      onClick={stopDetection}
+                      onClick={stopSession}
                       className="flex-1 px-6 py-4 bg-red-500 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                     >
                       <Target className="w-5 h-5" />
@@ -653,138 +963,78 @@ export default function Ekspresi() {
 
           {/* Info Panel */}
           <div className="space-y-6">
-            {/* Target Info */}
-            <div className="bg-white rounded-3xl shadow-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center">
-                  <Target className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">Target</h3>
-                  <p className="text-gray-600 text-sm">Level 1</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Durasi Latihan</span>
-                  <span className="font-bold text-gray-900">
-                    {SESSION_DURATION} detik
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Target Minimal</span>
-                  <span className="font-bold text-orange-600">
-                    {TARGET_HAPPINESS}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Poin Reward</span>
-                  <span className="font-bold text-green-600">+10</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Data Collected</span>
-                  <span className="font-bold text-blue-600">
-                    {sessionData.length} points
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Current Progress */}
-            {isDetecting && faceDetected && (
-              <div className="bg-white rounded-3xl shadow-lg p-6 animate-fadeIn">
+            {/* Session Results */}
+            {sessionResults.length > 0 && (
+              <div className="bg-white rounded-3xl shadow-lg p-6">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-orange-600" />
-                  Progress Real-time
+                  <Trophy className="w-5 h-5 text-orange-600" />
+                  Hasil Sesi
                 </h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Kebahagiaan</span>
-                      <span className="font-bold text-orange-600">
-                        {currentHappiness}%
+                <div className="space-y-2">
+                  {sessionResults.map((result) => (
+                    <div
+                      key={result.sessionNumber}
+                      className={`flex items-center justify-between p-3 rounded-xl ${
+                        result.isSuccess
+                          ? "bg-green-50 border-2 border-green-200"
+                          : "bg-red-50 border-2 border-red-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {result.isSuccess ? (
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        )}
+                        <span className="font-bold text-gray-900">
+                          Sesi {result.sessionNumber}
+                        </span>
+                      </div>
+                      <span
+                        className={`font-black text-lg ${
+                          result.isSuccess ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {result.avgScore}%
                       </span>
                     </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full bg-gradient-to-r ${getHappinessColor(
-                          currentHappiness
-                        )} transition-all duration-300`}
-                        style={{ width: `${currentHappiness}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Confidence</span>
-                      <span className="font-bold text-blue-600">
-                        {currentConfidence}%
-                      </span>
-                    </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300"
-                        style={{ width: `${currentConfidence}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Waktu</span>
-                      <span className="font-bold text-purple-600">
-                        {timer}s / {SESSION_DURATION}s
-                      </span>
-                    </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-300"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            (timer / SESSION_DURATION) * 100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
+                  ))}
                 </div>
+
+                {sessionResults.length === levelConfig.sessionCount && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 font-semibold">
+                        Rata-rata Level
+                      </span>
+                      <span className="text-2xl font-black text-orange-600">
+                        {levelAvgScore}%
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Instructions */}
-            <div className="bg-orange-50 border-2 border-orange-200 rounded-3xl p-6">
+            <div
+              className={`bg-orange-50 border-2 border-orange-200 rounded-3xl p-6`}
+            >
               <div className="flex gap-3">
-                <Smile className="w-8 h-8 text-orange-600 flex-shrink-0" />
+                <div className={`w-8 h-8 ${levelConfig.color} flex-shrink-0`}>
+                  {levelConfig.icon}
+                </div>
                 <div>
                   <h3 className="font-bold text-orange-900 mb-2 text-lg">
-                    Cara Latihan:
+                    Instruksi:
                   </h3>
                   <ul className="space-y-2 text-orange-800 text-sm">
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-1">1.</span>
-                      <span>Aktifkan kamera dan izinkan akses</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-1">2.</span>
-                      <span>Posisikan wajah di dalam frame</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-1">3.</span>
-                      <span>Tunggu hingga wajah terdeteksi (✓)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-1">4.</span>
-                      <span>Klik "Mulai Latihan"</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-1">5.</span>
-                      <span>
-                        Tunjukkan senyum bahagia selama {SESSION_DURATION}{" "}
-                        detik!
-                      </span>
-                    </li>
+                    {levelConfig.instructions.map((instruction, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-orange-600 mt-1">{i + 1}.</span>
+                        <span>{instruction}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -797,214 +1047,300 @@ export default function Ekspresi() {
                 Tips:
               </h3>
               <ul className="space-y-2 text-yellow-800 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-600">•</span>
-                  <span>Tersenyum natural, tidak dipaksakan</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-600">•</span>
-                  <span>Tunjukkan gigi saat tersenyum</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-600">•</span>
-                  <span>Pastikan pencahayaan cukup terang</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-600">•</span>
-                  <span>Pikirkan hal yang menyenangkan!</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-600">•</span>
-                  <span>Jaga posisi wajah tetap di tengah</span>
-                </li>
+                {levelConfig.tips.map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-yellow-600">•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
               </ul>
+            </div>
+
+            {/* Level Navigation */}
+            <div className="bg-gray-50 rounded-2xl p-4 border-2 border-gray-200">
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() =>
+                      router.push(`/latihan-dasar/ekspresi?level=${level}`)
+                    }
+                    className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                      level === currentLevel
+                        ? "bg-orange-600 text-white scale-110"
+                        : level < currentLevel
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-sm text-gray-600 font-medium mt-2 text-center">
+                Level Ekspresi
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Result Modal */}
-      {mounted && showResult && sessionResult
-        ? createPortal(
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div
-                  className={`bg-gradient-to-r ${
-                    sessionResult.isSuccess
-                      ? "from-green-500 to-emerald-600"
-                      : "from-orange-500 to-pink-600"
-                  } p-8 text-center text-white rounded-t-3xl`}
-                >
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                    {sessionResult.isSuccess ? (
-                      <Award className="w-12 h-12" />
-                    ) : (
-                      <Smile className="w-12 h-12" />
-                    )}
+      {/* Session Result Modal */}
+      {mounted &&
+        showSessionResult &&
+        !showLevelResult &&
+        sessionResults.length > 0 &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl animate-fadeIn">
+              {/* Header */}
+              <div
+                className={`bg-gradient-to-r ${
+                  sessionResults[sessionResults.length - 1].isSuccess
+                    ? "from-green-500 to-emerald-600"
+                    : "from-orange-500 to-pink-600"
+                } p-8 text-center text-white rounded-t-3xl`}
+              >
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                  {sessionResults[sessionResults.length - 1].isSuccess ? (
+                    <CheckCircle className="w-10 h-10" />
+                  ) : (
+                    <AlertCircle className="w-10 h-10" />
+                  )}
+                </div>
+                <h2 className="text-2xl font-black mb-2">
+                  Sesi {currentSession}{" "}
+                  {sessionResults[sessionResults.length - 1].isSuccess
+                    ? "Berhasil! 🎉"
+                    : "Selesai"}
+                </h2>
+                <p className="text-white/90">
+                  {sessionResults[sessionResults.length - 1].isSuccess
+                    ? "Ekspresi Anda sudah sesuai target!"
+                    : "Perlu latihan lebih untuk mencapai target"}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-blue-50 rounded-xl p-4 text-center">
+                    <p className="text-sm text-gray-600 mb-1">Skor Rata-rata</p>
+                    <p className="text-3xl font-black text-blue-600">
+                      {sessionResults[sessionResults.length - 1].avgScore}%
+                    </p>
                   </div>
-                  <h2 className="text-3xl font-black mb-2">
-                    {sessionResult.isSuccess ? "Berhasil! 🎉" : "Coba Lagi! 💪"}
-                  </h2>
-                  <p className="text-white/90 text-lg">
-                    {sessionResult.isSuccess
-                      ? "Ekspresi bahagia Anda sangat natural!"
-                      : "Terus berlatih untuk hasil yang lebih baik"}
+                  <div className="bg-green-50 rounded-xl p-4 text-center">
+                    <p className="text-sm text-gray-600 mb-1">Skor Maksimal</p>
+                    <p className="text-3xl font-black text-green-600">
+                      {sessionResults[sessionResults.length - 1].maxScore}%
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Data Points</span>
+                    <span className="font-bold">
+                      {sessionResults[sessionResults.length - 1].dataPoints}{" "}
+                      detections
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  {!sessionResults[sessionResults.length - 1].isSuccess && (
+                    <button
+                      onClick={retrySession}
+                      className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-all flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Ulangi
+                    </button>
+                  )}
+                  {currentSession < levelConfig.sessionCount ? (
+                    <button
+                      onClick={nextSession}
+                      className={`flex-1 px-4 py-3 bg-gradient-to-r ${levelConfig.bgGradient} text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2`}
+                    >
+                      Sesi {currentSession + 1}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowSessionResult(false);
+                        setShowLevelResult(true);
+                      }}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      Lihat Hasil Level
+                      <Trophy className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Level Result Modal */}
+      {mounted &&
+        showLevelResult &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
+              {/* Header */}
+              <div
+                className={`bg-gradient-to-r ${levelConfig.bgGradient} p-8 text-center text-white rounded-t-3xl`}
+              >
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Award className="w-12 h-12" />
+                </div>
+                <h2 className="text-3xl font-black mb-2">
+                  Level {currentLevel} Selesai! 🎉
+                </h2>
+                <p className="text-white/90 text-lg">
+                  Anda telah menyelesaikan {levelConfig.title}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="p-8">
+                {/* Overall Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-orange-50 rounded-2xl p-4 text-center border-2 border-orange-200">
+                    <Trophy className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-1">
+                      Rata-rata Level
+                    </p>
+                    <p className="text-3xl font-black text-orange-600">
+                      {levelAvgScore}%
+                    </p>
+                  </div>
+                  <div className="bg-green-50 rounded-2xl p-4 text-center border-2 border-green-200">
+                    <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-1">Sesi Selesai</p>
+                    <p className="text-3xl font-black text-green-600">
+                      {sessionResults.filter((r) => r.isSuccess).length}/
+                      {levelConfig.sessionCount}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Session Results */}
+                <div className="mb-8">
+                  <h3 className="font-bold text-gray-900 mb-4 text-lg">
+                    Detail Hasil Sesi:
+                  </h3>
+                  <div className="space-y-3">
+                    {sessionResults.map((result, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center justify-between p-4 rounded-2xl ${
+                          result.isSuccess
+                            ? "bg-green-50 border-2 border-green-200"
+                            : "bg-red-50 border-2 border-red-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                              result.isSuccess ? "bg-green-500" : "bg-red-500"
+                            }`}
+                          >
+                            <span className="text-white font-black text-lg">
+                              {result.sessionNumber}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">
+                              Sesi {result.sessionNumber}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {result.dataPoints} detections
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className={`text-2xl font-black ${
+                              result.isSuccess
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {result.avgScore}%
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Max: {result.maxScore}%
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Feedback */}
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-8">
+                  <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Feedback AI Detection
+                  </h4>
+                  <p className="text-blue-800 leading-relaxed">
+                    {levelAvgScore >= 90
+                      ? `Luar biasa! Anda telah menguasai ${
+                          levelConfig.title
+                        } dengan sempurna. Ekspresi wajah Anda sangat natural dan sesuai target. ${
+                          currentLevel < 5
+                            ? "Siap melanjutkan ke level berikutnya!"
+                            : "Anda telah menyelesaikan semua level ekspresi!"
+                        }`
+                      : levelAvgScore >= levelConfig.minScore
+                      ? `Bagus sekali! Ekspresi Anda sudah sesuai target. ${
+                          currentLevel < 5
+                            ? "Lanjutkan ke level berikutnya untuk tantangan baru!"
+                            : "Pertahankan latihan untuk hasil yang lebih sempurna."
+                        }`
+                      : "Terus berlatih! Perlu lebih banyak latihan untuk menguasai ekspresi ini dengan sempurna."}
                   </p>
                 </div>
 
-                {/* Content */}
-                <div className="p-8">
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-8">
-                    <div className="bg-orange-50 rounded-2xl p-4 text-center">
-                      <Trophy className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Rata-rata</p>
-                      <p className="text-3xl font-black text-orange-600">
-                        {sessionResult.avgHappiness}%
-                      </p>
-                    </div>
-                    <div className="bg-green-50 rounded-2xl p-4 text-center">
-                      <TrendingUp className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Maksimal</p>
-                      <p className="text-3xl font-black text-green-600">
-                        {sessionResult.maxHappiness}%
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 rounded-2xl p-4 text-center">
-                      <Clock className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Durasi</p>
-                      <p className="text-3xl font-black text-blue-600">
-                        {sessionResult.duration}s
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-gray-700">
-                        Pencapaian Target
-                      </span>
-                      <span className="text-sm font-bold text-orange-600">
-                        {sessionResult.avgHappiness}% / {TARGET_HAPPINESS}%
-                      </span>
-                    </div>
-                    <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full bg-gradient-to-r ${getHappinessColor(
-                          sessionResult.avgHappiness
-                        )} transition-all duration-500`}
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            (sessionResult.avgHappiness / TARGET_HAPPINESS) *
-                              100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Feedback */}
-                  <div
-                    className={`rounded-2xl p-6 mb-8 ${
-                      sessionResult.isSuccess
-                        ? "bg-green-50 border-2 border-green-200"
-                        : "bg-orange-50 border-2 border-orange-200"
-                    }`}
+                {/* Action Buttons */}
+                <div className="flex gap-4">
+                  <button
+                    onClick={resetLevel}
+                    className="flex-1 px-6 py-4 bg-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-300 transition-all flex items-center justify-center gap-2"
                   >
-                    <h4
-                      className={`font-bold mb-2 flex items-center gap-2 ${
-                        sessionResult.isSuccess
-                          ? "text-green-900"
-                          : "text-orange-900"
-                      }`}
-                    >
-                      {sessionResult.isSuccess ? (
-                        <CheckCircle className="w-5 h-5" />
-                      ) : (
-                        <AlertCircle className="w-5 h-5" />
-                      )}
-                      Feedback AI Detection
-                    </h4>
-                    <p
-                      className={`leading-relaxed ${
-                        sessionResult.isSuccess
-                          ? "text-green-800"
-                          : "text-orange-800"
-                      }`}
-                    >
-                      {sessionResult.isSuccess
-                        ? "Luar biasa! Ekspresi bahagia Anda sangat natural dan konsisten. AI berhasil mendeteksi senyum genuine Anda dengan tingkat kebahagiaan yang tinggi. Anda siap melanjutkan ke level berikutnya!"
-                        : sessionResult.avgHappiness >= 75
-                        ? "Hampir sempurna! AI mendeteksi ekspresi bahagia yang cukup baik, namun perlu sedikit peningkatan untuk mencapai target. Coba senyum lebih lebar dan tunjukkan gigi Anda!"
-                        : sessionResult.avgHappiness >= 60
-                        ? "Bagus! AI mendeteksi ada ekspresi bahagia, tapi masih bisa lebih ekspresif. Pikirkan hal yang benar-benar membahagiakan untuk senyum yang lebih natural!"
-                        : "Terus berlatih! AI mendeteksi ekspresi masih cenderung netral. Cobalah untuk tersenyum lebih lebar dan genuine. Ingat, senyum dari hati akan terlihat lebih natural!"}
-                    </p>
-                  </div>
-
-                  {/* Detailed Stats */}
-                  <div className="mb-8">
-                    <h4 className="font-bold text-gray-900 mb-4">
-                      Detail Statistik:
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
-                        <span className="text-gray-600">Total Percobaan</span>
-                        <span className="font-bold text-gray-900">
-                          {sessionResult.attempts}x
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
-                        <span className="text-gray-600">
-                          Data Points Collected
-                        </span>
-                        <span className="font-bold text-gray-900">
-                          {sessionData.length} detections
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
-                        <span className="text-gray-600">Detection Rate</span>
-                        <span className="font-bold text-gray-900">
-                          ~{Math.round(1000 / 300)} detections/sec
-                        </span>
-                      </div>
-                      {sessionResult.isSuccess && (
-                        <div className="flex items-center justify-between bg-green-50 rounded-2xl p-4">
-                          <span className="text-gray-600">Poin Didapat</span>
-                          <span className="font-bold text-green-600">+10</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4">
+                    <RotateCcw className="w-5 h-5" />
+                    Ulangi Level
+                  </button>
+                  {currentLevel < 5 ? (
                     <button
-                      onClick={resetSession}
-                      className="flex-1 px-6 py-4 bg-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-300 transition-all flex items-center justify-center gap-2"
+                      onClick={goToNextLevel}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                     >
-                      <RotateCcw className="w-5 h-5" />
-                      Ulangi Latihan
+                      Level {currentLevel + 1}
+                      <ArrowRight className="w-5 h-5" />
                     </button>
-                    {sessionResult.isSuccess && (
-                      <button
-                        onClick={completeLevel}
-                        className="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                      >
-                        Selesai & Lanjut
-                        <ArrowRight className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
+                  ) : (
+                    <Link
+                      href="/latihan-dasar"
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      Selesai
+                      <CheckCircle className="w-5 h-5" />
+                    </Link>
+                  )}
                 </div>
               </div>
-            </div>,
-            document.body
-          )
-        : null}
+            </div>
+          </div>,
+          document.body
+        )}
 
       <style jsx>{`
         @keyframes fadeIn {
@@ -1017,7 +1353,6 @@ export default function Ekspresi() {
             transform: scale(1);
           }
         }
-
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
         }

@@ -12,10 +12,10 @@ import {
   Wind,
   Heart,
   Smile,
-  // [ADD] ikon untuk modal waktu habis (opsional)
   AlarmClock,
   RotateCcw,
   ArrowLeft,
+  Radio,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -83,9 +83,9 @@ function CameraFeed({
   }, [stableConstraints]);
 
   return (
-    <div className={`relative bg-white ${className}`}>
+    <div className={`relative bg-gray-900 ${className}`}>
       {label && (
-        <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/60 text-white px-2 py-1 rounded">
+        <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/70 text-white px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm">
           {label}
         </span>
       )}
@@ -98,8 +98,11 @@ function CameraFeed({
         }`}
       />
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm p-4 text-center rounded-xl">
-          {error}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm p-4 text-center">
+          <div>
+            <Mic className="w-12 h-12 mx-auto mb-3 text-red-400" />
+            <p>{error}</p>
+          </div>
         </div>
       )}
     </div>
@@ -186,7 +189,7 @@ type InterviewState =
   | "user-answering"
   | "paused";
 
-export default function Pidato() {
+export default function Wawancara() {
   const router = useRouter();
   const PREPARATION_TIME = 15;
 
@@ -207,7 +210,6 @@ export default function Pidato() {
   const isLastQuestion =
     currentQuestionIndex === INTERVIEW_QUESTIONS.length - 1;
 
-  // [ADD] Limit 1 menit
   const MAX_TOTAL_TIME = 60;
   const [timeUp, setTimeUp] = useState(false);
 
@@ -234,7 +236,7 @@ export default function Pidato() {
     }
   }, [isPaused, interviewState]);
 
-  // [ADD] Otomatis berhenti ketika mencapai 60 detik
+  // Otomatis berhenti ketika mencapai 60 detik
   useEffect(() => {
     if (
       totalTime >= MAX_TOTAL_TIME &&
@@ -242,13 +244,11 @@ export default function Pidato() {
       interviewState !== "not-started" &&
       interviewState !== "preparation"
     ) {
-      // hentikan audio & rekaman
       if (audioRef.current) audioRef.current.pause();
       if (mediaRecorderRef.current && isRecording) {
         mediaRecorderRef.current.stop();
         setIsRecording(false);
       }
-      // jeda semua timer & munculkan modal
       setIsPaused(true);
       setTimeUp(true);
     }
@@ -262,7 +262,7 @@ export default function Pidato() {
     }
   }, [interviewState, isPaused]);
 
-  // Auto play audio pertanyaan saat state berubah
+  // Auto play audio pertanyaan
   useEffect(() => {
     if (
       interviewState === "playing-question" &&
@@ -314,7 +314,6 @@ export default function Pidato() {
   const handleStartInterview = () => {
     setInterviewState("preparation");
     setPreparationTimer(PREPARATION_TIME);
-    // [ADD] reset limit
     setTotalTime(0);
     setAnswerTime(0);
     setIsPaused(false);
@@ -388,7 +387,6 @@ export default function Pidato() {
 
   // Handle pause/resume
   const handlePauseResume = () => {
-    // [ADD] jika waktu habis, tombol tidak berfungsi
     if (timeUp) return;
 
     setIsPaused(!isPaused);
@@ -414,295 +412,192 @@ export default function Pidato() {
   React.useEffect(() => setMounted(true), []);
 
   return (
-    <div className="pr-8">
-      <div className="bg-white p-4 rounded-xl">
-        <section className="relative min-h-screen w-full bg-[url(/podium/tirai.png)] bg-no-repeat bg-cover bg-top rounded-xl">
-          <div className="p-4">
-            <div className="flex justify-between items-center">
-              <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
-                <p className="text-orange-500 font-bold text-lg">
-                  Mode: Wawancara
-                </p>
-              </div>
+    <div className="bg-white rounded-xl p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          href="/podium-swara"
+          className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
+          <span className="font-semibold text-gray-700">Kembali</span>
+        </Link>
 
-              {/* Progress Indicator */}
-              {interviewState !== "not-started" &&
-                interviewState !== "preparation" && (
-                  <div className="bg-white rounded-2xl px-6 py-2 shadow-sm">
-                    <p className="text-gray-700 font-semibold">
-                      Pertanyaan {currentQuestionIndex + 1} /{" "}
-                      {INTERVIEW_QUESTIONS.length}
-                    </p>
-                  </div>
+        <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-6 py-3 rounded-2xl shadow-lg">
+          <p className="font-bold text-lg">Mode: Wawancara</p>
+        </div>
+
+        {interviewState !== "not-started" &&
+          interviewState !== "preparation" && (
+            <div className="bg-white px-6 py-3 rounded-2xl shadow-lg">
+              <p className="text-gray-700 font-semibold">
+                Pertanyaan {currentQuestionIndex + 1} /{" "}
+                {INTERVIEW_QUESTIONS.length}
+              </p>
+            </div>
+          )}
+      </div>
+
+      {/* Main Content */}
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        {/* Curtain Background */}
+        <div className="relative bg-[url(/podium/tirai.png)] bg-cover bg-top min-h-[600px] p-8">
+          {/* Camera Feeds Grid */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* User Camera */}
+            <div className="relative">
+              <CameraFeed
+                className="w-full h-96 rounded-2xl overflow-hidden ring-4 ring-orange-300 shadow-2xl"
+                label="Anda"
+                mirrored
+              />
+              {interviewState === "user-answering" && (
+                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 animate-pulse shadow-lg">
+                  <div className="w-3 h-3 bg-white rounded-full animate-ping" />
+                  RECORDING
+                </div>
+              )}
+            </div>
+
+            {/* Interviewer */}
+            <div className="relative">
+              <div className="relative w-full h-96 rounded-2xl overflow-hidden ring-4 ring-orange-400 shadow-2xl bg-gradient-to-br from-blue-100 to-purple-100">
+                <img
+                  src="/podium/virtual.png"
+                  alt="Bu Hilda PT Foodie"
+                  className={`h-full w-full object-cover transition-all duration-300 ${
+                    interviewState === "playing-question"
+                      ? "scale-105"
+                      : "scale-100"
+                  }`}
+                />
+
+                {/* Speaking Animation Overlay */}
+                {interviewState === "playing-question" && (
+                  <>
+                    <div className="absolute inset-0 bg-green-500/10 animate-pulse" />
+                    <div className="absolute top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg">
+                      <Radio className="w-4 h-4 animate-pulse" />
+                      Berbicara
+                    </div>
+                    {/* Sound Waves Animation */}
+                    <div className="absolute bottom-4 left-4 flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-green-500 rounded-full animate-pulse"
+                          style={{
+                            height: `${Math.random() * 30 + 20}px`,
+                            animationDelay: `${i * 0.1}s`,
+                            animationDuration: "0.6s",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
+
+                <span className="absolute left-4 bottom-4 z-10 text-sm bg-black/70 text-white px-4 py-2 rounded-xl font-semibold backdrop-blur-sm">
+                  Bu Hilda - PT Foodie
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-center items-end gap-10 w-full relative min-h-[500px]">
-            {/* START INTERVIEW CARD - Full overlay centered */}
-            {interviewState === "not-started" && (
-              <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/20 rounded-xl">
-                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-2xl w-full mx-8">
-                  <div className="text-center">
-                    <Link href={"/podium-swara"} className="flex items-center gap-2">
-                      <ArrowLeft />
-                      Kembali
-                    </Link>
-                    <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Mic className="w-12 h-12 text-orange-500" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-3">
-                      Siap untuk Wawancara?
-                    </h3>
-                    <p className="text-gray-600 text-lg mb-8">
-                      Anda akan mendapatkan waktu{" "}
-                      <strong className="text-orange-600">15 detik</strong>{" "}
-                      untuk bersiap-siap dan relaksasi sebelum wawancara
-                      dimulai.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 rounded-2xl p-6 mb-8">
-                    <p className="text-base text-blue-900 font-bold mb-4 flex items-center gap-2">
-                      💡 Tips Wawancara:
-                    </p>
-                    <ul className="text-sm text-blue-800 space-y-2">
-                      <li>• Dengarkan pertanyaan dengan seksama</li>
-                      <li>• Jawab dengan jelas dan terstruktur</li>
-                      <li>• Berbicara dengan percaya diri</li>
-                      <li>• Gunakan bahasa yang sopan dan profesional</li>
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={handleStartInterview}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-5 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Play className="w-6 h-6" />
-                    Mulai Wawancara
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* PREPARATION PHASE - Modal */}
-            {mounted && interviewState === "preparation"
-              ? createPortal(
-                  <div>
-                    {/* Overlay */}
-                    <div
-                      className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
-                      onClick={handleCancelPreparation}
-                      aria-hidden="true"
-                    />
-
-                    {/* Modal container */}
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                      <div
-                        role="dialog"
-                        aria-modal="true"
-                        className="w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden"
-                      >
-                        {/* Modal header/background */}
-                        <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-8">
-                          <div className="text-center px-2 sm:px-6">
-                            {/* Large Countdown Circle */}
-                            <div className="relative w-56 h-56 mx-auto mb-10">
-                              <svg className="w-56 h-56 transform -rotate-90">
-                                <circle
-                                  cx="112"
-                                  cy="112"
-                                  r="100"
-                                  stroke="rgba(255,255,255,0.2)"
-                                  strokeWidth="8"
-                                  fill="none"
-                                />
-                                <circle
-                                  cx="112"
-                                  cy="112"
-                                  r="100"
-                                  stroke="white"
-                                  strokeWidth="8"
-                                  fill="none"
-                                  strokeDasharray={`${2 * Math.PI * 100}`}
-                                  strokeDashoffset={`${
-                                    2 *
-                                    Math.PI *
-                                    100 *
-                                    (1 - preparationTimer / PREPARATION_TIME)
-                                  }`}
-                                  className="transition-all duration-1000 ease-linear"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center">
-                                  <div className="text-8xl font-black text-white mb-2">
-                                    {preparationTimer}
-                                  </div>
-                                  <div className="text-lg text-white/80 font-semibold">
-                                    detik
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Relaxation Card */}
-                            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border-2 border-white/30 max-w-2xl mx-auto">
-                              <div className="flex items-center justify-center mb-5">
-                                <div className="bg-white/20 p-5 rounded-2xl">
-                                  <StepIcon className="w-12 h-12 text-white" />
-                                </div>
-                              </div>
-                              <h3 className="text-3xl font-bold text-white mb-3">
-                                {currentStep.text}
-                              </h3>
-                              <p className="text-lg text-white/90">
-                                {currentStep.subtext}
-                              </p>
-                            </div>
-
-                            {/* Bottom Info */}
-                            <div className="mt-10 space-y-3">
-                              <p className="text-white/80 text-base">
-                                💡 Bersiaplah untuk wawancara
-                              </p>
-                              <p className="text-white/70 text-sm">
-                                Wawancara akan dimulai otomatis
-                              </p>
-                            </div>
-
-                            {/* Actions */}
-                            <button
-                              onClick={handleCancelPreparation}
-                              className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all border border-white/30"
-                            >
-                              Batalkan
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>,
-                  document.body
-                )
-              : null}
-
-            {/* Camera Feeds - Always visible in background */}
-            <CameraFeed
-              className="w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-200"
-              label="Anda"
-              mirrored
-            />
-            <div className="flex items-center flex-col justify-center gap-10">
-              {/* Question Bubble */}
-              {interviewState !== "not-started" &&
-                interviewState !== "preparation" && (
-                  <div className="relative w-fit max-w-3xl mx-auto">
-                    <div
-                      className={`bg-white rounded-3xl shadow-md px-8 py-4 text-center text-orange-500 font-medium text-lg relative transition-all ${
-                        interviewState === "playing-question"
-                          ? "ring-4 ring-orange-400 animate-pulse"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        {interviewState === "playing-question" && (
-                          <Volume2 className="w-5 h-5 text-orange-500 animate-bounce" />
-                        )}
-                        {interviewState === "user-answering" && (
-                          <Mic className="w-5 h-5 text-red-500 animate-pulse" />
-                        )}
-                      </div>
-                      <p>{currentQuestion.text}</p>
-                      <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[16px] border-transparent border-t-white"></div>
-                    </div>
-
-                    {/* State Indicator */}
-                    <div className="mt-4 text-center">
+          {/* Question Bubble - Positioned Above Cameras */}
+          {interviewState !== "not-started" &&
+            interviewState !== "preparation" && (
+              <div className="mb-8">
+                <div
+                  className={`bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto transition-all duration-300 ${
+                    interviewState === "playing-question"
+                      ? "ring-4 ring-orange-400 scale-105"
+                      : "ring-2 ring-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    {interviewState === "playing-question" && (
+                      <Volume2 className="w-8 h-8 text-orange-500 animate-bounce" />
+                    )}
+                    {interviewState === "user-answering" && (
+                      <Mic className="w-8 h-8 text-red-500 animate-pulse" />
+                    )}
+                    <div className="text-center">
                       {interviewState === "playing-question" && (
                         <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold">
-                          <Volume2 className="w-4 h-4" />
                           Mendengarkan Pertanyaan...
                         </span>
                       )}
                       {interviewState === "user-answering" && (
-                        <div className="space-y-2">
-                          <span className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-semibold">
-                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                            SEDANG MEREKAM - {formatTime(answerTime)}
-                          </span>
-                        </div>
+                        <span className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-semibold">
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                          MEREKAM - {formatTime(answerTime)}
+                        </span>
                       )}
                     </div>
                   </div>
-                )}
-
-              {/* Interviewer Avatar */}
-              <div className="relative bg-white w-[35rem] h-80 rounded-xl overflow-hidden ring-4 ring-orange-400">
-                <img
-                  src="/podium/virtual.png"
-                  alt="Bu Hilda PT Foodie"
-                  className="h-full w-full object-cover"
-                />
-                <span className="absolute left-3 bottom-3 z-10 text-xs bg-black/60 text-white px-2 py-1 rounded">
-                  Bu Hilda PT Foodie
-                </span>
-
-                {/* Speaking Indicator */}
-                {interviewState === "playing-question" && (
-                  <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    Berbicara
-                  </div>
-                )}
+                  <p className="text-2xl font-bold text-gray-800 text-center leading-relaxed">
+                    {currentQuestion.text}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
 
           {/* Controls */}
           {interviewState !== "not-started" &&
             interviewState !== "preparation" && (
-              <div className="flex items-center justify-center mt-10">
-                <div className="bg-white flex items-center justify-center w-[90%] h-40 rounded-2xl shadow-md">
-                  <div className="flex items-center gap-4 z-40">
-                    {/* Pause/Resume */}
-                    <button
-                      onClick={handlePauseResume}
-                      className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
-                    >
-                      {isPaused ? (
-                        <Play className="w-5 h-5" />
-                      ) : (
-                        <Pause className="w-5 h-5" />
-                      )}
-                      {isPaused ? "Resume" : "Pause"}
-                    </button>
+              <div className="bg-white rounded-3xl shadow-xl p-6">
+                <div className="flex items-center justify-center gap-4">
+                  {/* Pause/Resume */}
+                  <button
+                    onClick={handlePauseResume}
+                    disabled={timeUp}
+                    className={`px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all duration-300 transform hover:scale-105 ${
+                      timeUp
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white"
+                    }`}
+                  >
+                    {isPaused ? (
+                      <Play className="w-5 h-5" />
+                    ) : (
+                      <Pause className="w-5 h-5" />
+                    )}
+                    {isPaused ? "Resume" : "Pause"}
+                  </button>
 
-                    {/* Total Time */}
-                    <div className="bg-white border-4 border-orange-300 px-8 py-4 rounded-2xl shadow-xl">
-                      <p className="text-xs text-gray-600 mb-1">Total Waktu</p>
-                      <p className="text-3xl font-bold text-gray-800 tabular-nums">
-                        {formatTime(totalTime)}
-                      </p>
+                  {/* Total Time */}
+                  <div className="bg-gradient-to-br from-orange-50 to-pink-50 border-4 border-orange-300 px-8 py-4 rounded-2xl shadow-xl">
+                    <p className="text-xs text-gray-600 mb-1 text-center font-semibold">
+                      Total Waktu
+                    </p>
+                    <p className="text-4xl font-black text-gray-800 tabular-nums">
+                      {formatTime(totalTime)}
+                    </p>
+                    <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${(totalTime / MAX_TOTAL_TIME) * 100}%`,
+                        }}
+                      />
                     </div>
+                  </div>
 
-                    {/* Finish Answer Button */}
-                    {interviewState === "user-answering" && (
+                  {/* User Answering Controls */}
+                  {interviewState === "user-answering" && (
+                    <>
                       <button
                         onClick={handleFinishAnswer}
-                        className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105 animate-pulse"
+                        className="px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-2xl font-bold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
                       >
                         <Square className="w-5 h-5" />
                         Berhenti Bicara
                       </button>
-                    )}
 
-                    {/* Next/Finish Button */}
-                    {interviewState === "user-answering" && (
                       <button
                         onClick={handleFinishAnswer}
-                        className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
+                        className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl font-bold flex items-center gap-2 shadow-xl transition-all duration-300 transform hover:scale-105"
                       >
                         {isLastQuestion ? (
                           <>
@@ -716,8 +611,8 @@ export default function Pidato() {
                           </>
                         )}
                       </button>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -725,36 +620,228 @@ export default function Pidato() {
           {/* Progress Bar */}
           {interviewState !== "not-started" &&
             interviewState !== "preparation" && (
-              <div className="px-8 pb-6">
-                <div className="bg-white rounded-2xl p-4 shadow-md">
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Progress Wawancara</span>
-                    <span>
-                      {Math.round(
+              <div className="mt-6 bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex justify-between text-sm text-gray-600 mb-3 font-semibold">
+                  <span>Progress Wawancara</span>
+                  <span>
+                    {Math.round(
+                      ((currentQuestionIndex + 1) /
+                        INTERVIEW_QUESTIONS.length) *
+                        100
+                    )}
+                    %
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-orange-500 to-pink-500 h-4 rounded-full transition-all duration-500 relative overflow-hidden"
+                    style={{
+                      width: `${
                         ((currentQuestionIndex + 1) /
                           INTERVIEW_QUESTIONS.length) *
-                          100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-gradient-to-r from-orange-500 to-pink-500 h-3 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${
-                          ((currentQuestionIndex + 1) /
-                            INTERVIEW_QUESTIONS.length) *
-                          100
-                        }%`,
-                      }}
-                    />
+                        100
+                      }%`,
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-white/30 animate-pulse" />
                   </div>
                 </div>
               </div>
             )}
-        </section>
+        </div>
       </div>
+
+      {/* START INTERVIEW MODAL */}
+      {mounted &&
+        interviewState === "not-started" &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="relative bg-white rounded-3xl shadow-2xl p-10 max-w-2xl w-full mx-8 animate-fadeIn">
+              <div className="text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <Mic className="w-12 h-12 text-white" />
+                </div>
+                <h3 className="text-4xl font-black text-gray-900 mb-3">
+                  Siap untuk Wawancara?
+                </h3>
+                <p className="text-gray-600 text-lg mb-8">
+                  Anda akan mendapatkan waktu{" "}
+                  <strong className="text-orange-600">15 detik</strong> untuk
+                  bersiap-siap dan relaksasi sebelum wawancara dimulai.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8 border-2 border-blue-200">
+                <p className="text-base text-blue-900 font-bold mb-4 flex items-center gap-2">
+                  💡 Tips Wawancara:
+                </p>
+                <ul className="text-sm text-blue-800 space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Dengarkan pertanyaan dengan seksama</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Jawab dengan jelas dan terstruktur</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Berbicara dengan percaya diri</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Gunakan bahasa yang sopan dan profesional</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={handleStartInterview}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-5 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
+                <Play className="w-6 h-6" />
+                Mulai Wawancara
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* PREPARATION PHASE MODAL */}
+      {mounted &&
+        interviewState === "preparation" &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <div className="relative w-full max-w-4xl">
+              <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-3xl shadow-2xl p-12 animate-fadeIn">
+                <div className="text-center">
+                  {/* Large Countdown Circle */}
+                  <div className="relative w-64 h-64 mx-auto mb-12">
+                    <svg className="w-64 h-64 transform -rotate-90">
+                      <circle
+                        cx="128"
+                        cy="128"
+                        r="110"
+                        stroke="rgba(255,255,255,0.2)"
+                        strokeWidth="12"
+                        fill="none"
+                      />
+                      <circle
+                        cx="128"
+                        cy="128"
+                        r="110"
+                        stroke="white"
+                        strokeWidth="12"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 110}`}
+                        strokeDashoffset={`${
+                          2 *
+                          Math.PI *
+                          110 *
+                          (1 - preparationTimer / PREPARATION_TIME)
+                        }`}
+                        className="transition-all duration-1000 ease-linear"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-9xl font-black text-white mb-3 animate-pulse">
+                          {preparationTimer}
+                        </div>
+                        <div className="text-2xl text-white/90 font-bold">
+                          detik
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Relaxation Card */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-10 border-2 border-white/30 max-w-3xl mx-auto">
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="bg-white/20 p-6 rounded-3xl">
+                        <StepIcon className="w-16 h-16 text-white" />
+                      </div>
+                    </div>
+                    <h3 className="text-4xl font-black text-white mb-4">
+                      {currentStep.text}
+                    </h3>
+                    <p className="text-xl text-white/90">
+                      {currentStep.subtext}
+                    </p>
+                  </div>
+
+                  {/* Bottom Info */}
+                  <div className="mt-12 space-y-4">
+                    <p className="text-white/90 text-lg font-semibold">
+                      💡 Bersiaplah untuk wawancara
+                    </p>
+                    <p className="text-white/70 text-base">
+                      Wawancara akan dimulai otomatis
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <button
+                    onClick={handleCancelPreparation}
+                    className="mt-10 px-10 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold text-lg transition-all border-2 border-white/30"
+                  >
+                    Batalkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* TIME UP MODAL */}
+      {mounted &&
+        timeUp &&
+        createPortal(
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <div className="relative bg-white max-w-lg w-full rounded-3xl shadow-2xl p-10 text-center animate-fadeIn">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-xl">
+                <AlarmClock className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-3xl font-black text-gray-900 mb-3">
+                Waktu Habis!
+              </h3>
+              <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                Rekaman & pertanyaan dihentikan otomatis karena mencapai batas{" "}
+                <strong className="text-orange-600">60 detik</strong>.
+              </p>
+
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={() => router.push("/podium-swara/selesai")}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 rounded-2xl font-bold text-lg shadow-xl transition-all transform hover:scale-105"
+                >
+                  Akhiri & Lihat Hasil
+                </button>
+                <button
+                  onClick={() => {
+                    setInterviewState("not-started");
+                    setPreparationTimer(PREPARATION_TIME);
+                    setCurrentQuestionIndex(0);
+                    setTotalTime(0);
+                    setAnswerTime(0);
+                    setIsPaused(false);
+                    setTimeUp(false);
+                  }}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                  Ulangi dari Awal
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Hidden Audio Player */}
       <audio
@@ -764,54 +851,21 @@ export default function Pidato() {
         className="hidden"
       />
 
-      {/* [ADD] Modal waktu habis 1 menit */}
-      {mounted && timeUp
-        ? createPortal(
-            <div>
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-              <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl p-8 text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
-                    <AlarmClock className="w-10 h-10 text-orange-500" />
-                  </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">
-                    Waktu Habis (1 Menit)
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Rekaman & pertanyaan dihentikan otomatis karena mencapai
-                    batas <strong>60 detik</strong>.
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => router.push("/podium-swara/selesai")}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-bold hover:from-green-600 hover:to-green-700"
-                    >
-                      Akhiri & Lihat Hasil
-                    </button>
-                    <button
-                      onClick={() => {
-                        // reset ke awal sesi
-                        setInterviewState("not-started");
-                        setPreparationTimer(PREPARATION_TIME);
-                        setCurrentQuestionIndex(0);
-                        setTotalTime(0);
-                        setAnswerTime(0);
-                        setIsPaused(false);
-                        setTimeUp(false);
-                      }}
-                      className="flex-1 bg-gray-100 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-200 flex items-center justify-center gap-2"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                      Ulangi dari Awal
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

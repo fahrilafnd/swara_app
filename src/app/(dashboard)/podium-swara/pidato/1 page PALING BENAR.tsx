@@ -9,12 +9,10 @@ import {
   RotateCcw,
   ArrowLeft,
   Mic,
+  Volume2,
+  ThumbsUp,
   ThumbsDown,
   HelpCircle,
-  Wind,
-  Heart,
-  Smile,
-  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
@@ -35,7 +33,12 @@ interface SpeechData {
 }
 
 type ReactionType = "applause" | "thumbsDown" | "confused" | "leave";
-type SessionState = "not-started" | "preparation" | "speaking" | "paused";
+
+interface AudienceReaction {
+  audienceIndex: number;
+  reaction: ReactionType;
+  timestamp: number;
+}
 
 // ============ SPEECH DATA ============
 const SPEECH_DATA: SpeechData[] = [
@@ -68,25 +71,6 @@ const SPEECH_DATA: SpeechData[] = [
     title: "Krisis Air dan Kesadaran Lingkungan",
     content:
       "Selamat pagi, hadirin sekalian. Di tengah kemajuan zaman, ada satu hal yang sering kita lupakan: air bersih. Beberapa daerah di Indonesia sudah mengalami krisis air akibat perubahan iklim dan eksploitasi sumber daya alam. Padahal, air adalah sumber kehidupan. Mulai dari menghemat air di rumah hingga menjaga sungai tetap bersih, semua bisa berkontribusi menyelamatkan bumi. Mari kita ubah kepedulian menjadi tindakan, karena setetes air hari ini bisa menentukan masa depan generasi esok. Terima kasih.",
-  },
-];
-
-// Relaxation steps
-const RELAXATION_STEPS = [
-  {
-    icon: Wind,
-    text: "Tarik napas dalam-dalam...",
-    subtext: "Hirup udara melalui hidung, tahan sebentar",
-  },
-  {
-    icon: Heart,
-    text: "Hembuskan perlahan...",
-    subtext: "Keluarkan napas melalui mulut, rasakan relaks",
-  },
-  {
-    icon: Smile,
-    text: "Siapkan suara terbaik Anda!",
-    subtext: "Anda siap untuk pidato ini",
   },
 ];
 
@@ -129,8 +113,8 @@ function AudiencePerson({ index, reaction, hasLeft }: AudiencePersonProps) {
 
   if (hasLeft) {
     return (
-      <div className="w-[88px] h-[88px] flex items-center justify-center opacity-30">
-        <div className="text-red-500 text-xs font-bold">Keluar</div>
+      <div className="w-[88px] h-[88px] flex items-center justify-center ">
+        <div className="text-red-500 text-xs">Keluar</div>
       </div>
     );
   }
@@ -153,8 +137,6 @@ function AudiencePerson({ index, reaction, hasLeft }: AudiencePersonProps) {
 // ============ MAIN COMPONENT ============
 export default function Pidato() {
   const router = useRouter();
-  const PREPARATION_TIME = 15;
-  const SESSION_TIME = 60;
 
   // Select random speech on mount
   const [selectedSpeech] = useState<SpeechData>(
@@ -167,13 +149,12 @@ export default function Pidato() {
   );
 
   // State
-  const [sessionState, setSessionState] = useState<SessionState>("not-started");
-  const [preparationTimer, setPreparationTimer] = useState(PREPARATION_TIME);
-  const [time, setTime] = useState(SESSION_TIME);
+  const [isPaused, setIsPaused] = useState(false);
+  const [time, setTime] = useState(60);
   const [timeUp, setTimeUp] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [recognizedText, setRecognizedText] = useState("");
-  const [warningMessage, setWarningMessage] = useState("");
 
   // Speech tracking
   const [completedWordIndices, setCompletedWordIndices] = useState<Set<number>>(
@@ -182,7 +163,6 @@ export default function Pidato() {
   const [currentHighlightIndex, setCurrentHighlightIndex] = useState(-1);
   const [spokenWords, setSpokenWords] = useState<WordData[]>([]);
   const [errorCount, setErrorCount] = useState(0);
-  const [skipCount, setSkipCount] = useState(0);
 
   // Audience reactions
   const [audienceReactions, setAudienceReactions] = useState<
@@ -192,115 +172,58 @@ export default function Pidato() {
 
   // Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
-  const preparationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
   const completedIndicesRef = useRef<Set<number>>(new Set());
   const spokenWordsRef = useRef<WordData[]>([]);
   const lastProcessedTranscriptRef = useRef<string>("");
   const errorCountRef = useRef(0);
-  const skipCountRef = useRef(0);
   const consecutiveErrorsRef = useRef(0);
-  const expectedWordIndexRef = useRef(0);
 
-  const AUDIENCE_COUNT = 30;
+  const AUDIENCE_COUNT = 30; // 5 columns x 6 rows
 
   useEffect(() => setMounted(true), []);
 
-  // Current relaxation step
-  const currentRelaxationStep = useMemo(() => {
-    const elapsed = PREPARATION_TIME - preparationTimer;
-    if (elapsed < 5) return 0;
-    if (elapsed < 10) return 1;
-    return 2;
-  }, [preparationTimer]);
-
-  const currentStep = RELAXATION_STEPS[currentRelaxationStep];
-  const StepIcon = currentStep.icon;
-
-  // Preparation phase countdown
-  useEffect(() => {
-    if (sessionState === "preparation") {
-      preparationIntervalRef.current = setInterval(() => {
-        setPreparationTimer((prev) => {
-          if (prev <= 1) {
-            if (preparationIntervalRef.current) {
-              clearInterval(preparationIntervalRef.current);
-              preparationIntervalRef.current = null;
-            }
-            startSpeaking();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => {
-        if (preparationIntervalRef.current) {
-          clearInterval(preparationIntervalRef.current);
-        }
-      };
-    }
-  }, [sessionState]);
-
   // Timer
   useEffect(() => {
-    if (sessionState === "speaking" && time > 0) {
+    if (!isPaused && time > 0 && isRecording) {
       const timer = setInterval(() => setTime((t) => t - 1), 1000);
       return () => clearInterval(timer);
     }
-  }, [sessionState, time]);
+  }, [isPaused, time, isRecording]);
 
   // Time up handler
   useEffect(() => {
-    if (time === 0 && !timeUp && sessionState === "speaking") {
+    if (time === 0 && !timeUp) {
+      setIsPaused(true);
       setTimeUp(true);
       stopRecording();
     }
-  }, [time, timeUp, sessionState]);
+  }, [time, timeUp]);
 
-  // Camera setup - improved
+  // Camera setup
   useEffect(() => {
     const enableCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: "user",
-          },
-          audio: false,
+          video: true,
         });
-
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          streamRef.current = stream;
-
-          // Wait for video to load
-          videoRef.current.onloadedmetadata = () => {
-            if (videoRef.current) {
-              videoRef.current.play().catch((err) => {
-                console.error("Error playing video:", err);
-              });
-            }
-          };
         }
       } catch (err) {
         console.error("Tidak dapat mengakses kamera:", err);
       }
     };
-
     enableCamera();
 
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((tr) => tr.stop());
-      }
+      const stream = videoRef.current?.srcObject as MediaStream | null;
+      stream?.getTracks().forEach((tr) => tr.stop());
     };
   }, []);
 
-  // ============ SPEECH RECOGNITION (same as before) ============
+  // ============ SPEECH RECOGNITION ============
   const normalizeWord = (word: string): string => {
     return word
       .toLowerCase()
@@ -413,86 +336,69 @@ export default function Pidato() {
     const spokenWordsList = normalizedTranscript.split(" ").filter(Boolean);
     const trainingWordsNormalized = words.map((w) => normalizeWord(w));
 
-    const expectedIndex = expectedWordIndexRef.current;
-
-    if (expectedIndex >= words.length) {
-      return;
-    }
-
-    const targetWord = trainingWordsNormalized[expectedIndex];
+    let furthestMatchIndex = Math.max(
+      -1,
+      ...Array.from(completedIndicesRef.current)
+    );
     let foundMatch = false;
 
+    // Sequential matching
     for (const spokenWord of spokenWordsList) {
-      const similarity = calculateSimilarity(spokenWord, targetWord);
+      for (
+        let i = furthestMatchIndex + 1;
+        i < trainingWordsNormalized.length;
+        i++
+      ) {
+        if (completedIndicesRef.current.has(i)) continue;
 
-      if (similarity > 0.65) {
-        const wordData: WordData = {
-          word: words[expectedIndex],
-          index: expectedIndex,
-          timestamp: Date.now(),
-          isCorrect: similarity > 0.8,
-        };
+        const targetWord = trainingWordsNormalized[i];
+        const similarity = calculateSimilarity(spokenWord, targetWord);
 
-        completedIndicesRef.current.add(expectedIndex);
-        setCompletedWordIndices(new Set(completedIndicesRef.current));
+        if (similarity > 0.65) {
+          const wordData: WordData = {
+            word: words[i],
+            index: i,
+            timestamp: Date.now(),
+            isCorrect: similarity > 0.8,
+          };
 
-        if (!spokenWordsRef.current.find((w) => w.index === expectedIndex)) {
-          spokenWordsRef.current = [...spokenWordsRef.current, wordData];
-          setSpokenWords(spokenWordsRef.current);
+          completedIndicesRef.current.add(i);
+          setCompletedWordIndices(new Set(completedIndicesRef.current));
+
+          if (!spokenWordsRef.current.find((w) => w.index === i)) {
+            spokenWordsRef.current = [...spokenWordsRef.current, wordData];
+            setSpokenWords(spokenWordsRef.current);
+          }
+
+          setCurrentHighlightIndex(i);
+          furthestMatchIndex = i;
+          foundMatch = true;
+
+          // Trigger positive reaction
+          if (similarity > 0.85 && Math.random() > 0.7) {
+            triggerAudienceReaction("applause");
+            consecutiveErrorsRef.current = 0;
+          }
+
+          break;
         }
-
-        setCurrentHighlightIndex(expectedIndex);
-        expectedWordIndexRef.current += 1;
-        foundMatch = true;
-        consecutiveErrorsRef.current = 0;
-
-        setWarningMessage("");
-
-        if (similarity > 0.85 && Math.random() > 0.7) {
-          triggerAudienceReaction("applause");
-        }
-
-        break;
       }
     }
 
+    // Detect errors (wrong words)
     if (!foundMatch && spokenWordsList.length > 0) {
-      let isSkipping = false;
-      for (
-        let i = expectedIndex + 1;
-        i < Math.min(expectedIndex + 5, words.length);
-        i++
-      ) {
-        const futureWord = trainingWordsNormalized[i];
-        for (const spokenWord of spokenWordsList) {
-          if (calculateSimilarity(spokenWord, futureWord) > 0.7) {
-            isSkipping = true;
-            break;
-          }
-        }
-        if (isSkipping) break;
-      }
+      errorCountRef.current += 1;
+      consecutiveErrorsRef.current += 1;
+      setErrorCount(errorCountRef.current);
 
-      if (isSkipping) {
-        skipCountRef.current += 1;
-        setSkipCount(skipCountRef.current);
-        setWarningMessage(
-          `⚠️ Jangan skip! Ucapkan kata: "${words[expectedIndex]}"`
-        );
+      // Trigger negative reactions on errors
+      if (consecutiveErrorsRef.current >= 2) {
+        triggerAudienceReaction("thumbsDown");
+      } else if (Math.random() > 0.5) {
         triggerAudienceReaction("confused");
-      } else {
-        errorCountRef.current += 1;
-        consecutiveErrorsRef.current += 1;
-        setErrorCount(errorCountRef.current);
-        setWarningMessage(
-          `❌ Kata salah! Seharusnya: "${words[expectedIndex]}"`
-        );
-
-        if (consecutiveErrorsRef.current >= 2) {
-          triggerAudienceReaction("thumbsDown");
-        }
       }
 
+      // Make some audience leave after many errors
       if (errorCountRef.current > 5 && Math.random() > 0.7) {
         makeAudienceLeave();
       }
@@ -535,34 +441,17 @@ export default function Pidato() {
 
     const randomIndex =
       availableAudience[Math.floor(Math.random() * availableAudience.length)];
+
     setAudienceLeft((prev) => new Set(prev).add(randomIndex));
   };
 
-  // ============ CONTROLS ============
-  const handleStartPreparation = () => {
-    setSessionState("preparation");
-    setPreparationTimer(PREPARATION_TIME);
-  };
-
-  const handleCancelPreparation = () => {
-    if (preparationIntervalRef.current) {
-      clearInterval(preparationIntervalRef.current);
-      preparationIntervalRef.current = null;
-    }
-    setSessionState("not-started");
-    setPreparationTimer(PREPARATION_TIME);
-  };
-
-  const startSpeaking = () => {
+  const startRecording = () => {
     const recognition = initializeSpeechRecognition();
-    if (!recognition) {
-      setSessionState("not-started");
-      return;
-    }
+    if (!recognition) return;
 
     recognitionRef.current = recognition;
     isRecordingRef.current = true;
-    setSessionState("speaking");
+    setIsRecording(true);
 
     try {
       recognition.start();
@@ -573,24 +462,13 @@ export default function Pidato() {
 
   const stopRecording = () => {
     isRecordingRef.current = false;
+    setIsRecording(false);
 
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
       } catch (e) {}
       recognitionRef.current = null;
-    }
-  };
-
-  const handlePauseResume = () => {
-    if (timeUp) return;
-
-    if (sessionState === "speaking") {
-      setSessionState("paused");
-      stopRecording();
-    } else if (sessionState === "paused") {
-      setSessionState("speaking");
-      startSpeaking();
     }
   };
 
@@ -611,17 +489,14 @@ export default function Pidato() {
   useEffect(() => {
     return () => {
       stopRecording();
-      if (preparationIntervalRef.current) {
-        clearInterval(preparationIntervalRef.current);
-      }
     };
   }, []);
 
   // ============ RENDER ============
   return (
-    <div className="pr-8">
-      <div className="bg-white rounded-xl p-4">
-        <div className="relative bg-[url(/podium/tirai.png)] bg-cover bg-top min-h-screen rounded-xl p-8">
+    <div className="bg-white rounded-xl">
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="relative bg-[url(/podium/tirai.png)] bg-cover bg-top min-h-screen p-8">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <Link
@@ -638,85 +513,68 @@ export default function Pidato() {
           </div>
 
           {/* Speech Title */}
-          {sessionState !== "not-started" && (
-            <div className="bg-white rounded-2xl px-6 py-3 shadow-lg mb-6 max-w-2xl">
-              <p className="text-gray-800 font-bold text-lg">
-                {selectedSpeech.title}
-              </p>
-            </div>
-          )}
+          <div className="bg-white rounded-2xl px-6 py-3 shadow-lg mb-6 max-w-2xl">
+            <p className="text-gray-800 font-bold text-lg">
+              {selectedSpeech.title}
+            </p>
+          </div>
 
-          {/* Main Content Layout */}
-          {sessionState === "speaking" || sessionState === "paused" ? (
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              {/* Speech Text */}
-              <div className="bg-white rounded-3xl p-6 shadow-2xl">
-                <div className="text-gray-700 text-base leading-relaxed max-h-[400px] overflow-y-auto">
-                  {words.map((word, index) => (
-                    <span
-                      key={index}
-                      className={`inline-block mx-1 my-0.5 px-2 py-1 rounded-lg transition-all font-medium ${
-                        index === currentHighlightIndex
-                          ? "bg-green-500 text-white scale-110 shadow-lg animate-pulse"
-                          : completedWordIndices.has(index)
-                          ? spokenWords.find((w) => w.index === index)
-                              ?.isCorrect
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                          : index === expectedWordIndexRef.current
-                          ? "bg-blue-100 text-blue-700 ring-2 ring-blue-400"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Progress */}
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-gray-700">
-                      Progress
-                    </span>
-                    <span className="text-sm font-bold text-green-600">
-                      {completedWordIndices.size} / {words.length} kata
-                    </span>
-                  </div>
-                  <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-300"
-                      style={{
-                        width: `${
-                          (completedWordIndices.size / words.length) * 100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Warning Message */}
-                {warningMessage && (
-                  <div className="mt-4 bg-red-50 border-2 border-red-300 rounded-xl p-4 animate-pulse">
-                    <div className="flex items-center gap-2 text-red-700 font-bold">
-                      <AlertTriangle className="w-5 h-5" />
-                      <p>{warningMessage}</p>
-                    </div>
-                  </div>
-                )}
+          <div className="flex items-center justify-between">
+            {/* Speech Text */}
+            <div className="bg-white rounded-3xl p-6 shadow-2xl mb-8 max-w-4xl">
+              <div className="text-gray-700 text-lg leading-relaxed">
+                {words.map((word, index) => (
+                  <span
+                    key={index}
+                    className={`inline-block mx-1 my-0.5 px-2 py-1 rounded-lg transition-all font-medium ${
+                      index === currentHighlightIndex
+                        ? "bg-green-500 text-white scale-110 shadow-lg"
+                        : completedWordIndices.has(index)
+                        ? spokenWords.find((w) => w.index === index)?.isCorrect
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {word}
+                  </span>
+                ))}
               </div>
 
-              {/* Camera */}
+              {/* Progress */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-bold text-gray-700">
+                    Progress
+                  </span>
+                  <span className="text-sm font-bold text-green-600">
+                    {completedWordIndices.size} / {words.length} kata
+                  </span>
+                </div>
+                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-300"
+                    style={{
+                      width: `${
+                        (completedWordIndices.size / words.length) * 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Camera */}
+            <div className="flex justify-center mb-8">
               <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl ring-4 ring-orange-300">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  muted
-                  className="w-full h-[400px] object-cover"
+                  className="w-[480px] h-[360px] object-cover"
                   style={{ transform: "scaleX(-1)" }}
                 />
-                {sessionState === "speaking" && (
+                {isRecording && (
                   <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 animate-pulse">
                     <div className="w-3 h-3 bg-white rounded-full animate-ping" />
                     RECORDING
@@ -730,55 +588,37 @@ export default function Pidato() {
                 )}
               </div>
             </div>
-          ) : (
-            /* Camera only for not-started state */
-            sessionState === "not-started" && (
-              <div className="flex justify-center mb-8">
-                <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl ring-4 ring-orange-300">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-[600px] h-[450px] object-cover"
-                    style={{ transform: "scaleX(-1)" }}
-                  />
-                </div>
-              </div>
-            )
-          )}
+          </div>
 
           {/* Audience */}
-          {(sessionState === "speaking" || sessionState === "paused") && (
-            <div className="mb-8">
-              <div className="grid grid-cols-10 gap-2 max-w-5xl mx-auto">
-                {Array.from({ length: AUDIENCE_COUNT }).map((_, i) => (
-                  <AudiencePerson
-                    key={i}
-                    index={i}
-                    reaction={audienceReactions.get(i) || null}
-                    hasLeft={audienceLeft.has(i)}
-                  />
-                ))}
-              </div>
+          <div className="mb-8">
+            <div className="grid grid-cols-10 gap-2 max-w-5xl mx-auto">
+              {Array.from({ length: AUDIENCE_COUNT }).map((_, i) => (
+                <AudiencePerson
+                  key={i}
+                  index={i}
+                  reaction={audienceReactions.get(i) || null}
+                  hasLeft={audienceLeft.has(i)}
+                />
+              ))}
             </div>
-          )}
+          </div>
 
           {/* Controls */}
           <div className="bg-white rounded-3xl shadow-xl p-6">
             <div className="flex items-center justify-center gap-4">
-              {sessionState === "not-started" ? (
+              {!isRecording ? (
                 <button
-                  onClick={handleStartPreparation}
+                  onClick={startRecording}
                   className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl font-bold flex items-center gap-2 shadow-xl transition-all transform hover:scale-105"
                 >
                   <Mic className="w-5 h-5" />
                   Mulai Pidato
                 </button>
-              ) : sessionState === "speaking" || sessionState === "paused" ? (
+              ) : (
                 <>
                   <button
-                    onClick={handlePauseResume}
+                    onClick={() => !timeUp && setIsPaused(!isPaused)}
                     disabled={timeUp}
                     className={`px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl transition-all transform hover:scale-105 ${
                       timeUp
@@ -786,12 +626,12 @@ export default function Pidato() {
                         : "bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white"
                     }`}
                   >
-                    {sessionState === "paused" ? (
+                    {isPaused ? (
                       <Play className="w-5 h-5" />
                     ) : (
                       <Pause className="w-5 h-5" />
                     )}
-                    {sessionState === "paused" ? "Resume" : "Pause"}
+                    {isPaused ? "Resume" : "Pause"}
                   </button>
 
                   <div className="bg-gradient-to-br from-orange-50 to-pink-50 border-4 border-orange-300 px-8 py-4 rounded-2xl shadow-xl">
@@ -804,7 +644,7 @@ export default function Pidato() {
                     <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full transition-all"
-                        style={{ width: `${(time / SESSION_TIME) * 100}%` }}
+                        style={{ width: `${(time / 60) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -817,12 +657,12 @@ export default function Pidato() {
                     Selesai
                   </button>
                 </>
-              ) : null}
+              )}
             </div>
 
             {/* Stats */}
-            {(sessionState === "speaking" || sessionState === "paused") && (
-              <div className="mt-6 grid grid-cols-4 gap-4">
+            {isRecording && (
+              <div className="mt-6 grid grid-cols-3 gap-4">
                 <div className="bg-green-50 rounded-xl p-4 text-center">
                   <p className="text-sm text-gray-600 mb-1">Kata Benar</p>
                   <p className="text-2xl font-black text-green-600">
@@ -833,12 +673,6 @@ export default function Pidato() {
                   <p className="text-sm text-gray-600 mb-1">Kesalahan</p>
                   <p className="text-2xl font-black text-red-600">
                     {errorCount}
-                  </p>
-                </div>
-                <div className="bg-yellow-50 rounded-xl p-4 text-center">
-                  <p className="text-sm text-gray-600 mb-1">Skip Kata</p>
-                  <p className="text-2xl font-black text-yellow-600">
-                    {skipCount}
                   </p>
                 </div>
                 <div className="bg-orange-50 rounded-xl p-4 text-center">
@@ -852,110 +686,6 @@ export default function Pidato() {
           </div>
         </div>
       </div>
-
-      {/* PREPARATION MODAL - SMALLER SIZE */}
-      {mounted &&
-        sessionState === "preparation" &&
-        createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-            <div className="relative w-full max-w-2xl">
-              <div className="bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-3xl shadow-2xl p-8 animate-fadeIn">
-                <div className="text-center">
-                  {/* Countdown Circle - Smaller */}
-                  <div className="relative w-40 h-40 mx-auto mb-6">
-                    <svg className="w-40 h-40 transform -rotate-90">
-                      <circle
-                        cx="80"
-                        cy="80"
-                        r="70"
-                        stroke="rgba(255,255,255,0.2)"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      <circle
-                        cx="80"
-                        cy="80"
-                        r="70"
-                        stroke="white"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 70}`}
-                        strokeDashoffset={`${
-                          2 *
-                          Math.PI *
-                          70 *
-                          (1 - preparationTimer / PREPARATION_TIME)
-                        }`}
-                        className="transition-all duration-1000 ease-linear"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-6xl font-black text-white mb-1 animate-pulse">
-                          {preparationTimer}
-                        </div>
-                        <div className="text-lg text-white/90 font-bold">
-                          detik
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Topic Card - Smaller */}
-                  <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 mb-6">
-                    <p className="text-xs text-gray-600 mb-1 font-semibold">
-                      Topik Pidato Anda:
-                    </p>
-                    <h3 className="text-xl font-black text-gray-900 mb-3">
-                      {selectedSpeech.title}
-                    </h3>
-                    <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl p-3">
-                      <p className="text-gray-700 text-xs leading-relaxed">
-                        {selectedSpeech.content.substring(0, 100)}...
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Relaxation Card - Smaller */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border-2 border-white/30">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="bg-white/20 p-4 rounded-2xl">
-                        <StepIcon className="w-10 h-10 text-white" />
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-black text-white mb-2">
-                      {currentStep.text}
-                    </h3>
-                    <p className="text-base text-white/90">
-                      {currentStep.subtext}
-                    </p>
-                  </div>
-
-                  {/* Bottom Info */}
-                  <div className="mt-6 space-y-2">
-                    <p className="text-white/90 text-sm font-semibold">
-                      💡 Bersiaplah untuk pidato
-                    </p>
-                    <p className="text-white/70 text-xs">
-                      Pidato akan dimulai otomatis
-                    </p>
-                  </div>
-
-                  {/* Cancel Button */}
-                  <button
-                    onClick={handleCancelPreparation}
-                    className="mt-6 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-sm transition-all border-2 border-white/30"
-                  >
-                    Batalkan
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
 
       {/* TIME UP MODAL */}
       {mounted &&
@@ -976,11 +706,17 @@ export default function Pidato() {
               </p>
 
               <div className="bg-blue-50 rounded-2xl p-4 mb-8">
-                <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-sm text-gray-600">Kata Benar</p>
                     <p className="text-2xl font-black text-green-600">
                       {completedWordIndices.size}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Kesalahan</p>
+                    <p className="text-2xl font-black text-red-600">
+                      {errorCount}
                     </p>
                   </div>
                   <div>

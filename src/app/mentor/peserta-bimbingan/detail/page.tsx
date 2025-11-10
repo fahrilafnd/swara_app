@@ -492,11 +492,6 @@ export default function DetailMentoring() {
               </p>
               <p className="text-4xl font-bold">2 Jam 15 Menit</p>
             </div>
-
-            {/* Share Button */}
-            <button className="w-full mt-6 bg-orange-700 hover:bg-orange-800 text-white py-3 rounded-xl font-bold transition-colors">
-              Bagikan Link ke Mentee
-            </button>
           </div>
         </div>
       </div>
