@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-export default function Sidebar({
+export default function AdminSidebar({
   isCollapsed,
   setIsCollapsed,
 }: {
@@ -17,12 +17,50 @@ export default function Sidebar({
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
       }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [setIsCollapsed]);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (window.innerWidth < 1024 && !isCollapsed) {
+        if (!target.closest('.sidebar') && !target.closest('.mobile-menu-button')) {
+          setIsCollapsed(true);
+        }
+      }
+    };
+
+    if (window.innerWidth < 1024 && !isCollapsed) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = '';
+    };
+  }, [isCollapsed, setIsCollapsed]);
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (window.innerWidth < 1024 && !isCollapsed) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isCollapsed]);
 
   const menuItems = [
     {
@@ -79,7 +117,7 @@ export default function Sidebar({
       ),
     },
     {
-      title: "Jadwal Mentoring  ",
+      title: "Jadwal Mentoring",
       href: "/mentor/jadwal-mentoring",
       icon: (
         <svg
@@ -145,83 +183,105 @@ export default function Sidebar({
   ];
 
   return (
-    <aside
-      className={`sidebar fixed left-0 z-40 md:z-0 top-0 flex h-screen flex-col overflow-y-hidden md:px-5 py-5 lg:static lg:translate-x-0 text-black transition-all duration-300 ${
-        isCollapsed ? "w-[92px] px-2" : "w-[285px] xl:w-[330px]"
-      }`}
-    >
-      <div className="h-full w-max md:w-full rounded-3xl border border-gray-200 bg-white flex flex-col">
+    <>
+      {/* Mobile Overlay */}
+      {!isCollapsed && (
         <div
-          className={`pt-8 pb-7 flex justify-between items-center ${
-            isCollapsed ? "w-full px-3" : "px-3 lg:px-6"
-          }`}
-        >
-          {!isCollapsed && (
-            <Link href="/mentor">
-              <img src="/logo.svg" alt="logo" className="w-32" />
-            </Link>
-          )}
-          <img
-            src="/toggle-sidebar.svg"
-            alt="toggle-sidebar"
-            className="w-8 cursor-pointer toggle-sidebar object-cover"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          />
-        </div>
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9998] lg:hidden"
+          onClick={() => setIsCollapsed(true)}
+        />
+      )}
 
-        <div className="flex flex-col duration-300 ease-linear overflow-y-auto">
-          <nav>
-            <ul
-              className={`flex flex-col ${
-                isCollapsed ? "items-center" : "px-6"
-              }`}
+      <aside
+        className={`sidebar fixed left-0 top-0 z-[9999] flex h-screen flex-col overflow-y-auto py-3 sm:py-5 lg:static lg:translate-x-0 lg:z-auto text-black transition-all duration-300 ${
+          isCollapsed
+            ? "-translate-x-full lg:translate-x-0 lg:w-[92px] px-2"
+            : "translate-x-0 w-[280px] sm:w-[285px] xl:w-[330px] px-3 sm:px-5"
+        }`}
+      >
+        <div className="h-full w-full rounded-3xl border border-gray-200 bg-white flex flex-col">
+          <div
+            className={`pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 lg:pb-7 flex justify-between items-center ${
+              isCollapsed ? "w-full px-2" : "px-3 sm:px-4 lg:px-6"
+            }`}
+          >
+            {!isCollapsed && (
+              <Link href="/mentor">
+                <img src="/logo.svg" alt="logo" className="w-24 sm:w-28 lg:w-32" />
+              </Link>
+            )}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-8 h-8 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label="Toggle sidebar"
             >
-              {menuItems.map((item) => {
-                const isActive =
-                  item.href === "/mentor"
-                    ? pathname === "/mentor"
-                    : pathname === item.href ||
-                      pathname.startsWith(`${item.href}/`);
-                return (
-                  <li
-                    key={item.title}
-                    className="rounded-xl py-3 font-lexend relative w-full"
-                  >
-                    <div
-                      className={`absolute -left-[25px] top-0 w-[6px] rounded-full h-full ${
-                        isActive ? "bg-[#F07122]" : "hidden"
-                      }`}
-                    ></div>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center transition-colors ${
-                        isCollapsed ? "justify-center" : ""
-                      } ${isActive ? "text-[#F07122]" : "text-[#B3C8CF]"}`}
+              <img
+                src="/toggle-sidebar.svg"
+                alt="toggle-sidebar"
+                className="w-8 object-cover"
+              />
+            </button>
+          </div>
+
+          <div className="flex flex-col duration-300 ease-linear overflow-y-auto flex-1">
+            <nav>
+              <ul
+                className={`flex flex-col ${
+                  isCollapsed ? "items-center px-2" : "px-3 sm:px-4 lg:px-6"
+                }`}
+              >
+                {menuItems.map((item) => {
+                  const isActive =
+                    item.href === "/mentor"
+                      ? pathname === "/mentor"
+                      : pathname === item.href ||
+                        pathname.startsWith(`${item.href}/`);
+                  return (
+                    <li
+                      key={item.title}
+                      className="rounded-xl py-2 sm:py-3 font-lexend relative w-full"
                     >
-                      <span
-                        className={`w-6 h-6 ${
-                          isActive ? "text-[#F07122]" : "text-[#B3C8CF]"
+                      <div
+                        className={`absolute -left-[20px] sm:-left-[25px] top-0 w-[4px] sm:w-[6px] rounded-full h-full ${
+                          isActive ? "bg-[#F07122]" : "hidden"
                         }`}
+                      ></div>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center transition-colors ${
+                          isCollapsed ? "justify-center" : ""
+                        } ${isActive ? "text-[#F07122]" : "text-[#B3C8CF]"}`}
+                        onClick={() => {
+                          if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                            setIsCollapsed(true);
+                          }
+                        }}
                       >
-                        {item.icon}
-                      </span>
-                      {!isCollapsed && (
                         <span
-                          className={`ml-4 ${
+                          className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${
                             isActive ? "text-[#F07122]" : "text-[#B3C8CF]"
                           }`}
                         >
-                          {item.title}
+                          {item.icon}
                         </span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+                        {!isCollapsed && (
+                          <span
+                            className={`ml-3 sm:ml-4 truncate text-sm sm:text-base ${
+                              isActive ? "text-[#F07122]" : "text-[#B3C8CF]"
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

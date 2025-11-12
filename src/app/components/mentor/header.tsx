@@ -1,11 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
-type HeaderProps = {
-  scrollContainerId?: string;
-};
 
 type Notif = {
   id: string;
@@ -15,8 +12,12 @@ type Notif = {
   read: boolean;
 };
 
-export default function MentorHeader({ scrollContainerId }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
+export default function MentorHeader({
+  setIsCollapsed,
+}: {
+  setIsCollapsed: (v: boolean) => void;
+}) {
+  const pathname = usePathname();
   const [openNotif, setOpenNotif] = useState(false);
   const [notifs, setNotifs] = useState<Notif[]>([
     {
@@ -45,24 +46,6 @@ export default function MentorHeader({ scrollContainerId }: HeaderProps) {
   const unreadCount = notifs.filter((n) => !n.read).length;
   const notifRef = useRef<HTMLDivElement>(null);
   const bellBtnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const el = scrollContainerId
-      ? (document.getElementById(scrollContainerId) as HTMLElement | null)
-      : window;
-    const getScrollTop = () =>
-      scrollContainerId
-        ? document.getElementById(scrollContainerId)?.scrollTop ?? 0
-        : window.scrollY;
-    const onScroll = () => setIsScrolled(getScrollTop() > 10);
-    if (el instanceof Window) {
-      el.addEventListener("scroll", onScroll, { passive: true });
-      return () => el.removeEventListener("scroll", onScroll);
-    } else if (el instanceof HTMLElement) {
-      el.addEventListener("scroll", onScroll, { passive: true });
-      return () => el.removeEventListener("scroll", onScroll);
-    }
-  }, [scrollContainerId]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -98,15 +81,34 @@ export default function MentorHeader({ scrollContainerId }: HeaderProps) {
   const clearAll = () => setNotifs([]);
 
   return (
-    <header
-      className={`sticky top-0 z-40 flex w-full pl-4 sm:pl-8 lg:pl-0 pr-8 py-5 transition-all duration-300 ${
-        isScrolled ? "bg-white/80 backdrop-blur-md shadow-md" : "bg-transparent"
-      }`}
-    >
-      <div className="flex w-full rounded-3xl relative">
-        <div className="flex grow items-center justify-between">
-          <div className="w-full pl-14 sm:gap-4 lg:pl-0 flex items-center">
-            <div className="flex w-[160px] md:w-[300px] relative">
+    <header className="sticky top-0 z-30 flex w-full px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 bg-[#F5F2E9]">
+      <div className="flex w-full rounded-3xl">
+        <div className="flex grow items-center justify-between gap-2 sm:gap-3 md:gap-4">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="lg:hidden mobile-menu-button p-2 rounded-lg bg-white text-black hover:bg-gray-500 transition-colors flex-shrink-0"
+            aria-label="Open menu"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 12H21M3 6H21M3 18H21"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <div className="w-full flex items-center gap-2 sm:gap-3 md:gap-4">
+            <div className="flex w-full sm:w-[200px] md:w-[250px] lg:w-[300px] relative">
               <label
                 htmlFor="search"
                 className="absolute left-4 top-0 bottom-0 m-auto h-max w-max"
@@ -128,23 +130,24 @@ export default function MentorHeader({ scrollContainerId }: HeaderProps) {
                 type="text"
                 name="search"
                 id="search"
-                className="w-full font-lexend text-[#F07122] bg-white py-4 rounded-2xl pl-14 pr-4 focus:outline-2 focus:outline-[#F07122]"
+                className="w-full font-lexend text-[#F07122] bg-white py-2 sm:py-3 md:py-4 rounded-xl sm:rounded-2xl pl-10 sm:pl-12 md:pl-14 pr-3 sm:pr-4 text-sm sm:text-base focus:outline-2 focus:outline focus:outline-[#F07122]"
                 placeholder="Search"
               />
             </div>
           </div>
 
-          <div className="gap-4 px-0 flex items-center relative">
-            <div className="relative">
+          <div className="gap-2 sm:gap-3 md:gap-4 px-0 flex items-center flex-shrink-0">
+            <div className="relative hidden sm:block">
               <button
                 ref={bellBtnRef}
                 aria-label="Notifikasi"
                 onClick={toggleNotif}
-                className="relative rounded-full p-2 hover:bg-gray-100"
+                className="relative rounded-full p-2 hover:bg-gray-100 cursor-pointer"
               >
                 <svg
-                  width="25"
-                  height="26"
+                  width="22"
+                  height="23"
+                  className="sm:w-[25px] sm:h-[26px]"
                   viewBox="0 0 25 26"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -234,11 +237,11 @@ export default function MentorHeader({ scrollContainerId }: HeaderProps) {
               )}
             </div>
 
-            <Link href="/mentor/profil" className="cursor-pointer">
+            <Link href="/mentor/profil">
               <img
                 src="https://i.pinimg.com/736x/5b/03/a2/5b03a2f8bd8d357c97754d572a3b816b.jpg"
-                className="w-[48px] h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer ml-2"
-                alt="profile"
+                className="w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] md:w-[48px] md:h-[48px] rounded-full border-2 border-[#F07122] cursor-pointer hover:opacity-80 transition-opacity"
+                alt="pp"
               />
             </Link>
           </div>
