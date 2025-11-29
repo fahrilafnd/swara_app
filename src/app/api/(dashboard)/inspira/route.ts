@@ -9,7 +9,7 @@ const API_BASE =
 
 export async function GET(req: NextRequest) {
   // ambil token user dari cookie hasil login
-  const token = cookies().get("swara_token")?.value;
+  const token = (await cookies()).get("swara_token")?.value;
   if (!token) {
     return NextResponse.json(
       { success: false, message: "Unauthenticated: token tidak ada." },

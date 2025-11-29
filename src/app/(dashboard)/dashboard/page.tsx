@@ -35,6 +35,8 @@ export default function Dashboard() {
   const [micBalance, setMicBalance] = useState(6);
   const [dailyStreak, setDailyStreak] = useState(3);
   const [completedMissions, setCompletedMissions] = useState<number[]>([]);
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -48,6 +50,100 @@ export default function Dashboard() {
         setUserName(name || "Pengguna");
       })
       .catch(() => setUserName("Pengguna"));
+  }, []);
+
+  // ✅ Fetch riwayat latihan dari API
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        setLoadingHistory(true);
+        const token = localStorage.getItem("accessToken");
+        // Try to derive user_id for more specific backend filtering
+        let userId: number | null = null;
+        try {
+          const uStr = localStorage.getItem("user");
+          if (uStr) {
+            const u = JSON.parse(uStr);
+            if (u?.user_id) userId = u.user_id;
+          }
+        } catch {}
+        const baseUrl = "https://swara-backend.onrender.com/api/swara/users/riwayat-latihan";
+        const url = userId ? `${baseUrl}?user_id=${userId}` : baseUrl;
+        
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch history");
+        }
+
+        const data = await response.json();
+        console.log("📜 [Riwayat] Raw response:", data);
+        
+        if (data.success && data.data) {
+          // Ambil 3 data terakhir untuk ditampilkan di dashboard
+          const recentHistory = (Array.isArray(data.data) ? data.data : [])
+            .slice(0, 3)
+            .map((item: any) => ({
+              id: item.skor_swara_id,
+              title: "Skor Swara",
+              date: new Date(item.created_at).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              }),
+              description: item.status === "complete" 
+                ? `Kamu mendapatkan hasil yang ${item.point_earned >= 70 ? "bagus" : "cukup bagus"}`
+                : "Latihan belum selesai",
+              points: item.point_earned || 0,
+            }));
+          
+          if (recentHistory.length > 0) {
+            setHistoryItems(recentHistory);
+          } else {
+            // Fallback: gunakan lastResult dari sessionStorage jika ada
+            const lastResultStr = sessionStorage.getItem("skor-swara:lastResult");
+            if (lastResultStr) {
+              try {
+                const last = JSON.parse(lastResultStr);
+                setHistoryItems([
+                  {
+                    id: last.skor_swara_id || "local",
+                    title: "Skor Swara (Terbaru)",
+                    date: new Date(last.created_at).toLocaleDateString("id-ID", {
+                      day: "numeric", month: "long", year: "numeric"
+                    }),
+                    description: last.status === "complete" ? `Skor terakhir: ${last.point_earned}` : "Sesi belum lengkap",
+                    points: last.point_earned || 0,
+                  },
+                ]);
+                console.log("🟠 Fallback applied with lastResult");
+              } catch {}
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error fetching history:", error);
+        // Gunakan data dummy jika gagal
+        setHistoryItems([
+          {
+            id: 1,
+            title: "Skor Swara",
+            date: "12 Agustus 2025",
+            description: "Kamu mendapatkan hasil yang cukup bagus",
+            points: 100,
+          },
+        ]);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    fetchHistory();
   }, []);
 
   const handleCloseModal = () => {
@@ -82,30 +178,6 @@ export default function Dashboard() {
     xp: 200,
     maxXp: 500,
   };
-
-  const historyItems = [
-    {
-      id: 1,
-      title: "Skor Swara",
-      date: "12 Agustus 2025",
-      description: "Kamu mendapatkan hasil yang cukup bagus",
-      points: 100,
-    },
-    {
-      id: 2,
-      title: "Adu Swara",
-      date: "5 Agustus 2025",
-      description: "Menang melawan lawan dengan skor tinggi",
-      points: 500,
-    },
-    {
-      id: 3,
-      title: "Podium Swara",
-      date: "2 Agustus 2025",
-      description: "Simulasi pidato berhasil diselesaikan",
-      points: 100,
-    },
-  ];
 
   const tips = [
     "Pastikan pencahayaan ruangan cukup terang agar kamera dapat menangkap ekspresi wajah dengan baik",
@@ -331,7 +403,10 @@ export default function Dashboard() {
               xp={levelData.xp}
               maxXp={levelData.maxXp}
             />
-            <HistorySection historyItems={historyItems} />
+            <HistorySection 
+              historyItems={historyItems} 
+              loading={loadingHistory}
+            />
           </div>
         </div>
       </main>

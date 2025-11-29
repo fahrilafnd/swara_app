@@ -10,15 +10,18 @@ export interface LevelConfig {
 export type TrainingMode = "full-text" | "topic-image" | "custom-topic";
 
 export interface TrainingTopic {
-  id: string;
-  title: string;
-  category: string;
-  difficulty: "easy" | "medium" | "hard";
+  skor_swara_topic_id?: number; // ✅ Match database column name
+  id?: string; // Local identifier for topics
+  topic: string; // ✅ Match database column name (bukan 'title')
+  title?: string; // Display title
   text?: string;
-  image?: string;
-  topic?: string; // Changed from keywords array to single topic string
+  level?: number;
+  category?: string;
+  difficulty?: string;
   minWords?: number;
   maxWords?: number;
+  image?: string;
+  keywords?: string[];
 }
 
 export const LEVELS: LevelConfig[] = [
@@ -60,7 +63,6 @@ export const LEVELS: LevelConfig[] = [
 ];
 
 export const TRAINING_TOPICS: TrainingTopic[] = [
-  // MODE 1: Full Text
   {
     id: "career-digital",
     title: "Merancang Masa Depan: Membangun Karier di Era Digital",
@@ -69,6 +71,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
     text: `Keterampilan komunikasi yang kuat dan kemampuan beradaptasi adalah dua hal yang saya anggap sangat penting di dunia kerja. Dengan komunikasi yang efektif, saya dapat menyampaikan ide dengan jelas dan berkolaborasi dengan tim.
 
 Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas juga menjadi harga mahal yang memang sangat berguna di era Industri 5.0 di mana banyak persaingan dalam berbagai bidang.`,
+    topic: ""
   },
   {
     id: "public-speaking",
@@ -78,6 +81,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     text: `Berbicara di depan umum adalah keterampilan yang dapat dipelajari oleh siapa saja. Kunci utamanya adalah persiapan yang matang dan latihan yang konsisten.
 
 Mulailah dengan topik yang Anda kuasai, lalu perlahan tingkatkan kompleksitas materi. Jangan takut membuat kesalahan, karena setiap kesalahan adalah pembelajaran berharga untuk tampil lebih baik di masa depan.`,
+    topic: ""
   },
   {
     id: "leadership",
@@ -87,6 +91,7 @@ Mulailah dengan topik yang Anda kuasai, lalu perlahan tingkatkan kompleksitas ma
     text: `Kepemimpinan yang efektif tidak hanya tentang memberikan instruksi, tetapi tentang menginspirasi dan memberdayakan tim. Seorang pemimpin yang baik mendengarkan anggota timnya, memahami kekuatan masing-masing individu, dan menciptakan lingkungan di mana setiap orang dapat berkontribusi maksimal.
 
 Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan berbasis data, dan mengomunikasikan visi dengan jelas kepada seluruh tim.`,
+    topic: ""
   },
 
   // MODE 2: Topic + Image
@@ -95,7 +100,7 @@ Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan
     title: "Perubahan Iklim dan Tanggung Jawab Kita",
     category: "Lingkungan",
     difficulty: "medium",
-    image: "/images/topics/climate.jpg",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg", // Updated to use URL
     topic: "Perubahan Iklim Global",
     minWords: 100,
     maxWords: 300,
@@ -105,7 +110,7 @@ Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan
     title: "Teknologi dan Masa Depan Pekerjaan",
     category: "Teknologi",
     difficulty: "hard",
-    image: "/images/topics/tech-future.jpg",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg", // Updated to use URL
     topic: "Artificial Intelligence dan Otomasi",
     minWords: 150,
     maxWords: 350,
@@ -115,10 +120,54 @@ Dalam menghadapi tantangan, pemimpin harus mampu tetap tenang, membuat keputusan
     title: "Pendidikan di Era Digital",
     category: "Pendidikan",
     difficulty: "easy",
-    image: "/images/topics/education.jpg",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg", // Updated to use URL
     topic: "Pembelajaran Online",
     minWords: 80,
     maxWords: 250,
+  },
+  {
+    id: "environment-universe",
+    title: "Alam Semesta",
+    category: "Lingkungan",
+    difficulty: "easy",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg",
+    keywords: ["lingkungan", "alam", "kebersihan", "sekitar", "kepedulian"],
+    minWords: 100,
+    maxWords: 300,
+    topic: ""
+  },
+  {
+    id: "current-concerns",
+    title: "Keresahan Warga Jaman Sekarang",
+    category: "Lingkungan",
+    difficulty: "medium",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg",
+    keywords: ["banjir", "kebakaran", "hujan"],
+    minWords: 100,
+    maxWords: 300,
+    topic: ""
+  },
+  {
+    id: "environment-cleanliness",
+    title: "Kebersihan Lingkungan",
+    category: "Lingkungan",
+    difficulty: "hard",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg",
+    keywords: ["tenang", "ekspresi wajah", "intonasi yang tepat", "kontrol napas", "gerakan tubuh yang tenang", "kejelasan penyampaian", "konsistensi nada suara", "kesabaran", "rileksasi mental", "teknik meditasi"],
+    minWords: 100,
+    maxWords: 300,
+    topic: ""
+  },
+  {
+    id: "sustainable-practices",
+    title: "Praktik Berkelanjutan",
+    category: "Lingkungan",
+    difficulty: "medium",
+    image: "https://res.cloudinary.com/dluvt9ppm/image/upload/v1763314273/swara-image-topics/bdwoos99wnpj7havvrpg.jpg",
+    keywords: ["daur ulang", "konservasi", "energi terbarukan", "pertanian berkelanjutan"],
+    minWords: 100,
+    maxWords: 300,
+    topic: ""
   },
 ];
 

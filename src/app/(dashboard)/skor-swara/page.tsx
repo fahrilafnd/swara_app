@@ -5,28 +5,14 @@ import { useRouter } from "next/navigation";
 import HeroSection from "@/app/components/skor-swara/HeroSection";
 import ScoreCards from "@/app/components/skor-swara/ScoreCards";
 import TipsSection from "@/app/components/skor-swara/TipsSection";
-import HistorySection from "@/app/components/skor-swara/HistorySection";
 import SkorSwaraIntroModal from "@/app/components/skor-swara/SkorSwaraIntroModal";
 import { getUserLevel, getLevelInfo } from "./config/levels";
-
-interface ScoreCard {
-  title: string;
-  icon: string;
-  description: string;
-}
-
-interface HistoryItem {
-  id: number;
-  title: string;
-  date: string;
-  score: string;
-  status: string;
-}
 
 export default function SkorSwaraPage() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [userLevel, setUserLevel] = useState(3);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     const hidden =
@@ -38,9 +24,14 @@ export default function SkorSwaraPage() {
     setUserLevel(getUserLevel());
   }, []);
 
+  const handleStartTraining = () => {
+    // Hanya redirect, TIDAK ada hit API
+    router.push("/skor-swara/pilih-mode");
+  };
+
   const levelInfo = getLevelInfo(userLevel);
 
-  const scoreCards: ScoreCard[] = [
+  const scoreCards = [
     {
       title: "Tempo",
       icon: "⏱️",
@@ -70,42 +61,13 @@ export default function SkorSwaraPage() {
     },
   ];
 
-  const tips: string[] = [
+  const tips = [
     "Pastikan pencahayaan ruangan cukup terang agar kamera dapat menangkap ekspresi wajah dengan baik",
     "Posisikan kamera sejajar dengan mata Anda untuk simulasi kontak mata yang optimal",
     "Berlatih di ruangan yang tenang untuk hasil analisis suara yang lebih akurat",
     "Gunakan mikrofon eksternal jika memungkinkan untuk kualitas rekaman yang lebih baik",
     "Berlatih secara rutin untuk melihat peningkatan skor dari waktu ke waktu",
   ];
-
-  const historyItems: HistoryItem[] = [
-    {
-      id: 1,
-      title: "Presentasi Bisnis",
-      date: "28 Agustus 2025",
-      score: "70/100",
-      status: "Cukup baik",
-    },
-    {
-      id: 2,
-      title: "Presentasi Bisnis",
-      date: "10 Agustus 2025",
-      score: "85/100",
-      status: "Baik",
-    },
-    {
-      id: 3,
-      title: "Presentasi Bisnis",
-      date: "28 Agustus 2025",
-      score: "70/100",
-      status: "Cukup baik",
-    },
-  ];
-
-  // PENTING: Ubah routing ke pilih-mode, bukan langsung ke sesi-latihan
-  const handleStartTraining = () => {
-    router.push("/skor-swara/pilih-mode");
-  };
 
   return (
     <div className="space-y-8">
@@ -119,21 +81,13 @@ export default function SkorSwaraPage() {
 
       <div className="min-h-screen mb-10 bg-white rounded-3xl p-3 md:p-6 lg:p-8">
         <div className="w-full">
-          {/* Level Badge */}
-          {/* <div className="mb-6 flex justify-end">
-            <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-md">
-              <span className="text-2xl">{levelInfo?.badge}</span>
-              <div>
-                <p className="text-xs text-gray-600 font-medium">Your Level</p>
-                <p className="text-sm font-black text-gray-900">
-                  Level {userLevel}: {levelInfo?.title}
-                </p>
-              </div>
-            </div>
-          </div> */}
-
-          <HeroSection onStartTraining={handleStartTraining} />
+          <HeroSection 
+            onStartTraining={handleStartTraining}
+            isLoading={isStarting}
+          />
+          
           <ScoreCards scoreCards={scoreCards} />
+          
           <TipsSection tips={tips} />
 
           {/* Mode Preview Section */}

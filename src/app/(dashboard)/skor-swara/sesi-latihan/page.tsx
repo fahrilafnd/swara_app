@@ -12,6 +12,7 @@ import {
   Wind,
   Heart,
   Smile,
+  Tag,
 } from "lucide-react";
 import SkorSwaraHeader from "@/app/components/skor-swara/SkorSwaraHeader";
 import type { TrainingTopic } from "../config/levels";
@@ -58,11 +59,10 @@ interface SpeechRecognition extends EventTarget {
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
   }
 }
 
-// Instruksi relaksasi yang akan muncul bergantian
+// Instruksi relaksasi
 const RELAXATION_STEPS = [
   {
     icon: Wind,
@@ -81,112 +81,218 @@ const RELAXATION_STEPS = [
   },
 ];
 
+type TrainingMode = "full-text" | "topic-image" | "custom-topic";
+
+// ✅ Extended interface untuk topic-image
+interface ExtendedTrainingTopic extends TrainingTopic {
+  // Mode topic-image
+  image_url?: string;
+  image_topic?: string;
+  image_keyword?: string;
+  skor_swara_image_id?: number;
+  image_id?: number;
+  
+  // Mode full-text
+  text?: string;
+  
+  // Mode custom
+  customDescription?: string;
+}
+
+function normalizeTrainingMode(raw: unknown): TrainingMode | null {
+  if (!raw) return null;
+  let v = String(raw);
+
+  try {
+    const parsed = JSON.parse(v);
+    if (typeof parsed === "string") v = parsed;
+    else if (typeof parsed?.mode === "string") v = parsed.mode;
+    else if (typeof parsed?.value === "string") v = parsed.value;
+    else if (typeof parsed?.mode_type === "string") v = parsed.mode_type;
+    else if (typeof parsed?.mode_id === "number") {
+      if (parsed.mode_id === 1) return "full-text";
+      if (parsed.mode_id === 2) return "topic-image";
+      if (parsed.mode_id === 3) return "custom-topic";
+    }
+  } catch {
+    // bukan JSON
+  }
+
+  v = v.toLowerCase().replace(/[_\s]+/g, "-");
+
+  if (
+    ["full-text", "teks-lengkap", "text-lengkap", "fulltext", "text", "teks", "script"].includes(
+      v
+    )
+  )
+    return "full-text";
+
+  if (
+    ["topic-image", "topik-gambar", "topic+image", "topik+gambar", "image", "gambar"].includes(v)
+  )
+    return "topic-image";
+
+  if (["custom-topic", "topik-kustom", "kustom", "custom"].includes(v))
+    return "custom-topic";
+
+  return null;
+}
+
 export default function SesiLatihanPage() {
   const router = useRouter();
 
   // ===== CONFIG =====
   const MAX_SECONDS = 60;
-  const PREPARATION_TIME = 15; // 15 detik persiapan
+  const PREPARATION_TIME = 15;
 
-  // ===== TRAINING MODE & TOPIC =====
-  // ===== TRAINING MODE & TOPIC =====
-  const [trainingMode, setTrainingMode] = useState<
-    "full-text" | "topic-image" | "custom-topic"
-  >("full-text");
-
-  const [selectedTopic, setSelectedTopic] = useState<TrainingTopic | null>(
-    null
-  );
-
-  // ===== PREPARATION PHASE =====
+  // ===== STATE =====
+  const [trainingMode, setTrainingMode] = useState<TrainingMode>("full-text");
+  const [selectedTopic, setSelectedTopic] = useState<ExtendedTrainingTopic | null>(null);
   const [isPreparation, setIsPreparation] = useState(false);
   const [preparationTimer, setPreparationTimer] = useState(PREPARATION_TIME);
-  const preparationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // ===== RECORDING =====
   const [isRecording, setIsRecording] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [showTele, setShowTele] = useState(false);
+  const [currentWordIdx, setCurrentWordIdx] = useState(0);
+  const [fontPx, setFontPx] = useState<number>(22);
+  const [bgOpacity, setBgOpacity] = useState<number>(0.6);
+  const [speechReady, setSpeechReady] = useState<boolean>(false);
+  const [fallback, setFallback] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // ===== REFS =====
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const preparationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const endedRef = useRef(false);
-
-  // ===== TELEPROMPTER =====
-  const [showTele, setShowTele] = useState(false);
   const teleContainerRef = useRef<HTMLDivElement>(null);
-  const [currentWordIdx, setCurrentWordIdx] = useState(0);
-
-  // overlay controls
-  const [fontPx, setFontPx] = useState<number>(22);
-  const [bgOpacity, setBgOpacity] = useState<number>(0.6);
-
-  // speech rec
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const [speechReady, setSpeechReady] = useState<boolean>(false);
-  const [fallback, setFallback] = useState(false);
   const fallbackTickerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
 
-  // Load selected topic from sessionStorage
+  // ✅ FIXED: Load data from sessionStorage with better parsing
   useEffect(() => {
-    const mode = sessionStorage.getItem("skor-swara:selectedMode") as
-      | "full-text"
-      | "topic-image"
-      | "custom-topic"
-      | null;
-    const topicStr = sessionStorage.getItem("skor-swara:selectedTopic");
+    console.log("🔍 Loading session data...");
+    
+    // Load mode
+    const modeKeys = [
+      "skor-swara:selectedMode",
+      "skor-swara:mode",
+      "latihan:mode",
+      "selectedMode",
+    ];
 
-    if (mode) setTrainingMode(mode);
+    let normalized: TrainingMode | null = null;
+    for (const k of modeKeys) {
+      const v = sessionStorage.getItem(k);
+      normalized = normalizeTrainingMode(v);
+      if (normalized) {
+        console.log(`✅ Mode found from key "${k}":`, v, "→", normalized);
+        break;
+      }
+    }
+
+    if (normalized) {
+      setTrainingMode(normalized);
+    } else {
+      console.warn("⚠️ No valid mode found, using default: full-text");
+    }
+
+    // ✅ Load topic with proper structure
+    const topicStr =
+      sessionStorage.getItem("skor-swara:selectedTopic") ??
+      sessionStorage.getItem("selectedTopic");
+      
     if (topicStr) {
       try {
         const parsed = JSON.parse(topicStr);
-        setSelectedTopic(parsed);
+        console.log("📦 Raw topic data:", parsed);
+        
+        // ✅ Handle different response structures
+        let topicData: ExtendedTrainingTopic;
+        
+        if (normalized === "topic-image") {
+          // Mode topic-image bisa punya struktur berbeda
+          topicData = {
+            title: parsed.image_topic || parsed.topic || "Topik Pembahasan",
+            topic: parsed.image_topic || parsed.topic,
+            image_url: parsed.image_url,
+            image_topic: parsed.image_topic,
+            image_keyword: parsed.image_keyword,
+            skor_swara_image_id: parsed.skor_swara_image_id || parsed.image_id,
+            image_id: parsed.image_id,
+          };
+          
+          console.log("🖼️ Topic-image data:", topicData);
+        } else if (normalized === "full-text") {
+          // Mode full-text
+          topicData = {
+            title: parsed.topic || parsed.title,
+            topic: parsed.topic,
+            text: parsed.text,
+            skor_swara_topic_id: parsed.skor_swara_topic_id,
+          };
+          
+          console.log("📝 Full-text data:", topicData);
+        } else {
+          // Mode custom-topic
+          topicData = {
+            title: parsed.topic || parsed.title || "Topik Kustom",
+            topic: parsed.topic,
+            customDescription: parsed.customDescription,
+          };
+          
+          console.log("✨ Custom-topic data:", topicData);
+        }
+        
+        setSelectedTopic(topicData);
+        console.log("✅ Topic loaded successfully");
       } catch (e) {
-        console.error("Failed to parse topic:", e);
+        console.error("❌ Failed to parse topic:", e);
       }
+    } else {
+      console.warn("⚠️ No topic found in sessionStorage");
     }
   }, []);
 
   const topik =
     selectedTopic?.title ||
+    selectedTopic?.topic ||
+    selectedTopic?.image_topic ||
     "Merancang Masa Depan: Membangun Karier di Era Digital";
 
   const latihanText = useMemo(() => {
     if (selectedTopic) {
       if (selectedTopic.text) return selectedTopic.text;
-      if ((selectedTopic as any).customDescription)
-        return (selectedTopic as any).customDescription;
+      if (selectedTopic.customDescription) return selectedTopic.customDescription;
     }
     return `Keterampilan komunikasi yang kuat dan kemampuan beradaptasi adalah dua hal yang saya anggap sangat penting di dunia kerja. Dengan komunikasi yang efektif, saya dapat menyampaikan ide dengan jelas dan berkolaborasi dengan tim.
 
-Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas juga menjadi harga mahal yang memang sangat berguna di era Industri 5.0 di mana banyak persaingan dalam berbagai bidang.`;
+Dalam era digital ini, perubahan terjadi sangat cepat, sehingga kemampuan untuk belajar hal baru dan beradaptasi dengan teknologi menjadi kunci kesuksesan.`;
   }, [selectedTopic]);
 
-  // ===== helpers =====
-  const formatTime = (s: number) =>
-    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(
-      2,
-      "0"
-    )}`;
-
-  const normalize = (t: string) =>
-    t
-      .toLowerCase()
-      .replace(/[.,!?;:()"""''\-–—]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
   const teleWords = useMemo(() => {
-    const flat = latihanText.replace(/\n+/g, " \n ");
-    return flat.split(/\s+/).filter(Boolean);
-  }, [latihanText]);
+    if (trainingMode !== "full-text") return [];
+    const words: string[] = [];
+    const lines = latihanText.split("\n");
+    lines.forEach((line: string, lineIdx: number) => {
+      if (lineIdx > 0) words.push("\n");
+      const lineWords = line.trim().split(/\s+/).filter(Boolean);
+      words.push(...lineWords);
+    });
+    return words;
+  }, [latihanText, trainingMode]);
 
-  const teleWordsNormalized = useMemo(
-    () => teleWords.map((w) => (w === "\n" ? "" : normalize(w))),
-    [teleWords]
-  );
+  const teleWordsNormalized = useMemo(() => {
+    return teleWords.map((w) => (w === "\n" ? "" : normalize(w)));
+  }, [teleWords]);
 
-  // Current relaxation step based on timer
+  function normalize(text: string): string {
+    return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+  }
+
   const currentRelaxationStep = useMemo(() => {
     const elapsed = PREPARATION_TIME - preparationTimer;
     if (elapsed < 5) return 0;
@@ -194,7 +300,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     return 2;
   }, [preparationTimer]);
 
-  // ===== camera =====
+  // ===== CAMERA =====
   useEffect(() => {
     (async () => {
       try {
@@ -204,7 +310,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
         });
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (e) {
-        console.error(e);
+        console.error("Camera error:", e);
       }
     })();
     return () => {
@@ -224,26 +330,23 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     setSpeechReady(Boolean(SR));
   }, []);
 
-  // auto-scroll active word
+  // auto-scroll
   useEffect(() => {
     if (trainingMode === "topic-image") return;
-
     const box = teleContainerRef.current;
     if (!box) return;
     const el = box.querySelector<HTMLSpanElement>(
       `[data-word-idx="${currentWordIdx}"]`
     );
     if (!el) return;
-
     const targetTop = el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2;
-
     box.scrollTo({
       top: Math.max(0, targetTop),
       behavior: "smooth",
     });
   }, [currentWordIdx, trainingMode]);
 
-  // ===== PREPARATION PHASE =====
+  // ===== PREPARATION =====
   const startPreparation = () => {
     setIsPreparation(true);
     setPreparationTimer(PREPARATION_TIME);
@@ -273,13 +376,14 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     setPreparationTimer(PREPARATION_TIME);
   };
 
-  // ===== start recording =====
+  // ===== START RECORDING =====
   const startRecording = async () => {
     setIsRecording(true);
     setShowTele(true);
     setTimer(0);
     setCurrentWordIdx(0);
     endedRef.current = false;
+    startTimeRef.current = Date.now();
 
     intervalRef.current = setInterval(() => setTimer((p) => p + 1), 1000);
 
@@ -293,51 +397,19 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
         const mr = new MediaRecorder(stream, opts);
         mediaRecorderRef.current = mr;
         recordedChunksRef.current = [];
+        
         mr.ondataavailable = (e: BlobEvent) => {
           if (e.data?.size) recordedChunksRef.current.push(e.data);
         };
+        
         mr.onstop = async () => {
-          try {
-            const blob = new Blob(recordedChunksRef.current, {
-              type: "video/webm",
-            });
-            const dataUrl = await new Promise<string>((res, rej) => {
-              const r = new FileReader();
-              r.onloadend = () => res((r.result as string) || "");
-              r.onerror = rej;
-              r.readAsDataURL(blob);
-            });
-            const payload = {
-              src: dataUrl,
-              durationSeconds: timer,
-              createdAt: Date.now(),
-              topic: topik,
-              text: latihanText,
-              mimeType: "video/webm",
-              mode: trainingMode,
-            };
-            try {
-              localStorage.setItem(
-                "skor-swara:lastRecording",
-                JSON.stringify(payload)
-              );
-              sessionStorage.setItem(
-                "skor-swara:lastRecording",
-                JSON.stringify(payload)
-              );
-            } catch (e) {
-              console.error("Failed to save recording:", e);
-            }
-            router.push("/skor-swara/hasil-skor");
-          } catch (e) {
-            console.error("Recording processing error:", e);
-            router.push("/skor-swara/hasil-skor");
-          }
+          await handleVideoUpload();
         };
+        
         mr.start();
       }
     } catch (e) {
-      console.error(e);
+      console.error("Recording error:", e);
     }
 
     if (trainingMode === "full-text") {
@@ -349,6 +421,213 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     }
   };
 
+  // ===== VIDEO UPLOAD =====
+  const handleVideoUpload = async () => {
+    if (recordedChunksRef.current.length === 0) {
+      alert("Tidak ada video direkam");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) throw new Error("Token tidak ditemukan. Login dulu.");
+
+      const trainingMode: TrainingMode = sessionStorage.getItem("skor-swara:mode") as TrainingMode || "full-text";
+      const modeIdStr = sessionStorage.getItem("skor-swara:modeId") || "1";
+      const modeId = parseInt(modeIdStr, 10);
+
+      let userId = 19;
+      try {
+        const u = localStorage.getItem("user");
+        if (u) {
+          const parsed = JSON.parse(u);
+          if (parsed?.user_id) userId = parsed.user_id;
+        }
+      } catch {}
+
+      let selectedTopic: any = null;
+      try {
+        const t = sessionStorage.getItem("skor-swara:selectedTopic");
+        if (t) selectedTopic = JSON.parse(t);
+      } catch {}
+
+      const customTopicText = sessionStorage.getItem("skor-swara:customTopic") || "";
+
+      if (trainingMode === "full-text" && !selectedTopic?.skor_swara_topic_id) {
+        throw new Error("ID topik tidak ditemukan untuk mode full-text.");
+      }
+      if (trainingMode === "topic-image" && !selectedTopic?.skor_swara_image_id && !selectedTopic?.image_id) {
+        throw new Error("ID image tidak ditemukan untuk mode topic-image.");
+      }
+      if (trainingMode === "custom-topic" && !customTopicText.trim()) {
+        throw new Error("Topik kustom kosong.");
+      }
+
+      const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+
+      const formData = new FormData();
+      formData.append("video", blob, `session-${Date.now()}.webm`);
+      formData.append("user_id", String(userId));
+      formData.append("mode_id", String(modeId));
+
+      if (trainingMode === "full-text") {
+        formData.append("skor_swara_topic_id", String(selectedTopic.skor_swara_topic_id));
+      } else if (trainingMode === "topic-image") {
+        const imageId = selectedTopic.skor_swara_image_id || selectedTopic.image_id;
+        formData.append("image_id", String(imageId));
+      } else if (trainingMode === "custom-topic") {
+        formData.append("custom_topic", customTopicText.trim());
+        formData.append("custom_keyword", "");
+      }
+
+      console.log("📤 Upload FormData (mode:", trainingMode, ")");
+      for (const [k, v] of formData.entries()) {
+        if (v instanceof Blob) {
+          console.log(`  ${k}: Blob(${v.size} bytes)`);
+        } else {
+          console.log(`  ${k}: ${v}`);
+        }
+      }
+
+      const submitUrl = "https://swara-backend.onrender.com/api/swara/skor-swara/submit";
+      const res = await fetch(submitUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const raw = await res.text();
+      let json: any = {};
+      try { json = JSON.parse(raw); } catch {
+        throw new Error("Response bukan JSON valid");
+      }
+
+      if (!res.ok) {
+        console.error("❌ Upload failed:", json);
+        throw new Error(json.message || json.error || `HTTP ${res.status}`);
+      }
+
+      console.log("📦 Full backend response:", json);
+      console.log("📦 Response keys:", Object.keys(json));
+      if (json.data) console.log("📦 json.data keys:", Object.keys(json.data));
+
+      // ✅ Extract updatedData and suggestions from response
+      const result = json.data?.updatedData || json.data || {};
+      console.log("📦 result keys:", Object.keys(result));
+      const suggestions = json.data?.suggestions || null;
+      
+      console.log("📊 Score data (updatedData):", result);
+      console.log("💡 Suggestions data:", suggestions);
+      
+      // ✅ Adaptasi struktur baru: metrics ada di result.details
+      const details = (result.details && typeof result.details === 'object') ? result.details : result;
+      if (result.details) console.log("📦 details keys:", Object.keys(result.details));
+      
+      // ✅ Get skor_swara_id from response or fallback to sessionStorage
+      let skorSwaraId = result.skor_swara_id || json.data?.skor_swara_id;
+      if (!skorSwaraId) {
+        const existingId = sessionStorage.getItem("skor-swara:sessionId");
+        if (existingId) {
+          skorSwaraId = parseInt(existingId, 10);
+          console.log("⚠️ Using sessionId as fallback:", skorSwaraId);
+        }
+      }
+
+      // ✅ Ambil video_result dari berbagai kemungkinan lokasi
+      let videoResultUrl = result.video_result || json.data?.video_result || details.video_result || 
+                           result.video_url || json.data?.video_url || details.video_url ||
+                           result.cloudUrl || json.data?.cloudUrl || details.cloudUrl ||
+                           result.videoUrl || json.data?.videoUrl || details.videoUrl ||
+                           result.video || json.data?.video || details.video ||
+                           result.url || json.data?.url || details.url || null;
+      
+      console.log("🎬 Video result URL:", videoResultUrl);
+      console.log("🔍 Checking all possible video fields:", {
+        'result.video_result': result.video_result,
+        'json.data.video_result': json.data?.video_result,
+        'details.video_result': details.video_result,
+        'result.video_url': result.video_url,
+        'result.videoUrl': result.videoUrl,
+        'result.url': result.url,
+        'json.data.url': json.data?.url
+      });
+
+      // Ambil meta dari suggestions jika ada
+      let metaFromSuggestions: Record<string, any> = {};
+      if (suggestions && typeof suggestions === 'object') {
+        const metaKeys = ["kesimpulan_umum","prioritas_perbaikan","apresiasi","tips_latihan"] as const;
+        for (const k of metaKeys) {
+          if (suggestions[k] !== undefined) metaFromSuggestions[k] = suggestions[k];
+        }
+      }
+      
+      const resultData = {
+        skor_swara_id: skorSwaraId,
+        point_earned: details.point_earned ?? result.point_earned ?? 0,
+        tempo: details.tempo ?? 0,
+        artikulasi: details.artikulasi ?? 0,
+        kontak_mata: details.kontak_mata ?? 0,
+        kesesuaian_topik: details.kesesuaian_topik ?? 0,
+        struktur: details.struktur ?? 0,
+        jeda: details.jeda ?? 0,
+        first_impression: details.first_impression ?? 0,
+        ekspresi: details.ekspresi ?? 0,
+        gestur: details.gestur ?? 0,
+        kata_pengisi: details.kata_pengisi ?? 0,
+        kata_tidak_senonoh: details.kata_tidak_senonoh ?? 0,
+        video_result: videoResultUrl,
+        status: result.status || "complete",
+        created_at: result.created_at || new Date().toISOString(),
+        mode: trainingMode,
+        topic: result.topic || null,
+        // ✅ Store suggestions from backend
+        suggestions: suggestions,
+        // Simpan meta tambahan
+        ...metaFromSuggestions,
+      };
+
+      console.log("💾 Storing to sessionStorage:", resultData);
+      sessionStorage.setItem("skor-swara:lastResult", JSON.stringify(resultData));
+      
+      // ✅ Update lastRecording dengan URL video dari backend
+      if (videoResultUrl) {
+        const metaStr = sessionStorage.getItem("skor-swara:lastRecording");
+        if (metaStr) {
+          try {
+            const meta = JSON.parse(metaStr);
+            meta.cloudUrl = videoResultUrl;
+            meta.src = videoResultUrl;
+            sessionStorage.setItem("skor-swara:lastRecording", JSON.stringify(meta));
+            console.log("✅ Updated lastRecording with video URL:", videoResultUrl);
+          } catch (e) {
+            console.error("❌ Failed to update lastRecording:", e);
+          }
+        } else {
+          // Buat metadata baru jika belum ada
+          const newMeta = {
+            cloudUrl: videoResultUrl,
+            src: videoResultUrl,
+            timestamp: Date.now(),
+          };
+          sessionStorage.setItem("skor-swara:lastRecording", JSON.stringify(newMeta));
+          console.log("✅ Created new lastRecording with video URL:", videoResultUrl);
+        }
+      } else {
+        console.warn("⚠️ No video_result URL found in response");
+      }
+
+      console.log("✅ Upload sukses:", resultData);
+      router.push("/skor-swara/hasil-skor");
+    } catch (e: any) {
+      console.error("❌ Upload error:", e);
+      alert(`Gagal upload: ${e.message || e}`);
+      setIsUploading(false);
+    }
+  };
+
+  // ===== FINISH TRAINING =====
   const handleStartTraining = () => {
     startPreparation();
   };
@@ -381,7 +660,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     }
   };
 
-  // ===== SR logic =====
+  // ===== SR LOGIC =====
   const startSR = () => {
     const SR =
       (window as any).SpeechRecognition ||
@@ -461,7 +740,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
     setFallback(false);
   };
 
-  // ===== AUTO-FINISH EFFECT =====
+  // ===== AUTO-FINISH =====
   useEffect(() => {
     if (!isRecording || endedRef.current) return;
     const reachedTime = timer >= MAX_SECONDS;
@@ -492,6 +771,12 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
   const currentStep = RELAXATION_STEPS[currentRelaxationStep];
   const StepIcon = currentStep.icon;
 
+  function formatTime(timer: number): React.ReactNode {
+    const m = Math.floor(timer / 60).toString().padStart(2, "0");
+    const s = (timer % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
   return (
     <>
       <SkorSwaraHeader />
@@ -516,14 +801,28 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
           </div>
         </div>
 
-        {/* VIDEO + TELEPROMPTER OVERLAY */}
+        {/* VIDEO + OVERLAY */}
         <div className="p-6">
           <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-video">
-            {/* Preparation Phase Overlay - SIMPLIFIED */}
+            {/* Upload Progress Overlay */}
+            {isUploading && (
+              <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Menganalisis Video...
+                  </h3>
+                  <p className="text-white/70 text-sm">
+                    Mohon tunggu, video sedang diupload ke server
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Preparation Phase Overlay */}
             {isPreparation && (
               <div className="absolute inset-0 z-50 bg-gradient-to-br from-blue-500/95 via-blue-600/95 to-purple-600/95 backdrop-blur-sm flex items-center justify-center">
                 <div className="text-center px-8 w-full max-w-2xl">
-                  {/* Countdown Circle - COMPACT */}
                   <div className="relative w-40 h-40 mx-auto mb-8">
                     <svg className="w-40 h-40 transform -rotate-90">
                       <circle
@@ -564,7 +863,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                     </div>
                   </div>
 
-                  {/* Relaxation Instructions - COMPACT */}
                   <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
                     <div className="flex items-center justify-center mb-3">
                       <div className="bg-white/20 p-3 rounded-full">
@@ -579,7 +877,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                     </p>
                   </div>
 
-                  {/* Bottom Info - MINIMAL */}
                   <div className="mt-6 space-y-2">
                     <p className="text-white/70 text-xs">
                       💡 Bersiaplah dengan tenang
@@ -589,7 +886,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                     </p>
                   </div>
 
-                  {/* Cancel button - SUBTLE */}
                   <button
                     onClick={cancelPreparation}
                     className="mt-4 px-5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg font-medium transition-all border border-white/20"
@@ -601,62 +897,76 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             )}
 
             {isRecording && (
-              <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-medium">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                RECORDING
+              <div className="absolute bottom-4 left-4 z-30 flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  RECORDING
+                </div>
+                <div className="bg-black/60 text-white px-4 py-1.5 rounded-full text-sm font-mono shadow">
+                  {formatTime(timer)}
+                </div>
               </div>
             )}
 
-            {isRecording && (
-              <div className="absolute top-4 right-4 z-30 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-mono">
-                {formatTime(timer)}
-              </div>
-            )}
-
-            {/* Topic+Image Mode */}
-            {trainingMode === "topic-image" &&
-              selectedTopic?.image &&
-              isRecording && (
-                <div className="absolute top-20 left-2 z-30 bg-white/40 backdrop-blur-lg rounded-2xl p-6 max-w-lg mx-auto shadow-2xl">
+            {/* ✅ FIXED: Topic+Image Mode Display */}
+            {trainingMode === "topic-image" && isRecording && selectedTopic && (
+              <div className="absolute top-20 left-4 z-30 bg-white/95 backdrop-blur-lg rounded-2xl p-6 w-[440px] shadow-2xl">
+                {/* Display Image if available */}
+                {selectedTopic.image_url && (
                   <div className="relative w-full h-48 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl mb-4 overflow-hidden shadow-lg">
                     <img
-                      src={selectedTopic.image}
-                      alt={selectedTopic.title}
+                      src={selectedTopic.image_url}
+                      alt={selectedTopic.image_topic || selectedTopic.topic || "Topic Image"}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
+                        console.error("❌ Image load failed:", selectedTopic.image_url);
                         target.style.display = "none";
+                      }}
+                      onLoad={() => {
+                        console.log("✅ Image loaded:", selectedTopic.image_url);
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                   </div>
+                )}
 
-                  {selectedTopic.topic && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-3 font-semibold flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4 text-orange-500" />
-                        Topik Pembahasan:
+                {/* Display Topic */}
+                {(selectedTopic.image_topic || selectedTopic.topic) && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-2 font-semibold flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-orange-500" />
+                      Topik Pembahasan:
+                    </p>
+                    <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl p-4 border-2 border-orange-300 shadow-sm">
+                      <p className="text-lg font-black text-gray-900 text-center leading-tight">
+                        {selectedTopic.image_topic || selectedTopic.topic}
                       </p>
-                      <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl p-5 border-2 border-orange-300 shadow-sm">
-                        <p className="text-xl font-black text-gray-900 text-center leading-tight">
-                          {selectedTopic.topic}
-                        </p>
-                      </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {selectedTopic.minWords && selectedTopic.maxWords && (
-                    <div className="mt-4 text-xs text-center">
-                      <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-200">
-                        <span className="font-semibold">💡 Target:</span>
-                        <span className="font-bold">
-                          {selectedTopic.minWords}-{selectedTopic.maxWords} kata
+                {/* Display Keywords */}
+                {selectedTopic.image_keyword && (
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-600 mb-2 font-semibold flex items-center gap-2">
+                      <Tag className="w-3 h-3 text-blue-500" />
+                      Keyword Hints:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTopic.image_keyword.split(',').map((keyword: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold"
+                        >
+                          {keyword.trim()}
                         </span>
-                      </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Font & Opacity Controls */}
             {showTele && trainingMode === "full-text" && (
@@ -665,7 +975,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 <button
                   onClick={() => setFontPx((v) => Math.max(14, v - 2))}
                   className="px-2 py-0.5 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
-                  aria-label="perkecil"
                 >
                   A-
                 </button>
@@ -673,7 +982,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 <button
                   onClick={() => setFontPx((v) => Math.min(48, v + 2))}
                   className="px-2 py-0.5 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
-                  aria-label="perbesar"
                 >
                   A+
                 </button>
@@ -687,7 +995,6 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                   value={bgOpacity}
                   onChange={(e) => setBgOpacity(parseFloat(e.target.value))}
                   className="w-24"
-                  aria-label="opasitas"
                 />
               </div>
             )}
@@ -700,7 +1007,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
               className="w-full h-full [transform:scaleX(-1)] object-cover"
             />
 
-            {/* Teleprompter for full-text mode */}
+            {/* Teleprompter */}
             {showTele && trainingMode === "full-text" && (
               <div
                 ref={teleContainerRef}
@@ -712,14 +1019,14 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                 }}
               >
                 <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-9 rounded bg-orange-50/60" />
-                {teleWords.map((w, i) => {
-                  if (w === "\n") return <br key={`br-${i}`} />;
-                  const spoken = i < currentWordIdx;
-                  const current = i === currentWordIdx;
+                {teleWords.map((w, index) => {
+                  if (w === "\n") return <br key={`br-${index}`} />;
+                  const spoken = index < currentWordIdx;
+                  const current = index === currentWordIdx;
                   return (
                     <span
-                      key={i}
-                      data-word-idx={i}
+                      key={index}
+                      data-word-idx={index}
                       className={[
                         "mx-[2px] whitespace-pre-wrap transition-colors duration-150 relative",
                         spoken
@@ -730,7 +1037,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
                       ].join(" ")}
                     >
                       {w}
-                      {i < teleWords.length - 1 ? " " : ""}
+                      {index < teleWords.length - 1 ? " " : ""}
                     </span>
                   );
                 })}
@@ -739,7 +1046,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
 
             {/* Custom Topic Mode */}
             {showTele && trainingMode === "custom-topic" && (
-              <div className="absolute z-20 left-4 right-4 top-4 bg-white/40 backdrop-blur rounded-2xl p-6 shadow-2xl max-w-2xl mx-auto">
+              <div className="absolute top-20 left-4 z-30 bg-white/95 backdrop-blur-lg rounded-2xl p-6 w-[440px] shadow-2xl">
                 <div className="text-center">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl mb-4">
                     <Edit3 className="w-8 h-8 text-purple-600" />
@@ -766,13 +1073,13 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             )}
           </div>
 
-          {/* Kontrol */}
+          {/* Controls */}
           <div className="flex gap-4 mt-6">
             <button
               onClick={handleStartTraining}
-              disabled={isRecording || isPreparation}
+              disabled={isRecording || isPreparation || isUploading}
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all duration-200 ${
-                isRecording || isPreparation
+                isRecording || isPreparation || isUploading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-green-500 text-white hover:bg-green-600 hover:shadow-lg hover:-translate-y-0.5"
               }`}
@@ -783,9 +1090,9 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
 
             <button
               onClick={handleFinishTraining}
-              disabled={!isRecording}
+              disabled={!isRecording || isUploading}
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all duration-200 ${
-                !isRecording
+                !isRecording || isUploading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:-translate-y-0.5"
               }`}
@@ -795,7 +1102,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             </button>
           </div>
 
-          {/* Info Preparation - COMPACT */}
+          {/* Info */}
           {!isRecording && !isPreparation && (
             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
@@ -849,7 +1156,7 @@ Dalam era saat ini, ketepatan bicara, cara menyampaikan informasi dengan jelas j
             </div>
           )}
 
-          {/* Mode-specific info */}
+          {/* Mode Tips */}
           {trainingMode === "topic-image" && !isPreparation && (
             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="text-sm text-blue-900 font-semibold mb-2">

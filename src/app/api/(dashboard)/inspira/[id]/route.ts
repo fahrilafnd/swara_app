@@ -10,7 +10,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const token = cookies().get("swara_token")?.value;
+  const token = (await cookies()).get("swara_token")?.value;
   if (!token) {
     return NextResponse.json(
       { success: false, message: "Unauthenticated: token tidak ada." },

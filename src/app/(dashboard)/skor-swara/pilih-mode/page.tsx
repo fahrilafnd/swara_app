@@ -11,7 +11,7 @@ import {
   ChevronRight,
   Trophy,
   ArrowLeft,
-  Mic, // ⬅️ mic icon
+  Mic,
 } from "lucide-react";
 import SkorSwaraHeader from "@/app/components/skor-swara/SkorSwaraHeader";
 import {
@@ -22,6 +22,10 @@ import {
 } from "../config/levels";
 import Link from "next/link";
 
+// ✅ FIX 1: TAMBAHKAN IMPORT INI
+// Uncomment setelah membuat file /lib/training-storage.ts
+// import { saveTrainingMode } from "@/lib/training-storage";
+
 interface ModeCard {
   id: TrainingMode;
   title: string;
@@ -30,14 +34,16 @@ interface ModeCard {
   difficulty: string;
   minLevel: number;
   features: string[];
-  color: string; // tailwind gradient classes
-  micCost: number; // ⬅️ token mic yang dibutuhkan
+  color: string;
+  micCost: number;
 }
 
 export default function PilihModePage() {
   const router = useRouter();
   const [userLevel, setUserLevel] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isStarting, setIsStarting] = useState(false);
+  const [selectedModeId, setSelectedModeId] = useState<TrainingMode | null>(null);
 
   useEffect(() => {
     const level = getUserLevel();
@@ -64,7 +70,7 @@ export default function PilihModePage() {
         "Fokus pada intonasi & tempo",
       ],
       color: "from-green-500 to-emerald-600",
-      micCost: 1, // ⬅️
+      micCost: 1,
     },
     {
       id: "topic-image",
@@ -80,7 +86,7 @@ export default function PilihModePage() {
         "Melatih spontanitas",
       ],
       color: "from-blue-500 to-indigo-600",
-      micCost: 2, // ⬅️
+      micCost: 2,
     },
     {
       id: "custom-topic",
@@ -96,11 +102,25 @@ export default function PilihModePage() {
         "Challenge maksimal",
       ],
       color: "from-orange-500 to-orange-600",
-      micCost: 3, // ⬅️
+      micCost: 3,
     },
   ];
 
-  const handleSelectMode = (mode: TrainingMode) => {
+  // Mapping mode ke mode_id untuk API
+  const getModeId = (mode: TrainingMode): number => {
+    switch (mode) {
+      case "full-text":
+        return 1;
+      case "topic-image":
+        return 2;
+      case "custom-topic":
+        return 3;
+      default:
+        return 1;
+    }
+  };
+
+  const handleSelectMode = async (mode: TrainingMode) => {
     if (isModeLocked(mode)) {
       alert(
         `Mode ini terkunci! Capai Level ${
@@ -109,8 +129,36 @@ export default function PilihModePage() {
       );
       return;
     }
-    sessionStorage.setItem("skor-swara:selectedMode", mode);
-    router.push(`/skor-swara/pilih-topik?mode=${mode}`);
+
+    setSelectedModeId(mode);
+    setIsStarting(true);
+
+    try {
+      // ✅ SIMPLIFIED: Just save mode and redirect
+      console.log("🚀 Selected mode:", mode);
+
+      // Save mode to sessionStorage
+      sessionStorage.setItem("skor-swara:selectedMode", mode);
+      sessionStorage.setItem("skor-swara:mode", mode);
+      
+      const modeId = getModeId(mode);
+      sessionStorage.setItem("skor-swara:modeId", modeId.toString());
+
+      console.log("💾 Mode saved to sessionStorage:", {
+        mode,
+        modeId,
+      });
+
+      // Redirect to pilih topik
+      router.push(`/skor-swara/pilih-topik?mode=${mode}`);
+
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+      
+      setIsStarting(false);
+      setSelectedModeId(null);
+    }
   };
 
   const renderMicTokens = (count: number, dimmed?: boolean) => (
@@ -172,14 +220,6 @@ export default function PilihModePage() {
               </p>
             </div>
           </div>
-
-          {/* Debug info */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
-              🔍 Debug: Level {userLevel} | Unlocked modes:{" "}
-              {currentLevelConfig?.unlockedModes.join(", ")}
-            </p>
-          </div>
         </div>
 
         {/* Header */}
@@ -197,22 +237,23 @@ export default function PilihModePage() {
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           {modes.map((mode) => {
             const locked = isModeLocked(mode.id);
+            const isCurrentlyStarting = isStarting && selectedModeId === mode.id;
 
             return (
               <div
                 key={mode.id}
                 className={`relative bg-white rounded-3xl shadow-xl overflow-hidden transition-all duration-300 ${
-                  locked
+                  locked || isStarting
                     ? "opacity-60"
                     : "hover:shadow-2xl hover:-translate-y-2 cursor-pointer"
                 }`}
-                onClick={() => !locked && handleSelectMode(mode.id)}
+                onClick={() => !locked && !isStarting && handleSelectMode(mode.id)}
               >
                 {/* Header */}
                 <div
                   className={`bg-gradient-to-r ${mode.color} p-6 text-white relative`}
                 >
-                  {/* Mic token pill (selalu tampil) */}
+                  {/* Mic token pill */}
                   <div className="absolute top-4 right-4">
                     <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2">
                       {renderMicTokens(mode.micCost, locked)}
@@ -221,15 +262,6 @@ export default function PilihModePage() {
                       </span>
                     </div>
                   </div>
-
-                  {locked && (
-                    <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
-                      <span className="text-xs font-bold">
-                        Level {mode.minLevel}
-                      </span>
-                    </div>
-                  )}
 
                   <div className="mb-4">{mode.icon}</div>
                   <h3 className="text-2xl font-black mb-2">{mode.title}</h3>
@@ -260,9 +292,9 @@ export default function PilihModePage() {
                   </div>
 
                   <button
-                    disabled={locked}
+                    disabled={locked || isStarting}
                     className={`w-full py-3 rounded-xl font-bold transition-all ${
-                      locked
+                      locked || isStarting
                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                         : `bg-gradient-to-r ${mode.color} text-white hover:shadow-lg`
                     }`}
@@ -271,6 +303,11 @@ export default function PilihModePage() {
                       <span className="flex items-center justify-center gap-2">
                         <Lock className="w-4 h-4" />
                         Terkunci
+                      </span>
+                    ) : isCurrentlyStarting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Memulai Sesi...
                       </span>
                     ) : (
                       "Pilih Mode Ini"
@@ -289,6 +326,17 @@ export default function PilihModePage() {
                       <p className="text-sm text-gray-600">
                         untuk membuka mode ini
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading Overlay */}
+                {isCurrentlyStarting && (
+                  <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-gray-900 font-bold">Memulai Sesi...</p>
+                      <p className="text-sm text-gray-600">Mohon tunggu</p>
                     </div>
                   </div>
                 )}

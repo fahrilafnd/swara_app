@@ -129,6 +129,95 @@ export default function RiwayatPage() {
   );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<"all" | "week" | "month">("all");
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data from API
+  React.useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("accessToken");
+        // Attempt to get user_id for more precise filtering if backend supports it
+        let userId: number | null = null;
+        try {
+          const uStr = localStorage.getItem("user");
+          if (uStr) {
+            const u = JSON.parse(uStr);
+            if (u?.user_id) userId = u.user_id;
+          }
+        } catch {}
+        const baseUrl = "https://swara-backend.onrender.com/api/swara/users/riwayat-latihan";
+        const url = userId ? `${baseUrl}?user_id=${userId}` : baseUrl;
+        
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch activities");
+        }
+
+        const data = await response.json();
+        console.log("📜 [Riwayat Page] Raw response:", data);
+        
+        if (data.success && data.data) {
+          // Transform API data to Activity format
+          const transformedActivities: Activity[] = (Array.isArray(data.data) ? data.data : []).map((item: any) => ({
+            id: String(item.skor_swara_id),
+            type: "skor-swara" as ActivityType,
+            title: "Latihan Public Speaking",
+            description: item.topic || item.custom_topic || "Latihan public speaking",
+            score: item.point_earned || 0,
+            maxScore: 100,
+            duration: 60, // Default duration
+            date: new Date(item.created_at),
+            level: item.user?.level || 1,
+            badges: [], // Will be populated if badges data available
+            isCompleted: item.status === "complete",
+          }));
+          
+          setActivities(transformedActivities);
+          // Fallback if empty: use lastResult from sessionStorage
+          if (transformedActivities.length === 0) {
+            const lastResultStr = sessionStorage.getItem("skor-swara:lastResult");
+            if (lastResultStr) {
+              try {
+                const last = JSON.parse(lastResultStr);
+                setActivities([
+                  {
+                    id: String(last.skor_swara_id || Date.now()),
+                    type: "skor-swara",
+                    title: "Latihan Public Speaking (Terbaru)",
+                    description: last.custom_topic || last.topic || "Sesi terbaru",
+                    score: last.point_earned || 0,
+                    maxScore: 100,
+                    duration: 60,
+                    date: new Date(last.created_at || new Date()),
+                    level: 1,
+                    badges: [],
+                    isCompleted: last.status === "complete",
+                  },
+                ]);
+                console.log("🟠 Fallback applied on riwayat page with lastResult");
+              } catch {}
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error fetching activities:", error);
+        // Use mock data as fallback
+        setActivities(MOCK_ACTIVITIES);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, []);
 
   // Activity type config
   const activityConfig = {
@@ -171,7 +260,7 @@ export default function RiwayatPage() {
 
   // Filter and search activities
   const filteredActivities = useMemo(() => {
-    let filtered = MOCK_ACTIVITIES;
+    let filtered = activities;
 
     // Filter by type
     if (selectedFilter !== "all") {
@@ -200,23 +289,23 @@ export default function RiwayatPage() {
     }
 
     return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [searchQuery, selectedFilter, dateRange]);
+  }, [searchQuery, selectedFilter, dateRange, activities]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const totalActivities = MOCK_ACTIVITIES.length;
-    const totalScore = MOCK_ACTIVITIES.filter((a) => a.score).reduce(
+    const totalActivities = activities.length;
+    const totalScore = activities.filter((a) => a.score).reduce(
       (sum, a) => sum + (a.score || 0),
       0
     );
-    const scoredActivities = MOCK_ACTIVITIES.filter((a) => a.score).length;
+    const scoredActivities = activities.filter((a) => a.score).length;
     const avgScore =
       scoredActivities > 0 ? Math.round(totalScore / scoredActivities) : 0;
-    const wins = MOCK_ACTIVITIES.filter((a) => a.result === "win").length;
-    const badges = MOCK_ACTIVITIES.flatMap((a) => a.badges || []).length;
+    const wins = activities.filter((a) => a.result === "win").length;
+    const badges = activities.flatMap((a) => a.badges || []).length;
 
     return { totalActivities, avgScore, wins, badges };
-  }, []);
+  }, [activities]);
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -383,7 +472,27 @@ export default function RiwayatPage() {
 
         {/* Activities List */}
         <div className="space-y-4">
-          {filteredActivities.length === 0 ? (
+          {loading ? (
+            // Loading skeleton
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl shadow-lg p-6 animate-pulse"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 bg-gray-200 rounded-2xl"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                    <div className="w-20 h-16 bg-gray-200 rounded-xl"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredActivities.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-10 h-10 text-gray-400" />
@@ -558,9 +667,12 @@ export default function RiwayatPage() {
 
                       {/* Action Buttons */}
                       <div className="flex flex-wrap gap-3 mt-4">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors">
+                        <button 
+                          onClick={() => router.push(`/skor-swara/detail/${activity.id}`)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors"
+                        >
                           <Video className="w-4 h-4" />
-                          Lihat Rekaman
+                          Lihat Detail
                         </button>
                         <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
                           <Share2 className="w-4 h-4" />

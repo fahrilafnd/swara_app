@@ -78,6 +78,11 @@ export default function Login() {
         text: data?.message || "Login berhasil. Mengalihkan...",
       });
 
+      // After successful login
+      console.log("🔐 Saving token:", data.data.accessToken);
+      localStorage.setItem("accessToken", data.data.accessToken);
+      console.log("✅ Token saved, verify:", localStorage.getItem("accessToken"));
+
       // Redirect prioritas:
       // 1) next=?  2) home by role  3) fallback /dashboard
       const dest = nextParam || HOME_BY_ROLE[role] || "/dashboard";

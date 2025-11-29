@@ -29,8 +29,15 @@
     "**/*.tsx",
     "next-env.d.ts",
     "src/types/**/*.d.ts",
-    ".next/types/**/*.ts",
-    "pdfjs-dist.d.ts"
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  }
 }

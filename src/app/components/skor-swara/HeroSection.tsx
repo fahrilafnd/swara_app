@@ -4,9 +4,10 @@ import React from "react";
 
 interface HeroSectionProps {
   onStartTraining: () => void;
+  isLoading?: boolean;
 }
 
-export default function HeroSection({ onStartTraining }: HeroSectionProps) {
+export default function HeroSection({ onStartTraining, isLoading }: HeroSectionProps) {
   return (
     <div className="relative rounded-3xl overflow-hidden shadow-2xl mb-8 h-80 md:h-96">
       {/* Background with outdoor scene simulation */}
@@ -36,9 +37,10 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
         </h1>
         <button
           onClick={onStartTraining}
-          className="bg-white text-orange-500 px-6 py-3 rounded-lg font-bold text-base shadow-lg hover:shadow-xl hover:-translate-y-1 hover:scale-105 transition-all duration-300 whitespace-nowrap"
+          disabled={isLoading}
+          className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-orange-600 transition-all hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Mulai Latihan
+          {isLoading ? "Memulai..." : "Mulai Latihan"}
         </button>
       </div>
     </div>
